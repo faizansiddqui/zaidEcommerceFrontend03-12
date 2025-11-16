@@ -6,8 +6,9 @@ import { Catagories } from "./catagory.model.js";
 
 const Products = connection.define("Products", {
   product_id: {
-    type: DataTypes.STRING,
+    type: DataTypes.INTEGER,
     allowNull:false,
+    autoIncrement:true,
     primaryKey: true,
   },
 

@@ -5,6 +5,7 @@ import {connection} from "../config/db.js"
 import { v4 as uuidv4 } from "uuid";
 import  Orders  from "../model/orders.model.js";
 import Addresses from "../model/addresses.model.js";
+import { json } from "sequelize";
 
 // const addSubcatagory = async (req, res) => {
 //   try {
@@ -107,9 +108,9 @@ const uploadProduct = async (req, res) => {
 
     // Create product (ensure product_id matches your model column name)
     // NOTE: use the actual primary key column name your Products model expects.
-    const productId = uuidv4();
+    // const productId = uuidv4();
     const newProduct = await Products.create({
-      product_id: productId, // <-- use product_id (or `id` if your model uses `id`)
+      // product_id: productId, // <-- use product_id (or `id` if your model uses `id`)
       title,
       name,
       price:Number(price),
@@ -119,6 +120,9 @@ const uploadProduct = async (req, res) => {
       catagory_id:catagory_id
     }, { transaction });
 
+    console.log(` product id:${JSON.stringify(newProduct.product_id)}`);
+    
+    const productId = newProduct.product_id;
     // Insert specifications (if any) — using product_id consistent with create above
     if (specsArr.length > 0) {
       const specsWithProductId = specsArr.map((s) => ({
@@ -129,12 +133,12 @@ const uploadProduct = async (req, res) => {
     }
 
     // Insert ProductImages rows
-    const imageRows = uploadedImageUrls.map((url) => ({
-      id: uuidv4(),
-      product_id: productId,
-      image_url: url,
-    }));
-    await ProductImages.bulkCreate(imageRows, { transaction });
+    // const imageRows = uploadedImageUrls.map((url) => ({
+    //   id: uuidv4(),
+    //   product_id: productId,
+    //   image_url: url,
+    // }));
+    // await ProductImages.bulkCreate(imageRows, { transaction });
 
     await transaction.commit();
 
@@ -167,7 +171,7 @@ const getOrders = async (req,res)=>{
 
 const updateOrderStatus = async(req,res)=>{
   const {payload} = req.body;
-  if(!payload) return res.status(401).json({Message:"Status not found"})
+  if(!payload) return res.status(401).json({Message:"Status not found"});
 }
 
 const login = (req,res)=>{
