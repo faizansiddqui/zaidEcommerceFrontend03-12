@@ -1,6 +1,6 @@
 import { router } from "../app.js";
 // import { getOrders } from "../controller/admin.controller.js";
-import {getProductById,getProductByCatagory,searchProduct,showProduct,order,createAddress,getUserProfile,getOrders} from "../controller/user.controller.js"
+import {getProductById,getProductByCatagory,searchProduct,showProduct,order,createAddress,getUserProfile,getOrders,getUserAddresess} from "../controller/user.controller.js"
 import { authMiddleware } from "../middleware/auth.middleware.js";
 
 //profile related routes
@@ -18,6 +18,7 @@ router.post('/create-order',authMiddleware,order)
 router.post('/get-orders',authMiddleware,getOrders)
 // router.post('/create-order',authMiddleware,createOrder)
 router.post('/create-newAddress',authMiddleware,createAddress);
+router.post('/get-user-addresess',authMiddleware,getUserAddresess)
 
 
 

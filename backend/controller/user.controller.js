@@ -330,8 +330,33 @@ const getOrders = async (req,res)=>{
   
 }
 
+const getUserAddresess = async (req,res)=>{
+
+  const {decode_user} = req.body;
+  if (!decode_user) {
+    return res.status(402).json({Message:"Cant fetch User Adress please login first"});
+  }
+
+  try {
+
+    const userAddresess = await Addresses.findAll({
+      where:{user_id:decode_user}
+    })
+
+    res.status(200).json({status:true,data:userAddresess})
+    
+  } catch (error) {
+    console.error(JSON.stringify(error));
+    
+    return res.status(500).json({msg:"somthing went wrong"})
+  }
+
+    
+}
+
 export {
   getOrders,
+  getUserAddresess,
   getUserProfile,
   getProductByCatagory,
   searchProduct,

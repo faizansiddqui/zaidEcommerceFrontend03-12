@@ -5,7 +5,6 @@ import {connection} from "../config/db.js"
 import { v4 as uuidv4 } from "uuid";
 import  Orders  from "../model/orders.model.js";
 import Addresses from "../model/addresses.model.js";
-import { json } from "sequelize";
 
 // const addSubcatagory = async (req, res) => {
 //   try {
@@ -162,7 +161,6 @@ const uploadProduct = async (req, res) => {
 
 const getOrders = async (req,res)=>{
     const data = await Orders.findAll({
-        where:{status:"Pending"},
         include:[{model:Products}]
         
     })
@@ -174,10 +172,32 @@ const getOrders = async (req,res)=>{
     res.status(200).json({status:true,orders:data})
 }
 
-const updateOrderStatus = async(req,res)=>{
-  const {payload} = req.body;
-  if(!payload) return res.status(401).json({Message:"Status not found"});
-}
+const updateOrderStatus = async (req, res) => {
+  try {
+    const { status, order_id } = req.body;
+
+    // Validate
+    if (!status || !order_id) {
+      return res.status(400).json({ message: "Status or Order ID missing" });
+    }
+
+    // Update in database
+    const [updated] = await Orders.update(
+      { status: status },
+      { where: { order_id: order_id } }
+    );
+
+    if (updated === 0) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    return res.status(200).json({ message: "Order status updated successfully" });
+
+  } catch (error) {
+    console.error("Error updating order:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 const login = (req,res)=>{
     const {userName,password} = req.body;
@@ -194,9 +214,18 @@ const login = (req,res)=>{
     }
  }
 
+ const getProducts = async (req, res) => {
+};
+
+const updateProduct = async (req, res) => {
+};
+
+
 
 
 export {
+  getProducts,
+  updateProduct,
   addCatagory,
   uploadProduct,
   login,
