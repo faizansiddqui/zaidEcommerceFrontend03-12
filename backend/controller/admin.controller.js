@@ -170,11 +170,27 @@ const updateOrderStatus = async(req,res)=>{
   if(!payload) return res.status(401).json({Message:"Status not found"})
 }
 
+const login = (req,res)=>{
+    const {userName,password} = req.body;
+    if(!userName || !password){
+      return res.status(400).json({msg:"userName and Password required"})
+    }
+
+    const checkUserName = process.env.ADMIN_USERNAME;
+    const checkPassword = process.env.PASSWORD;
+    if(checkUserName === userName && checkPassword===password){
+        return res.status(200).json({status:true,msg:"Login successfull"});
+    }else{
+        return res.status(401).json({status:false,msg:"Can't login"})
+    }
+ }
+
 
 
 export {
   addCatagory,
   uploadProduct,
+  login,
   getOrders,
   updateOrderStatus
 };
