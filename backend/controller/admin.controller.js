@@ -56,9 +56,8 @@ const uploadProduct = async (req, res) => {
   const transaction = await connection.transaction();
   try {
     const files = req.files || [];
-    const { name, title, price, description, catagory, specification,selling_price } = req.body;
+    const { name, title, price,quantity,sku, description, catagory, specification,selling_price } = req.body;
 
-    console.log(`PRICE:$${Number(price)} selling:${Number(selling_price)}`);
     
     // parse specs (same as before)
     let specsArr = [];
@@ -109,21 +108,25 @@ const uploadProduct = async (req, res) => {
     // Create product (ensure product_id matches your model column name)
     // NOTE: use the actual primary key column name your Products model expects.
     // const productId = uuidv4();
+     
+    // let imageurl = {...uploadedImageUrls}
+
+  let imageUrl = {...uploadedImageUrls}
+    
+      
     const newProduct = await Products.create({
-      // product_id: productId, // <-- use product_id (or `id` if your model uses `id`)
       title,
       name,
       price:Number(price),
-      product_image: uploadedImageUrls[0], // optionally set the first image as main/thumbnail
+      product_image: imageUrl , //all images url in json form 
       description,
       selling_price:Number(selling_price),
-      catagory_id:catagory_id
+      catagory_id:catagory_id,
+      quantity:quantity,
+      sku:sku
     }, { transaction });
 
-    console.log(` product id:${JSON.stringify(newProduct.product_id)}`);
-    
     const productId = newProduct.product_id;
-    // Insert specifications (if any) — using product_id consistent with create above
     if (specsArr.length > 0) {
       const specsWithProductId = specsArr.map((s) => ({
         ...s,
@@ -131,6 +134,8 @@ const uploadProduct = async (req, res) => {
       }));
       await ProductSpecification.bulkCreate(specsWithProductId, { transaction });
     }
+
+    
 
     // Insert ProductImages rows
     // const imageRows = uploadedImageUrls.map((url) => ({

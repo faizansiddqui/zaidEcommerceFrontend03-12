@@ -36,13 +36,12 @@ const Products = connection.define("Products", {
     type: DataTypes.TEXT,
   },
   product_image: {
-    type: DataTypes.STRING,
+    type: DataTypes.JSON,
     allowNull: false,
   },
   quantity:{
     type:DataTypes.INTEGER,
-    allowNull:false,
-    
+    allowNull:false
 
   },
   catagory_id: {
