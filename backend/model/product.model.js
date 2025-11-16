@@ -39,9 +39,12 @@ const Products = connection.define("Products", {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  // quantity:{
-  //   type:DataTypes.ENUM('In Stock','Out Of Stack'),
-  // },
+  quantity:{
+    type:DataTypes.INTEGER,
+    allowNull:false,
+    
+
+  },
   catagory_id: {
   type: DataTypes.INTEGER,
   allowNull: false
