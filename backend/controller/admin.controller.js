@@ -175,7 +175,6 @@ const uploadProduct = async (req, res) => {
 
 const getOrders = async (req, res) => {
   const data = await Orders.findAll({
-    where: { status: "Pending" },
     include: [{ model: Products }]
 
   })
@@ -302,8 +301,7 @@ export {
   updateProduct,
   addCatagory,
   uploadProduct,
-  getProducts,
-  updateProduct,
+
   login,
   getOrders,
   updateOrderStatus

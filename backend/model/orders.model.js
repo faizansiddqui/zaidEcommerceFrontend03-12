@@ -45,8 +45,8 @@ export const Orders = connection.define("Orders", {
     allowNull: false,
   },
   status: {
-    type: DataTypes.ENUM("pending" , "confirm" , "reject" , "delivered"),
-    defaultValue: "Pending",
+    type: DataTypes.ENUM("ongoing" , "confirm" , "reject" , "delivered"),
+    defaultValue: "confirm",
   },
 });
 
