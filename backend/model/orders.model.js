@@ -16,7 +16,7 @@ export const Orders = connection.define("Orders", {
   phone1: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique: true,
+    // unique: true,
   },
   phone2: {
     type: DataTypes.STRING,
@@ -45,7 +45,7 @@ export const Orders = connection.define("Orders", {
     allowNull: false,
   },
   status: {
-    type: DataTypes.ENUM("ongoing" , "confirm" , "reject" , "delivered"),
+    type: DataTypes.ENUM("ongoing" , "confirm" ,"rto", "reject" , "delivered"),
     defaultValue: "confirm",
   },
 });

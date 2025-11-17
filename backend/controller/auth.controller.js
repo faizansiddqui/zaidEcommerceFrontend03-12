@@ -26,17 +26,23 @@ export const google = async (req, res) => {
   }
 };
 
-export const login = async (req, res) => {
+export const varifyEmail = async (req, res) => {
   try {
-    const { email } = req.body;
-    if (!email)
-      return res.status(400).json({ Message: "Email must be required" });
 
+    const token = req.headers.authorization?.split(" ")[1];
+        if (!token) return res.status(401).json({ message: "Token missing" });
+
+        console.log(token);
+        
+        const { data, error } = await supabase.auth.getUser(token);
+    if (error) return res.status(401).json({ message: "Invalid token" });
+
+    const supabaseUser = data.user;
     const [user,created] = await User.findOrCreate({
-      where: { email },
+      where: { email: supabaseUser.email },
       defaults: {
-        id: v4(),
-        email: email,
+        id: supabaseUser.id,
+        email: supabaseUser.email,
       },
     });
 
@@ -64,3 +70,19 @@ export const login = async (req, res) => {
     console.error(error);
   }
 };
+
+export const login = async (req,res)=>{
+  const {email} = req.body;
+
+  console.log('first step');
+  
+
+  if(!email) return res.status(400).json({Message:"Email not Provided"});
+
+    const {error,data} = await supabase.auth.signInWithOtp({
+      email:email
+    });
+
+    res.send(data)
+    
+}

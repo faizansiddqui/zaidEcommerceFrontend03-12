@@ -1,5 +1,5 @@
 import { router } from "../app.js";
-import {google,login} from '../controller/auth.controller.js'
+import {google,login,varifyEmail} from '../controller/auth.controller.js'
 import { supabase } from "../config/supabase.config.js";
 
 
@@ -40,7 +40,9 @@ console.log(access_token);
   });
 });
 
-router.post('/login',login)
+router.post('/log',login)
+router.post('/varify-email',varifyEmail)
+
 
 
 

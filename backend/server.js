@@ -16,7 +16,7 @@ app.use(cors({
 
 app.get('/', async(request,response)=>{
   
-  response.get('Welcome Back');
+  response.send('Welcome Back');
 
 })
 
