@@ -379,7 +379,7 @@ export const addToCart = async (req, res) => {
 
 export const getUserCart = async (req, res) => {
   try {
-    const { decode_user: user_id } = req.params;
+    const { decode_user:user_id } = req.body;
 
     const cart = await AddToCart.findAll({
       where: { user_id },
@@ -390,13 +390,30 @@ export const getUserCart = async (req, res) => {
         }
       ]
     });
-
+  
+    
     return res.status(200).json(cart);
 
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
+export const removeFromCart = async (req, res) => {
+  try {
+    const { cart_id } = req.params;
+
+    await AddToCart.destroy({
+      where: { cart_id }
+    });
+
+    return res.json({ message: "Item removed" });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 
 
 
