@@ -80,7 +80,10 @@ export const login = async (req,res)=>{
   if(!email) return res.status(400).json({Message:"Email not Provided"});
 
     const {error,data} = await supabase.auth.signInWithOtp({
-      email:email
+      email:email,
+      options:{
+        emailRedirectTo: `${process.env.FRONTEND_URL}/api/auth/verify`
+      }
     });
 
     res.send(data)
