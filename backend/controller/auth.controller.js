@@ -71,29 +71,79 @@ export const varifyEmail = async (req, res) => {
   }
 };
 
-export const login = async (req,res)=>{
-  
+export const login = async (req, res) => {
   try {
-    const {email} = req.body;  
+    const { email } = req.body;
 
-  if(!email) return res.status(400).json({Message:"Email not Provided"});
+    if (!email)
+      return res.status(400).json({ message: "Email not provided" });
 
-     await supabase.auth.signInWithOtp({
-      email:email,
-      // options:{
-      //   emailRedirectTo: `${process.env.FRONTEND_URL}/api/auth/verify`
-      // }
-    }).then(()=>{
+    // Step 1: Check if email already exists in DB
+    const user = await User.findOne({ where: { email } });
 
-      return res.status(200).json({Msg:"Varification link Sended to your email"})
+    //IF USER ALREADY EXIST THEN SEND COOKIES ONLY
+    if (user) {
+      const AccessToken = await generateAccessToken(
+        { id: user.id, email: user.email },
+        process.env.JWT_SECRET
+      );
 
-    })
-    
+      const RefreshToken = await generateRefressToken(
+        { id: user.id, email: user.email },
+        process.env.JWT_SECRET
+      );
+
+      user.refreshToken = RefreshToken;
+      await user.save();
+
+         res.cookie("accessToken", AccessToken, { httpOnly: true, maxAge: 15*60*1000 });
+      res.cookie("refreshToken", RefreshToken, { httpOnly: true, maxAge: 7*24*60*60*1000 });
+
+     return  res.status(200).json({Message:"Login successful check your cookie"})
+
+    }
+
+    //IN CASE NEW USER WANTS TO LOGIN
+    await supabase.auth.signInWithOtp({
+      email: email,
+      options: {
+        emailRedirectTo: "http://localhost:8080/api/auth/verify", // yaha apna callback
+      },
+    });
+
+    return res.status(200).json({
+      message: "Verification link sent — check email",
+      loginType: "magic_link",
+    });
   } catch (error) {
     console.error(error);
-    res.satus(500).json({status:false,message:"something went wrong"})
-    
+    res.status(500).json({
+      status: false,
+      message: "Something went wrong",
+    });
   }
-     
-    
-}
+};
+
+export const logoutUser = async (req, res) => {
+  try {
+    // Supabase tokens remove karna
+    res.clearCookie("sb-access-token", { httpOnly: true, secure: true, sameSite: "none" });
+    res.clearCookie("sb-refresh-token", { httpOnly: true, secure: true, sameSite: "none" });
+
+    // Agar tum apne JWT use karte ho:
+    res.clearCookie("accessToken", { httpOnly: true, secure: true, sameSite: "none" });
+    res.clearCookie("refreshToken", { httpOnly: true, secure: true, sameSite: "none" });
+
+    return res.status(200).json({
+      message: "Logout successful — all cookies cleared",
+      success: true
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      message: "Error in logout",
+      error: error.message
+    });
+  }
+};
+
