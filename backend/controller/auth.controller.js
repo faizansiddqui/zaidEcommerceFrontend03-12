@@ -72,20 +72,28 @@ export const varifyEmail = async (req, res) => {
 };
 
 export const login = async (req,res)=>{
-  const {email} = req.body;
-
-  console.log('first step');
   
+  try {
+    const {email} = req.body;  
 
   if(!email) return res.status(400).json({Message:"Email not Provided"});
 
-    const {error,data} = await supabase.auth.signInWithOtp({
+     await supabase.auth.signInWithOtp({
       email:email,
-      options:{
-        emailRedirectTo: `${process.env.FRONTEND_URL}/api/auth/verify`
-      }
-    });
+      // options:{
+      //   emailRedirectTo: `${process.env.FRONTEND_URL}/api/auth/verify`
+      // }
+    }).then(()=>{
 
-    res.send(data)
+      return res.status(200).json({Msg:"Varification link Sended to your email"})
+
+    })
+    
+  } catch (error) {
+    console.error(error);
+    res.satus(500).json({status:false,message:"something went wrong"})
+    
+  }
+     
     
 }

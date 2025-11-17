@@ -4,6 +4,7 @@ import { Orders } from "../model/orders.model.js";
 import { v4 } from "uuid";
 import { User } from "../model/user.model.js";
 import Addresses from "../model/addresses.model.js"
+import AddToCart from "../model/addToCart.model.js";
 
 const getProductByCatagory = async (req, res) => {
   try {
@@ -330,6 +331,9 @@ const getOrders = async (req,res)=>{
   
 }
 
+
+
+
 const getUserAddresess = async (req,res)=>{
 
   const {decode_user} = req.body;
@@ -353,6 +357,49 @@ const getUserAddresess = async (req,res)=>{
 
     
 }
+
+
+
+export const addToCart = async (req, res) => {
+  try {
+    const { decode_user:user_id, product_id, quantity } = req.body;
+
+    const cartItem = await AddToCart.create({
+      user_id,
+      product_id,
+      quantity,
+    });
+
+    return res.json({ message: "Added to cart", cartItem });
+
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+export const getUserCart = async (req, res) => {
+  try {
+    const { decode_user: user_id } = req.params;
+
+    const cart = await AddToCart.findAll({
+      where: { user_id },
+      include: [
+        {
+          model: Products,
+          attributes: ["title", "price", "product_id", "product_image"]
+        }
+      ]
+    });
+
+    return res.status(200).json(cart);
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
+
 
 export {
   getOrders,
