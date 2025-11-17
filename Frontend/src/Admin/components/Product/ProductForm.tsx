@@ -1,6 +1,6 @@
 import { X, Tag, Package, DollarSign, FileText, Settings, Grid, AlertCircle, Save } from 'lucide-react';
-import { ProductFormData } from '../types';
-import { categories } from '../types';
+import { ProductFormData } from '../../types';
+import { categories } from '../../types';
 import ImageUpload from './ImageUpload';
 import FeaturesInput from './FeaturesInput';
 

@@ -1,3 +1,5 @@
+import { CATEGORIES } from '../data/categories';
+
 export interface Product {
     id: string;
     images: (File | string)[];
@@ -17,13 +19,6 @@ export interface Product {
 
 export type ProductFormData = Omit<Product, 'id'>;
 
-export const categories = [
-    'Kiswah Clothes',
-    'Kiswah Qandeel',
-    'Kiswah Belts',
-    'Kiswah Locks',
-    'Kiswah Keys',
-    'Kiswah Keys Bags',
-    'Islamic Decoration Arts'
-] as const;
+// Use centralized categories from data/categories.ts
+export const categories = CATEGORIES.map(cat => cat.name);
 

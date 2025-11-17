@@ -1,5 +1,5 @@
 import { Edit, Trash2, Package } from 'lucide-react';
-import { Product } from '../types';
+import { Product } from '../../types';
 
 interface ProductTableProps {
   products: Product[];
@@ -60,11 +60,10 @@ export default function ProductTable({ products, onEdit, onDelete, getImageUrl }
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                     {typeof product.stock === 'number' ? product.stock : (
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        product.stock === 'in stock' 
-                          ? 'bg-green-100 text-green-800' 
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${product.stock === 'in stock'
+                          ? 'bg-green-100 text-green-800'
                           : 'bg-red-100 text-red-800'
-                      }`}>
+                        }`}>
                         {product.stock}
                       </span>
                     )}

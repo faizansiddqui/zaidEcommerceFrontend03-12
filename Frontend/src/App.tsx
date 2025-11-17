@@ -1,40 +1,146 @@
-import { useState, useEffect } from 'react';
-import Navbar from './components/Navbar';
-import Hero from './components/Hero';
+import { useState, useEffect, useRef } from 'react';
+import Navbar from './components/Navbar/Navbar';
+import Hero from './components/Hero/Hero';
 import BestSellers from './components/BestSellers';
-import ProductGrid from './components/ProductGrid';
-import ProductDetails from './components/ProductDetails';
-import Footer from './components/Footer';
+import NewArrivals from './components/NewArrivals';
+import Features from './components/Features';
+import ProductGrid from './components/Product/ProductGrid';
+import ProductDetails from './components/Product/ProductDetails';
+import Footer from './components/Footer/Footer';
 import AdminPage from './Admin/AdminPage';
+import CartPage from './pages/CartPage';
+import CheckoutPage from './pages/CheckoutPage';
+import LoginPage from './pages/LoginPage';
+import ProfilePage from './pages/ProfilePage';
+import MyOrdersPage from './pages/MyOrdersPage';
+
+import SettingsPage from './pages/SettingsPage';
+import CategoryPage from './pages/Category/CategoryPage';
+import ContactPage from './pages/ContactPage';
+import ShippingInfoPage from './pages/ShippingInfoPage';
+import ReturnsPage from './pages/ReturnsPage';
+import FAQPage from './pages/FAQPage';
+import { useAdminAuth } from './context/AdminAuthContext';
+import { navigateTo } from './utils/navigation';
 
 function App() {
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState<'home' | 'admin'>('home');
+  const [currentPage, setCurrentPage] = useState<'home' | 'admin' | 'cart' | 'checkout' | 'log' | 'verify' | 'profile' | 'orders' | 'settings' | 'categories' | 'contact' | 'shipping' | 'returns' | 'faq'>('home');
+  const { isAdminLoggedIn, logout: adminLogout } = useAdminAuth();
 
-  // Check URL hash for admin page and listen for hash changes
+  // Track previous path to detect route changes
+  const previousPathRef = useRef<string>(window.location.pathname);
+
+  // Check URL pathname for page routing and listen for popstate changes
   useEffect(() => {
-    const handleHashChange = () => {
-      if (window.location.hash === '#/admin') {
+    const handleRouteChange = () => {
+      const path = window.location.pathname;
+      const previousPath = previousPathRef.current;
+
+      // If admin is logged in and navigates to any non-admin route, logout admin
+      if (isAdminLoggedIn && path !== '/admin' && path !== '/') {
+        console.log('🔴 Admin navigated to user route, logging out admin...');
+        adminLogout();
+        // Continue to the user route they wanted to visit
+      }
+
+      // If admin is logged in and navigates to home
+      if (isAdminLoggedIn && previousPath === '/admin' && path === '/') {
+        console.log('🔴 Admin returned to home, logging out admin...');
+        adminLogout();
+      }
+
+      previousPathRef.current = path;
+
+      if (path === '/admin') {
         setCurrentPage('admin');
+      } else if (path === '/cart') {
+        setCurrentPage('cart');
+      } else if (path === '/checkout') {
+        setCurrentPage('checkout');
+      } else if (path === '/log') {
+        setCurrentPage('log');
+      } else if (path === '/api/auth/verify') {
+        setCurrentPage('verify');
+      } else if (path === '/profile') {
+        setCurrentPage('profile');
+      } else if (path === '/orders') {
+        setCurrentPage('orders');
+
+      } else if (path === '/settings') {
+        setCurrentPage('settings');
+      } else if (path === '/categories') {
+        setCurrentPage('categories');
+      } else if (path === '/contact') {
+        setCurrentPage('contact');
+      } else if (path === '/shipping') {
+        setCurrentPage('shipping');
+      } else if (path === '/returns') {
+        setCurrentPage('returns');
+      } else if (path === '/faq') {
+        setCurrentPage('faq');
       } else {
         setCurrentPage('home');
       }
     };
 
-    // Check initial hash
-    handleHashChange();
+    // Check initial path
+    handleRouteChange();
 
-    // Listen for hash changes
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
+    // Listen for popstate (back/forward browser navigation)
+    window.addEventListener('popstate', handleRouteChange);
+    return () => window.removeEventListener('popstate', handleRouteChange);
+  }, [isAdminLoggedIn, adminLogout]);
 
   if (currentPage === 'admin') {
-    return <AdminPage onBack={() => {
-      setCurrentPage('home');
-      window.location.hash = '';
-    }} />;
+    return <AdminPage onBack={() => navigateTo('/')} />;
+  }
+
+  if (currentPage === 'cart') {
+    return <CartPage onBack={() => navigateTo('/')} />;
+  }
+
+  if (currentPage === 'checkout') {
+    return <CheckoutPage onBack={() => navigateTo('/cart')} />;
+  }
+
+  if (currentPage === 'log' || currentPage === 'verify') {
+    return <LoginPage onBack={() => navigateTo('/')} />;
+  }
+
+  if (currentPage === 'profile') {
+    return <ProfilePage onBack={() => navigateTo('/')} />;
+  }
+
+  if (currentPage === 'orders') {
+    return <MyOrdersPage onBack={() => navigateTo('/')} />;
+  }
+
+
+
+  if (currentPage === 'settings') {
+    return <SettingsPage onBack={() => navigateTo('/')} />;
+  }
+
+  if (currentPage === 'categories') {
+    return <CategoryPage onBack={() => navigateTo('/')} />;
+  }
+
+  if (currentPage === 'contact') {
+    return <ContactPage onBack={() => navigateTo('/')} />;
+  }
+
+  if (currentPage === 'shipping') {
+    return <ShippingInfoPage onBack={() => navigateTo('/')} />;
+  }
+
+  if (currentPage === 'returns') {
+    return <ReturnsPage onBack={() => navigateTo('/')} />;
+  }
+
+  if (currentPage === 'faq') {
+    return <FAQPage onBack={() => navigateTo('/')} />;
   }
 
   return (
@@ -42,7 +148,9 @@ function App() {
       <Navbar onSearchChange={setSearchQuery} />
       <Hero />
       <BestSellers onProductClick={(id) => setSelectedProductId(id)} />
+      <NewArrivals onProductClick={(id) => setSelectedProductId(id)} />
       <ProductGrid onProductClick={(id) => setSelectedProductId(id)} searchQuery={searchQuery} />
+      <Features />
       <Footer />
 
       {selectedProductId && (
