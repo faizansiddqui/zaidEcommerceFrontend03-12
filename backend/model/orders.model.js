@@ -48,6 +48,11 @@ export const Orders = connection.define("Orders", {
     type: DataTypes.ENUM("ongoing" , "confirm" ,"rto", "reject" , "delivered"),
     defaultValue: "confirm",
   },
+  quantity:{
+    type:DataTypes.INTEGER,
+    allowNull:false,
+    defaultValue:1,
+  }
 });
 
 //ORDERS

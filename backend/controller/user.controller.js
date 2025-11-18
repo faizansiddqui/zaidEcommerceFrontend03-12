@@ -5,6 +5,7 @@ import { v4 } from "uuid";
 import { User } from "../model/user.model.js";
 import Addresses from "../model/addresses.model.js"
 import AddToCart from "../model/addToCart.model.js";
+import { Transaction } from "sequelize";
 
 const getProductByCatagory = async (req, res) => {
   try {
@@ -82,13 +83,8 @@ const order = async (req, res) => {
   try {
 
     const {
-      // phoneNo,
-      // pinCode,
-      // state,
-      // city,
-      // address,
-      // alt_Phone,
-      // addressType,
+      quantity,
+      address_id,
       product_id,
       decode_user
     } = req.body;
@@ -96,89 +92,19 @@ const order = async (req, res) => {
     // 1. Required fields check
     if (
       ! decode_user ||
-      // !pinCode ||
-      // !state ||
-      // !city ||
-      // !address ||
-      // !addressType ||
-      // !phoneNo ||
-      !product_id
+      !address_id ||
+      !product_id ||
+      !quantity
     ) {
       return res.status(400).json({
         error: "All required fields must be filled.",
       });
-    }
-
-    // 2. Pin code validation (Indian 6-digit)
-    // if (!/^\d{6}$/.test(pinCode)) {
-    //   return res.status(400).json({ error: "Invalid pin code format." });
-    // }
-
-    // // 3. Alternative phone validation (if provided)
-    // if (alt_Phone && !/^\d{10}$/.test(alt_Phone)) {
-    //   return res
-    //     .status(400)
-    //     .json({ error: "Invalid alternative phone number." });
-    // }
-
-    // // 4. Address validation
-    // if (address.length < 8) {
-    //   return res.status(400).json({ error: "Address is too short." });
-    // }
-
-    // // 5. Address type validation
-    // const validAddressTypes = ["home", "work"];
-    // if (!validAddressTypes.includes(addressType.toLowerCase())) {
-    //   return res
-    //     .status(400)
-    //     .json({ error: "Address type must be either home or work." });
-    // }
-
-    //    const avail_services =  await fetch('https://api.rapidshyp.com/rapidshyp/apis/v1/serviceabilty_check',{
-    //     method:"POST",
-    //       headers:{
-    //         "rapidshyp-token":"4f542cb1ee499eba09448bd8b5bf6150aa05b85e88136a15ef7b73c4315132fd",
-    //         "Content-Type":"application/json"
-    //       },
-    //       body:JSON.stringify({
-    //          "Pickup_pincode": "400008",
-    // "Delivery_pincode": "110003",
-    // "cod": true,
-    // "total_order_value": 100,
-    // "weight": 0.25
-
-    //       })
-
-    //      })
-
-    //     const data = await avail_services.json();
-
-    // console.log("Courier Response:", data);
-
-    // return res.status(200).json({
-    //   message: "Order details validated successfully.",
-    //   data: {
-    //     name,
-    //     pinCode,
-    //     state,
-    //     city,
-    //     address,
-    //     alt_Phone,
-    //     landmark,
-    //     addressType,
-    //   },
-    // });
-    // res.json(data);
-    // console.log("done");
-
-      
-
-
+    }   
 
     //Check if address exist or not
     const userAddess = await Addresses.findOne({
       attributes:['phone1','phone2','state','city','pinCode','address','addressType','FullName'],
-      where:{user_id:decode_user}
+      where:{id:address_id}
     });
 
 
@@ -196,11 +122,35 @@ const order = async (req, res) => {
            order_id: v4(),
         user_id: decode_user,
         ...userAddess.dataValues,
-        product_id
+        product_id,
+        quantity
     }
+
+    const product = await Products.findOne({
+      attributes:['quantity'],
+      where:{product_id}
+ })
     
-    
-   console.log(payload);
+
+// Check product exists
+if (!product) {
+  return res.status(404).json({ msg: "Product not found" });
+}
+
+// Check requested quantity valid
+if (product.quantity < quantity) {
+  return res.status(400).json({ msg: "Cannot create order with this quantity" });
+}
+
+// Subtract product quantity
+const newQty = product.quantity - quantity;
+
+// Now update in DB
+await Products.update(
+  { quantity: newQty },
+  { where: { product_id } },
+   {Transaction}
+);  
    
     
     //CREATE USER ORDER
@@ -208,8 +158,6 @@ const order = async (req, res) => {
 
     res.status(200).json({status:true,message:"Order Created Successfully"})
 
-     
-  
   } catch (error) {
     console.log(error);
 
