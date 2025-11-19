@@ -53,12 +53,12 @@ export default function ProductInfo({
             <div className="border-t border-b border-gray-200 py-4 sm:py-5 lg:py-6">
                 <div className="flex flex-wrap items-baseline gap-2 sm:gap-3 lg:gap-4">
                     <span className="text-3xl sm:text-4xl lg:text-5xl font-bold text-amber-700">
-                        ₹{sellingPrice || price}
+                        ${sellingPrice || price}
                     </span>
                     {price > sellingPrice && (
                         <>
                             <span className="text-base sm:text-lg lg:text-xl text-gray-500 line-through">
-                                ₹{price}
+                                ${price}
                             </span>
                             <span className="bg-red-100 text-red-700 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-semibold">
                                 Save {Math.round((1 - sellingPrice / price) * 100)}%
@@ -67,7 +67,7 @@ export default function ProductInfo({
                     )}
                 </div>
                 <p className="text-sm sm:text-base text-amber-600 font-medium mt-2">
-                    Free Shipping Over ₹500
+                    Free Shipping Over $500
                 </p>
             </div>
 
@@ -78,7 +78,7 @@ export default function ProductInfo({
                     specsLength: specs.length,
                     specs: specs
                 });
-                
+
                 if (specs.length > 0) {
                     return (
                         <div className="space-y-3 sm:space-y-4">

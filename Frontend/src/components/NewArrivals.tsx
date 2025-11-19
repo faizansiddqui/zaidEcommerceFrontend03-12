@@ -120,12 +120,12 @@ export default function NewArrivals({ onProductClick }: NewArrivalsProps) {
 
                                     <div className="flex flex-col gap-1">
                                         <span className="text-base sm:text-lg font-bold text-amber-700">
-                                            ₹{displayPrice}
+                                            ${displayPrice}
                                         </span>
                                         {oldPrice && (
                                             <div className="flex items-center gap-2">
                                                 <span className="text-xs text-gray-400 line-through">
-                                                    ₹{oldPrice}
+                                                    ${oldPrice}
                                                 </span>
                                                 <span className="bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full text-[10px] font-semibold">
                                                     -{calculateDiscount(displayPrice, oldPrice)}%

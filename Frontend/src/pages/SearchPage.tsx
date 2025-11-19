@@ -1,11 +1,11 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { ArrowLeft, Search } from 'lucide-react';
 import { productAPI } from '../services/api';
-import ProductCard from '../components/ProductCard';
-import ProductDetails from '../components/ProductDetails';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
-import SearchSuggestions from '../components/SearchSuggestions';
+import ProductCard from '../components/Product/ProductCard';
+import ProductDetails from '../components/Product/ProductDetails';
+import Navbar from '../components/Navbar/Navbar';
+import Footer from '../components/Footer/Footer';
+import SearchSuggestions from '../components/Search/SearchSuggestions';
 import { Product, getImageUrl, isProductNew, isProductBestSeller } from '../utils/productUtils';
 
 interface SearchPageProps {
@@ -310,12 +310,12 @@ export default function SearchPage({ onBack }: SearchPageProps) {
                                                         </p>
                                                         <div className="flex items-center gap-2">
                                                             <span className="text-base font-bold text-amber-700">
-                                                                ₹{product.selling_price || product.price}
+                                                                ${product.selling_price || product.price}
                                                             </span>
                                                             {product.price > product.selling_price && (
                                                                 <>
                                                                     <span className="text-xs text-gray-500 line-through">
-                                                                        ₹{product.price}
+                                                                        ${product.price}
                                                                     </span>
                                                                     <span className="bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full text-[8px] font-semibold">
                                                                         Save {Math.round(((product.price - product.selling_price) / product.price) * 100)}%

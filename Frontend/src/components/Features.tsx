@@ -5,7 +5,7 @@ export default function Features() {
         {
             icon: Truck,
             title: 'Free Shipping',
-            description: 'Free delivery on orders above ₹999',
+            description: 'Free delivery on orders above $999',
             color: 'bg-blue-50 text-blue-600'
         },
         {

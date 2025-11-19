@@ -32,18 +32,18 @@ export default function ShippingInfoPage({ onBack }: ShippingInfoPageProps) {
                         <div className="space-y-4">
                             <div className="border-l-4 border-amber-500 pl-4">
                                 <h3 className="font-medium text-gray-900">Standard Delivery</h3>
-                                <p className="text-gray-600">5-7 business days - ₹50</p>
+                                <p className="text-gray-600">5-7 business days - $50</p>
                                 <p className="text-sm text-gray-500">Available for all pin codes across India</p>
                             </div>
                             <div className="border-l-4 border-blue-500 pl-4">
                                 <h3 className="font-medium text-gray-900">Express Delivery</h3>
-                                <p className="text-gray-600">2-3 business days - ₹150</p>
+                                <p className="text-gray-600">2-3 business days - $150</p>
                                 <p className="text-sm text-gray-500">Available in major cities</p>
                             </div>
                             <div className="border-l-4 border-green-500 pl-4">
                                 <h3 className="font-medium text-gray-900">Free Delivery</h3>
                                 <p className="text-gray-600">5-7 business days - Free</p>
-                                <p className="text-sm text-gray-500">On orders above ₹999</p>
+                                <p className="text-sm text-gray-500">On orders above $999</p>
                             </div>
                         </div>
                     </div>

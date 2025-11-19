@@ -73,7 +73,7 @@ export default function ProductsList() {
     const formatPrice = (price: number) => {
         return new Intl.NumberFormat('en-IN', {
             style: 'currency',
-            currency: 'INR',
+            currency: 'USD',
             maximumFractionDigits: 2
         }).format(price);
     };
@@ -218,8 +218,8 @@ export default function ProductsList() {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className={`px-2 py-1 text-xs font-medium rounded-full ${product.quantity > 0
-                                                    ? 'bg-green-100 text-green-800'
-                                                    : 'bg-red-100 text-red-800'
+                                                ? 'bg-green-100 text-green-800'
+                                                : 'bg-red-100 text-red-800'
                                                 }`}>
                                                 {product.quantity}
                                             </span>
