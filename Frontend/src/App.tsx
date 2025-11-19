@@ -22,14 +22,13 @@ import ReturnsPage from './pages/ReturnsPage';
 import FAQPage from './pages/FAQPage';
 import { useAdminAuth } from './context/AdminAuthContext';
 import { navigateTo } from './utils/navigation';
-import AuthCallback from './pages/AuthCallback';
 // import AuthCallback from './pages/AuthCallback';
 
 
 function App() {
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState<'home' | 'admin' | 'cart' | 'checkout' | 'log' | 'verify' | 'profile' | 'orders' | 'settings' | 'categories' | 'contact' | 'shipping' | 'returns' | 'faq' | 'wishlist'>('home');
+  const [currentPage, setCurrentPage] = useState<'home' | 'admin' | 'cart' | 'checkout' | 'log' | 'verify' | 'profile' | 'orders' | 'settings' | 'categories' | 'contact' | 'shipping' | 'returns' | 'faq' | 'wishlist' | 'auth-callback'>('home');
   const { isAdminLoggedIn, logout: adminLogout } = useAdminAuth();
 
   // Track previous path to detect route changes
