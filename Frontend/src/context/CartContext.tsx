@@ -60,11 +60,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 setIsLoading(false);
                 return;
             }
-        } catch (error: any) {
-            if (error.response?.status === 404) {
-                console.warn("Cart endpoint /user/cart not available. Using localStorage only.");
-            } else if (error.code === "ERR_NETWORK" || error.message?.includes("CORS")) {
-                console.warn("Network error loading cart. Using localStorage.");
+        } catch (error: unknown) {
+            if (typeof error === 'object' && error !== null && 'response' in error) {
+                const axiosError = error as { response?: { status?: number; data?: unknown }; code?: string; message?: string };
+                if (axiosError.response?.status === 404) {
+                    console.warn("Cart endpoint /user/cart not available. Using localStorage only.");
+                } else if (axiosError.response?.status === 403) {
+                    console.warn("Authentication required for cart. Using localStorage only.");
+                } else if (axiosError.code === "ERR_NETWORK" || axiosError.message?.includes("CORS")) {
+                    console.warn("Network error loading cart. Using localStorage.");
+                } else {
+                    console.warn("Failed to load cart from backend. Using localStorage.");
+                }
             } else {
                 console.warn("Failed to load cart from backend. Using localStorage.");
             }
@@ -97,13 +104,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
         localStorage.setItem("cart", JSON.stringify(cartItems));
 
         // Save to backend (if exists)
-        userAPI.saveCart(cartItems as unknown as Record<string, unknown>[]).catch((error: any) => {
-            if (error.response?.status !== 404) {
-                if (error.code === "ERR_NETWORK" || error.message?.includes("CORS")) {
-                    console.warn("Network error saving cart. Cart saved to localStorage only.");
-                } else {
-                    console.warn("Failed to save cart to backend. Cart saved to localStorage only.");
+        userAPI.saveCart(cartItems as unknown as Record<string, unknown>[]).catch((error: unknown) => {
+            if (typeof error === 'object' && error !== null && 'response' in error) {
+                const axiosError = error as { response?: { status?: number }; code?: string; message?: string };
+                if (axiosError.response?.status !== 404) {
+                    if (axiosError.code === "ERR_NETWORK" || axiosError.message?.includes("CORS")) {
+                        console.warn("Network error saving cart. Cart saved to localStorage only.");
+                    } else {
+                        console.warn("Failed to save cart to backend. Cart saved to localStorage only.");
+                    }
                 }
+            } else {
+                console.warn("Failed to save cart to backend. Cart saved to localStorage only.");
             }
         });
     }, [cartItems, isLoading]);

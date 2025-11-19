@@ -71,11 +71,17 @@ export const userAPI = {
         if (error.response?.status === 404) {
             throw new Error('Cart endpoint not available. Using localStorage only.');
         }
+        if (error.response?.status === 403) {
+            throw new Error('Authentication required for cart. Using localStorage only.');
+        }
         throw error;
     }),
     saveCart: (cartItems: Array<Record<string, unknown>>) => api.post('/user/add-to-cart', { cartItems }).catch((error) => {
         if (error.response?.status === 404) {
             throw new Error('Save cart endpoint not available. Cart saved to localStorage only.');
+        }
+        if (error.response?.status === 403) {
+            throw new Error('Authentication required to save cart. Cart saved to localStorage only.');
         }
         throw error;
     }),
