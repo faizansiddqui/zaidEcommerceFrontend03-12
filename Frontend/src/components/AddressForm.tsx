@@ -104,33 +104,23 @@ export default function AddressForm({ address, onSubmit, onCancel, addressCount 
 
         try {
             let userId = user?.id;
-            console.log('Initial userId from context:', userId);
 
             // If user ID is missing, try to get it from profile
             if (!userId || userId === '') {
-                console.log('Fetching user profile to get ID...');
                 try {
                     const profileResponse = await userAPI.getProfile();
-                    console.log('Profile response:', profileResponse);
-                    console.log('Profile response data structure:', JSON.stringify(profileResponse.data, null, 2));
 
                     // Try different paths to extract profile data
                     const profileData = profileResponse.data?.data || profileResponse.data?.user || profileResponse.data?.profile || profileResponse.data;
-                    console.log('Extracted profileData:', profileData);
-                    console.log('profileData type:', typeof profileData);
-                    console.log('profileData keys:', profileData ? Object.keys(profileData) : 'null');
 
                     if (profileData && profileData.id) {
                         userId = profileData.id;
-                        console.log('Found userId from profile:', userId);
                     } else {
-                        console.log('No valid userId found in profile data');
                         // Try to get user ID from the main user object
                         if (profileData && typeof profileData === 'object' && 'user' in profileData) {
                             const userData = (profileData as { user?: { id?: string } }).user;
                             if (userData && userData.id) {
                                 userId = userData.id;
-                                console.log('Found userId from user object:', userId);
                             }
                         }
                         // Try to get user ID from localStorage
@@ -139,10 +129,8 @@ export default function AddressForm({ address, onSubmit, onCancel, addressCount 
                             if (savedUser) {
                                 try {
                                     const userData = JSON.parse(savedUser);
-                                    console.log('localStorage user data:', userData);
                                     if (userData && userData.id) {
                                         userId = userData.id;
-                                        console.log('Found userId from localStorage:', userId);
                                     }
                                 } catch (parseError) {
                                     console.error('Error parsing localStorage user data:', parseError);
@@ -165,12 +153,10 @@ export default function AddressForm({ address, onSubmit, onCancel, addressCount 
                     address_id: address.id,
                     decode_user: userId, // Add user ID for update
                 };
-                console.log('Updating address with data:', updateData);
                 await userAPI.updateAddress(address.id, updateData);
             } else {
                 // Create new address
                 // For create, backend expects phoneNo and alt_Phone
-                console.log('Creating new address, userId:', userId);
                 if (!userId || userId === '') {
                     throw new Error('Unable to retrieve user ID for address creation. Please log out and log back in.');
                 }
@@ -181,7 +167,6 @@ export default function AddressForm({ address, onSubmit, onCancel, addressCount 
                     alt_Phone: formData.phone2,
                     decode_user: userId,
                 };
-                console.log('Creating address with data:', createData);
                 await userAPI.createAddress(createData);
             }
 

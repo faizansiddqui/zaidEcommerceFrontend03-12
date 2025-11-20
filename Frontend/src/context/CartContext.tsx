@@ -6,8 +6,6 @@ import {
     useRef,
     ReactNode,
 } from "react";
-// @ts-expect-error - productDetails.js is a JavaScript file
-import { products } from "../productDetails";
 import { userAPI } from "../services/api";
 import { useAuth } from "./AuthContext";
 
@@ -65,8 +63,61 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
         try {
             const response = await userAPI.getCart();
-            if (response.data && response.data.cartItems) {
-                setCartItems(response.data.cartItems);
+            if (response.data) {
+                // Transform the backend response to match CartItem interface
+                const transformedItems = response.data.map((item: {
+                    Product: {
+                        product_id: number;
+                        title: string;
+                        price: number;
+                        selling_price?: number; // Made selling_price optional
+                        product_image: string | string[] | { [key: string]: string };
+                    };
+                    quantity: number;
+                }) => {
+                    // Process product_image to extract a valid image URL
+                    let imageUrl = '';
+                    if (typeof item.Product.product_image === 'string') {
+                        imageUrl = item.Product.product_image;
+                    } else if (Array.isArray(item.Product.product_image)) {
+                        imageUrl = item.Product.product_image[0] || '';
+                    } else if (typeof item.Product.product_image === 'object' && item.Product.product_image !== null) {
+                        const imageValues = Object.values(item.Product.product_image);
+                        imageUrl = imageValues[0] || '';
+                    }
+
+                    // Determine the correct price to use
+                    let priceToUse: number;
+                    if (typeof item.Product.selling_price === 'number' && !isNaN(item.Product.selling_price) && item.Product.selling_price > 0) {
+                        priceToUse = item.Product.selling_price;
+                    } else if (typeof item.Product.price === 'number' && !isNaN(item.Product.price) && item.Product.price > 0) {
+                        priceToUse = item.Product.price;
+                    } else {
+                        // Fallback to 0 if no valid price is found
+                        priceToUse = 0;
+                    }
+
+                    return {
+                        id: item.Product.product_id,
+                        name: item.Product.title,
+                        price: priceToUse,
+                        image: imageUrl,
+                        quantity: item.quantity,
+                    };
+                });
+
+                // Deduplicate items by ID, using the quantity from the first occurrence
+                const deduplicatedItems = transformedItems.reduce((acc: CartItem[], item: CartItem) => {
+                    const existingItem = acc.find((i) => i.id === item.id);
+                    if (!existingItem) {
+                        // If item doesn't exist, add it to the array
+                        acc.push(item);
+                    }
+                    // If item already exists, we ignore the duplicate (keep the first one)
+                    return acc;
+                }, []);
+
+                setCartItems(deduplicatedItems);
                 setIsLoading(false);
                 return;
             }
@@ -127,9 +178,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const addToCart = (
         productId: number,
         quantity: number = 1,
-        productData?: { name: string; price: number; image: string; stock?: number }
+        productData?: { name: string; price: number; selling_price?: number; image: string; stock?: number } // selling_price is already optional
     ) => {
         if (productData) {
+            // Determine the correct price to use
+            let priceToUse: number;
+            if (typeof productData.selling_price === 'number' && !isNaN(productData.selling_price) && productData.selling_price > 0) {
+                priceToUse = productData.selling_price;
+            } else if (typeof productData.price === 'number' && !isNaN(productData.price) && productData.price > 0) {
+                priceToUse = productData.price;
+            } else {
+                // Fallback to 0 if no valid price is found
+                priceToUse = 0;
+            }
+
             setCartItems((prevItems) => {
                 const existingItem = prevItems.find((item) => item.id === productId);
                 if (existingItem) {
@@ -144,7 +206,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
                         {
                             id: productId,
                             name: productData.name,
-                            price: productData.price,
+                            price: priceToUse,
                             image: productData.image,
                             quantity: quantity,
                             stock: productData.stock,
@@ -152,40 +214,29 @@ export function CartProvider({ children }: { children: ReactNode }) {
                     ];
                 }
             });
-            return;
-        }
 
-        const product = products.find((p: { id: number }) => p.id === productId);
-        if (!product) {
-            console.warn(`Product with id ${productId} not found in local products`);
-            return;
-        }
-
-        setCartItems((prevItems) => {
-            const existingItem = prevItems.find((item) => item.id === productId);
-            if (existingItem) {
-                return prevItems.map((item) =>
-                    item.id === productId
-                        ? { ...item, quantity: item.quantity + quantity }
-                        : item
-                );
-            } else {
-                return [
-                    ...prevItems,
-                    {
-                        id: product.id,
-                        name: product.name,
-                        price: product.price,
-                        image: product.image,
-                        quantity: quantity,
-                    },
-                ];
+            // Save to backend if authenticated
+            if (isAuthenticated) {
+                userAPI.addToCart(productId, quantity).catch((error) => {
+                    console.warn("Failed to add item to cart on backend:", error);
+                });
             }
-        });
+            return;
+        }
+
+        // If no productData provided, we can't add to cart without it
+        console.warn(`Product data not provided for product ${productId}`);
     };
 
     const removeFromCart = (productId: number) => {
         setCartItems((prevItems) => prevItems.filter((item) => item.id !== productId));
+
+        // Remove from backend if authenticated
+        if (isAuthenticated) {
+            userAPI.removeFromCart(productId).catch((error) => {
+                console.warn("Failed to remove item from cart on backend:", error);
+            });
+        }
     };
 
     const updateQuantity = (productId: number, quantity: number) => {
@@ -198,10 +249,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 item.id === productId ? { ...item, quantity } : item
             )
         );
+
+        // Update on backend if authenticated
+        if (isAuthenticated) {
+            userAPI.updateCartItem(productId, quantity).catch((error) => {
+                console.warn("Failed to update cart item on backend:", error);
+            });
+        }
     };
 
     const clearCart = () => {
         setCartItems([]);
+
+        // Clear on backend if authenticated
+        if (isAuthenticated) {
+            userAPI.clearCart().catch((error) => {
+                console.warn("Failed to clear cart on backend:", error);
+            });
+        }
     };
 
     const saveCartToLocalStorage = () => {

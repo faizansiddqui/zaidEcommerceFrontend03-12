@@ -237,36 +237,7 @@ export default function CartPage({ onBack }: CartPageProps) {
                     {/* Order Summary */}
                     <div className="lg:col-span-1">
                         <div className="bg-white rounded-xl shadow-md p-6 sticky top-8">
-                            <h2 className="text-2xl font-bold text-gray-900 mb-6">Order Summary</h2>
-
-                            <div className="space-y-4 mb-6">
-                                <div className="flex justify-between text-gray-600">
-                                    <span>Subtotal</span>
-                                    <span className="font-semibold">${subtotal.toFixed(2)}</span>
-                                </div>
-                                <div className="flex justify-between text-gray-600">
-                                    <span>Shipping</span>
-                                    <span className="font-semibold">
-                                        {shipping === 0 ? (
-                                            <span className="text-emerald-600">Free</span>
-                                        ) : (
-                                            `$${shipping.toFixed(2)}`
-                                        )}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between text-gray-600">
-                                    <span>Tax</span>
-                                    <span className="font-semibold">${tax.toFixed(2)}</span>
-                                </div>
-                                {subtotal < 50 && (
-                                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                                        <p className="text-sm text-amber-800">
-                                            Add ${(50 - subtotal).toFixed(2)} more for free shipping!
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
-
+                            
                             <div className="border-t border-gray-200 pt-4 mb-6">
                                 <div className="flex justify-between items-center">
                                     <span className="text-xl font-bold text-gray-900">Total</span>

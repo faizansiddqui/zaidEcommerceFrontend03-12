@@ -76,12 +76,58 @@ export const userAPI = {
         }
         throw error;
     }),
-    saveCart: (cartItems: Array<Record<string, unknown>>) => api.post('/user/add-to-cart', { cartItems }).catch((error) => {
+    saveCart: (cartItems: Array<Record<string, unknown>>) => api.post('/user/save-cart', { cartItems }, {
+        withCredentials: true
+    }).catch((error) => {
         if (error.response?.status === 404) {
             throw new Error('Save cart endpoint not available. Cart saved to localStorage only.');
         }
         if (error.response?.status === 403) {
             throw new Error('Authentication required to save cart. Cart saved to localStorage only.');
+        }
+        throw error;
+    }),
+    addToCart: (productId: number, quantity: number) => api.post('/user/add-to-cart', { product_id: productId, quantity }, {
+        withCredentials: true
+    }).catch((error) => {
+        if (error.response?.status === 404) {
+            throw new Error('Add to cart endpoint not available.');
+        }
+        if (error.response?.status === 403) {
+            throw new Error('Authentication required to add to cart.');
+        }
+        throw error;
+    }),
+    removeFromCart: (productId: number) => api.get(`/user/remove-cart-by-product/${productId}`, {
+        withCredentials: true
+    }).catch((error) => {
+        if (error.response?.status === 404) {
+            throw new Error('Remove from cart endpoint not available.');
+        }
+        if (error.response?.status === 403) {
+            throw new Error('Authentication required to remove from cart.');
+        }
+        throw error;
+    }),
+    updateCartItem: (productId: number, quantity: number) => api.post('/user/update-cart-item', { product_id: productId, quantity }, {
+        withCredentials: true
+    }).catch((error) => {
+        if (error.response?.status === 404) {
+            throw new Error('Update cart item endpoint not available.');
+        }
+        if (error.response?.status === 403) {
+            throw new Error('Authentication required to update cart item.');
+        }
+        throw error;
+    }),
+    clearCart: () => api.post('/user/clear-cart', {}, {
+        withCredentials: true
+    }).catch((error) => {
+        if (error.response?.status === 404) {
+            throw new Error('Clear cart endpoint not available.');
+        }
+        if (error.response?.status === 403) {
+            throw new Error('Authentication required to clear cart.');
         }
         throw error;
     }),
@@ -92,6 +138,26 @@ export const userAPI = {
         }
         throw error;
     }),
+    createOrder: (orderData: { quantity: number; address_id: number; product_id: number }) => {
+        // Get user ID from localStorage
+        const user = localStorage.getItem('user');
+        let userId = null;
+        if (user) {
+            try {
+                const userData = JSON.parse(user);
+                userId = userData.id;
+            } catch (e) {
+                console.error('Failed to parse user data:', e);
+            }
+        }
+
+        return api.post('/user/create-order', {
+            ...orderData,
+            decode_user: userId
+        }, {
+            withCredentials: true
+        });
+    },
 };
 
 // Product API

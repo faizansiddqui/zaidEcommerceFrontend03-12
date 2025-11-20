@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
-import { useProfile } from '../context/ProfileContext';
 import { useAuth } from '../context/AuthContext';
 import { ArrowLeft, CreditCard, Lock } from 'lucide-react';
-import ShippingForm from './checkout/ShippingForm';
 import PaymentMethodSelector from './checkout/PaymentMethodSelector';
 import PaymentDetails from './checkout/PaymentDetails';
-import OrderSummary from './checkout/OrderSummary';
 import OrderSuccess from './checkout/OrderSuccess';
 import { navigateTo } from '../utils/navigation';
+import AddressSelector from '../components/AddressSelector';
+import { userAPI } from '../services/api';
 
 interface CheckoutPageProps {
   onBack?: () => void;
@@ -18,12 +17,11 @@ type PaymentMethod = 'credit' | 'debit' | 'paypal' | 'cod' | 'bank';
 
 export default function CheckoutPage({ onBack }: CheckoutPageProps) {
   const { cartItems, getTotalPrice, clearCart } = useCart();
-  const { profile } = useProfile();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
-  const [isEditingAddress, setIsEditingAddress] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('credit');
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -33,9 +31,6 @@ export default function CheckoutPage({ onBack }: CheckoutPageProps) {
   }, [isAuthenticated, authLoading]);
 
   const subtotal = getTotalPrice();
-  const shipping = subtotal >= 50 ? 0 : 5.99;
-  const tax = subtotal * 0.08;
-  const total = subtotal + shipping + tax;
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -58,28 +53,6 @@ export default function CheckoutPage({ onBack }: CheckoutPageProps) {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Load saved address on mount
-  useEffect(() => {
-    if (profile?.Addresses && profile.Addresses.length > 0) {
-      const address = profile.Addresses[0];
-      setFormData((prev) => ({
-        ...prev,
-        firstName: address.FullName.split(' ')[0] || '',
-        lastName: address.FullName.split(' ').slice(1).join(' ') || '',
-        email: profile.email || '',
-        phone: address.phone1 || '',
-        address: address.address || '',
-        city: address.city || '',
-        state: address.state || '',
-        zipCode: address.pinCode || '',
-        country: '',
-      }));
-      setIsEditingAddress(false);
-    } else {
-      setIsEditingAddress(true);
-    }
-  }, [profile]);
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -88,61 +61,8 @@ export default function CheckoutPage({ onBack }: CheckoutPageProps) {
     }
   };
 
-  const handleSaveAddress = () => {
-    // In a real app, this would save to backend using profile context
-    // For now, just set editing to false
-    setIsEditingAddress(false);
-  };
-
-  const handleEditAddress = () => {
-    setIsEditingAddress(true);
-  };
-
-  const handleCancelEdit = () => {
-    setIsEditingAddress(false);
-    // Reset to saved address if available
-    if (profile?.Addresses && profile.Addresses.length > 0) {
-      const address = profile.Addresses[0];
-      setFormData((prev) => ({
-        ...prev,
-        firstName: address.FullName.split(' ')[0] || '',
-        lastName: address.FullName.split(' ').slice(1).join(' ') || '',
-        email: profile.email || '',
-        phone: address.phone1 || '',
-        address: address.address || '',
-        city: address.city || '',
-        state: address.state || '',
-        zipCode: address.pinCode || '',
-        country: '',
-      }));
-    }
-  };
-
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-
-    // Address validation
-    if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
-    if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Invalid email format';
-    }
-    if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone is required';
-    } else if (!/^\d{10,}$/.test(formData.phone.replace(/\D/g, ''))) {
-      newErrors.phone = 'Invalid phone number';
-    }
-    if (!formData.address.trim()) newErrors.address = 'Address is required';
-    if (!formData.city.trim()) newErrors.city = 'City is required';
-    if (!formData.state.trim()) newErrors.state = 'State is required';
-    if (!formData.zipCode.trim()) {
-      newErrors.zipCode = 'Zip code is required';
-    } else if (!/^\d{5,6}$/.test(formData.zipCode)) {
-      newErrors.zipCode = 'Invalid zip code';
-    }
-    if (!formData.country.trim()) newErrors.country = 'Country is required';
 
     // Payment validation based on method
     if (paymentMethod === 'credit' || paymentMethod === 'debit') {
@@ -185,13 +105,60 @@ export default function CheckoutPage({ onBack }: CheckoutPageProps) {
     e.preventDefault();
     if (!validateForm()) return;
 
-    setIsProcessing(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    // Check if an address is selected
+    if (!selectedAddressId) {
+      alert('Please select a delivery address');
+      return;
+    }
 
-    clearCart();
-    setIsProcessing(false);
-    setOrderPlaced(true);
+    // Check if user is authenticated and has a valid ID
+    const user = localStorage.getItem('user');
+    let userId = null;
+    if (user) {
+      try {
+        const userData = JSON.parse(user);
+        userId = userData.id;
+      } catch (e) {
+        console.error('Failed to parse user data:', e);
+      }
+    }
+
+    if (!userId) {
+      alert('User not authenticated. Please log in again.');
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      console.log('Creating orders for cart items:', cartItems);
+      console.log('Selected address ID:', selectedAddressId);
+      console.log('User ID:', userId);
+
+      // For now, we'll create one order per item in the cart
+      // In a real application, you might want to create a single order with multiple items
+      const orderPromises = cartItems.map(item => {
+        console.log('Creating order for item:', item);
+        return userAPI.createOrder({
+          quantity: item.quantity,
+          address_id: selectedAddressId,
+          product_id: item.id
+        });
+      });
+
+      // Wait for all orders to be created
+      const results = await Promise.all(orderPromises);
+      console.log('Order creation results:', results);
+
+      // Clear the cart after successful order creation
+      clearCart();
+      setIsProcessing(false);
+      setOrderPlaced(true);
+    } catch (error) {
+      console.error('Error creating order:', error);
+      setIsProcessing(false);
+      alert('Failed to create order. Please try again.');
+    }
   };
 
   const handleBack = () => {
@@ -274,15 +241,61 @@ export default function CheckoutPage({ onBack }: CheckoutPageProps) {
           {/* Checkout Form */}
           <div className="lg:col-span-2">
             <form onSubmit={handleSubmit} className="space-y-8">
-              <ShippingForm
-                isEditingAddress={isEditingAddress}
-                formData={formData}
-                errors={errors}
-                onInputChange={handleInputChange}
-                onEditAddress={handleEditAddress}
-                onSaveAddress={handleSaveAddress}
-                onCancelEdit={handleCancelEdit}
-              />
+
+              {/* Order Summary */}
+              <div className="lg:col-span-1">
+                <div className="bg-white rounded-xl shadow-md p-6 sticky top-8">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6">Order Summary</h2>
+
+                  <div className="space-y-4 mb-6">
+                    {cartItems.map((item) => (
+                      <div key={item.id} className="flex items-center gap-4">
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-16 h-16 object-cover rounded-lg"
+                        />
+                        <div className="flex-1">
+                          <h3 className="font-medium text-gray-900">{item.name}</h3>
+                          <p className="text-gray-600">Qty: {item.quantity}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-medium text-gray-900">
+                            ${(item.price * item.quantity).toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="border-t border-gray-200 pt-4 space-y-2">
+                    <div className="flex justify-between text-gray-600">
+                      <span>Subtotal</span>
+                      <span className="font-semibold">${subtotal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-gray-600">
+                      <span>Items</span>
+                      <span className="font-semibold">{cartItems.reduce((total, item) => total + item.quantity, 0)}</span>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-gray-200 pt-4 mt-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xl font-bold text-gray-900">Total</span>
+                      <span className="text-2xl font-bold text-amber-700">
+                        ${subtotal.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {/* Address Selection */}
+              <div className="bg-white rounded-xl shadow-md p-6">
+                <AddressSelector
+                  selectedAddressId={selectedAddressId}
+                  onAddressSelect={setSelectedAddressId}
+                />
+              </div>
 
               {/* Payment Information */}
               <div className="bg-white rounded-xl shadow-md p-6">
@@ -322,17 +335,6 @@ export default function CheckoutPage({ onBack }: CheckoutPageProps) {
                 )}
               </button>
             </form>
-          </div>
-
-          {/* Order Summary */}
-          <div className="lg:col-span-1">
-            <OrderSummary
-              cartItems={cartItems}
-              subtotal={subtotal}
-              shipping={shipping}
-              tax={tax}
-              total={total}
-            />
           </div>
         </div>
       </div>

@@ -75,7 +75,16 @@ export default function ProductDetails({ productId, onClose }: ProductDetailsPro
 
   const handleAddToCart = () => {
     if (product) {
-      addToCart(product.product_id, quantity);
+      // Pass product data to addToCart
+      addToCart(product.product_id, quantity, {
+        name: product.name || product.title || 'Product',
+        price: product.selling_price || product.price,
+        image: Array.isArray(product.product_image) 
+          ? product.product_image[0] 
+          : typeof product.product_image === 'string' 
+            ? product.product_image 
+            : Object.values(product.product_image)[0] || ''
+      });
       setAddedToCart(true);
     }
   };

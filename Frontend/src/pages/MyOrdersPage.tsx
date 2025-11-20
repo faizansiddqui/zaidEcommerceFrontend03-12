@@ -1,6 +1,16 @@
 import { useState, useEffect } from 'react';
-import { Package, ArrowLeft, Calendar, MapPin } from 'lucide-react';
+import { Package, ArrowLeft, Calendar } from 'lucide-react';
 import { userAPI } from '../services/api';
+import { navigateTo } from '../utils/navigation';
+
+interface Product {
+  product_id: number;
+  name: string;
+  price: number;
+  selling_price?: number;
+  product_image: string | string[] | { [key: string]: string };
+  description?: string;
+}
 
 interface Order {
   order_id: string;
@@ -11,7 +21,11 @@ interface Order {
   state: string;
   pinCode: string;
   phone1: string;
+  phone2?: string;
   createdAt: string;
+  status?: string;
+  quantity?: number;
+  Product?: Product;
 }
 
 interface MyOrdersPageProps {
@@ -30,18 +44,29 @@ export default function MyOrdersPage({ onBack }: MyOrdersPageProps) {
   const fetchOrders = async () => {
     try {
       const response = await userAPI.getOrders();
-      // Handle the case where backend returns empty response (res.end())
+
+      // Handle the case where backend returns empty response
       if (!response || !response.data) {
         setOrders([]);
       } else {
         // Check if response has orders property or is an array directly
+        let ordersData: Order[] = [];
         if (Array.isArray(response.data)) {
-          setOrders(response.data);
+          ordersData = response.data;
         } else if (response.data.orders && Array.isArray(response.data.orders)) {
-          setOrders(response.data.orders);
-        } else {
-          setOrders([]);
+          ordersData = response.data.orders;
+        } else if (response.data.data && Array.isArray(response.data.data)) {
+          // Handle case where orders are in data.data (nested)
+          ordersData = response.data.data;
         }
+        
+        // Ensure each order has a quantity of at least 1
+        const processedOrders = ordersData.map(order => ({
+          ...order,
+          quantity: order.quantity || 1
+        }));
+        
+        setOrders(processedOrders);
       }
       setError(null);
     } catch (error: unknown) {
@@ -65,8 +90,39 @@ export default function MyOrdersPage({ onBack }: MyOrdersPageProps) {
     if (onBack) {
       onBack();
     } else {
-      window.location.hash = '';
+      navigateTo('/');
     }
+  };
+
+  const handleOrderClick = (orderId: string) => {
+    navigateTo(`/order/${orderId}`);
+  };
+
+  const getProductImage = (product?: Product) => {
+    if (!product || !product.product_image) return '';
+    
+    if (typeof product.product_image === 'string') {
+      return product.product_image;
+    } else if (Array.isArray(product.product_image)) {
+      return product.product_image[0] || '';
+    } else if (typeof product.product_image === 'object' && product.product_image !== null) {
+      const imageValues = Object.values(product.product_image);
+      return imageValues[0] || '';
+    }
+    
+    return '';
+  };
+
+  const getProductPrice = (product?: Product) => {
+    if (!product) return 0;
+    
+    if (typeof product.selling_price === 'number' && !isNaN(product.selling_price) && product.selling_price > 0) {
+      return product.selling_price;
+    } else if (typeof product.price === 'number' && !isNaN(product.price) && product.price > 0) {
+      return product.price;
+    }
+    
+    return 0;
   };
 
   if (isLoading) {
@@ -119,14 +175,27 @@ export default function MyOrdersPage({ onBack }: MyOrdersPageProps) {
         ) : (
           <div className="space-y-4">
             {orders.map((order) => (
-              <div key={order.order_id} className="bg-white rounded-xl shadow-md p-6">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div 
+                key={order.order_id} 
+                className="bg-white rounded-xl shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() => handleOrderClick(order.order_id)}
+              >
+                <div className="flex flex-col md:flex-row md:items-center gap-4">
+                  {order.Product && (
+                    <div className="flex-shrink-0">
+                      <img
+                        src={getProductImage(order.Product)}
+                        alt={order.Product.name}
+                        className="w-16 h-16 object-cover rounded-lg"
+                      />
+                    </div>
+                  )}
+                  
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-3">
-                      <Package className="text-amber-700" size={24} />
+                    <div className="flex items-center gap-3 mb-2">
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900">
-                          Order #{order.order_id.slice(0, 8)}
+                          {order.Product?.name || `Order #${order.order_id.slice(0, 8)}`}
                         </h3>
                         <p className="text-sm text-gray-500 flex items-center gap-1">
                           <Calendar size={14} />
@@ -135,20 +204,24 @@ export default function MyOrdersPage({ onBack }: MyOrdersPageProps) {
                       </div>
                     </div>
 
-                    <div className="space-y-2 text-sm text-gray-600">
-                      <p className="font-medium text-gray-900">{order.FullName}</p>
-                      <p className="flex items-center gap-1">
-                        <MapPin size={14} />
-                        {order.address}, {order.city}, {order.state} {order.pinCode}
-                      </p>
-                      <p>Phone: {order.phone1}</p>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="space-y-1">
+                        {order.Product && (
+                          <p className="font-medium text-gray-900">
+                            ${getProductPrice(order.Product).toFixed(2)} × {order.quantity} = ${(getProductPrice(order.Product) * (order.quantity || 1)).toFixed(2)}
+                          </p>
+                        )}
+                        <p className="text-sm text-gray-600">
+                          Status: <span className="font-medium">{order.status ? order.status.charAt(0).toUpperCase() + order.status.slice(1) : 'Confirmed'}</span>
+                        </p>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-semibold">
+                          View Details
+                        </span>
+                      </div>
                     </div>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <span className="px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg font-semibold">
-                      Confirmed
-                    </span>
                   </div>
                 </div>
               </div>
@@ -159,4 +232,3 @@ export default function MyOrdersPage({ onBack }: MyOrdersPageProps) {
     </div>
   );
 }
-

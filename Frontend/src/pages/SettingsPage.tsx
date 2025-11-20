@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { userAPI } from '../services/api';
 import AddressForm from '../components/AddressForm';
-import { Settings, LogOut, Bell, Shield, Globe, ArrowLeft, MapPin, Plus, Edit } from 'lucide-react';
+import { Settings, LogOut, Shield, Globe, ArrowLeft, MapPin, Plus, Edit } from 'lucide-react';
 
 interface SettingsPageProps {
   onBack?: () => void;
@@ -25,8 +25,8 @@ interface Address {
 export default function SettingsPage({ onBack }: SettingsPageProps) {
   const { user, logout } = useAuth();
   const { saveCartToLocalStorage } = useCart();
-  const [notifications, setNotifications] = useState(true);
-  const [emailNotifications, setEmailNotifications] = useState(true);
+  // const [notifications, setNotifications] = useState(true);
+  // const [emailNotifications, setEmailNotifications] = useState(true);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loadingAddresses, setLoadingAddresses] = useState(true);
   const [showAddressForm, setShowAddressForm] = useState(false);
@@ -110,47 +110,6 @@ export default function SettingsPage({ onBack }: SettingsPageProps) {
               </div>
             </div>
           </div>
-
-          {/* Notification Settings */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <Bell className="text-amber-700" size={24} />
-              <h2 className="text-2xl font-bold text-gray-900">Notifications</h2>
-            </div>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-gray-900">Push Notifications</p>
-                  <p className="text-sm text-gray-500">Receive notifications about your orders</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={notifications}
-                    onChange={(e) => setNotifications(e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-amber-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-700"></div>
-                </label>
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-gray-900">Email Notifications</p>
-                  <p className="text-sm text-gray-500">Receive email updates about your account</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={emailNotifications}
-                    onChange={(e) => setEmailNotifications(e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-amber-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-700"></div>
-                </label>
-              </div>
-            </div>
-          </div>
-
           {/* Privacy & Security */}
           <div className="bg-white rounded-xl shadow-md p-6">
             <div className="flex items-center gap-3 mb-6">
@@ -158,10 +117,6 @@ export default function SettingsPage({ onBack }: SettingsPageProps) {
               <h2 className="text-2xl font-bold text-gray-900">Privacy & Security</h2>
             </div>
             <div className="space-y-4">
-              <button className="w-full text-left px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                <p className="font-medium text-gray-900">Change Password</p>
-                <p className="text-sm text-gray-500">Update your password regularly</p>
-              </button>
               <button className="w-full text-left px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                 <p className="font-medium text-gray-900">Privacy Policy</p>
                 <p className="text-sm text-gray-500">Read our privacy policy</p>

@@ -6,6 +6,7 @@ export interface Address {
     address: string;
     city: string;
     state: string;
+    country: string; // Added country field
     pinCode: string;
     addressType: 'home' | 'work';
 }

@@ -13,23 +13,28 @@ import CheckoutPage from './pages/CheckoutPage';
 import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
 import MyOrdersPage from './pages/MyOrdersPage';
-import WishlistPage from './pages/WishlistPage';
 import SettingsPage from './pages/SettingsPage';
 import CategoryPage from './pages/Category/CategoryPage';
 import ContactPage from './pages/ContactPage';
 import ShippingInfoPage from './pages/ShippingInfoPage';
 import ReturnsPage from './pages/ReturnsPage';
 import FAQPage from './pages/FAQPage';
+import OrderDetailsPage from './pages/OrderDetailsPage';
 import { useAdminAuth } from './context/AdminAuthContext';
 import { navigateTo } from './utils/navigation';
 // import AuthCallback from './pages/AuthCallback';
 
 
-function App() {
+type PageType = 'home' | 'admin' | 'cart' | 'checkout' | 'log' | 'verify' | 'profile' | 'orders' | 'order-details' | 'settings' | 'categories' | 'contact' | 'shipping' | 'returns' | 'faq' | 'wishlist' | 'auth-callback';
+
+export default function App() {
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState<'home' | 'admin' | 'cart' | 'checkout' | 'log' | 'verify' | 'profile' | 'orders' | 'settings' | 'categories' | 'contact' | 'shipping' | 'returns' | 'faq' | 'wishlist' | 'auth-callback'>('home');
+  const [currentPage, setCurrentPage] = useState<PageType>('home');
   const { isAdminLoggedIn, logout: adminLogout } = useAdminAuth();
+
+  // State for order details
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
   // Track previous path to detect route changes
   const previousPathRef = useRef<string>(window.location.pathname);
@@ -69,9 +74,12 @@ function App() {
         setCurrentPage('profile');
       } else if (path === '/orders') {
         setCurrentPage('orders');
+      } else if (path.startsWith('/order/')) {
+        const orderId = path.split('/').pop() || '';
+        setSelectedOrderId(orderId);
+        setCurrentPage('order-details');
       } else if (path === '/wishlist') {
         setCurrentPage('wishlist');
-
       } else if (path === '/settings') {
         setCurrentPage('settings');
       } else if (path === '/categories') {
@@ -121,11 +129,9 @@ function App() {
     return <MyOrdersPage onBack={() => navigateTo('/')} />;
   }
 
-  if (currentPage === 'wishlist') {
-    return <WishlistPage onBack={() => navigateTo('/')} />;
+  if (currentPage === 'order-details' && selectedOrderId) {
+    return <OrderDetailsPage orderId={selectedOrderId} onBack={() => navigateTo('/orders')} />;
   }
-
-
 
   if (currentPage === 'settings') {
     return <SettingsPage onBack={() => navigateTo('/')} />;
@@ -170,5 +176,3 @@ function App() {
     </div>
   );
 }
-
-export default App;

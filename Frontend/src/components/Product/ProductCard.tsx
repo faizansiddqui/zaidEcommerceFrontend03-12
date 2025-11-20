@@ -22,14 +22,19 @@ export default function ProductCard({ id, name, price, image, category, inStock,
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (inStock) {
-      addToCart(id, 1);
+      // Pass product data to addToCart
+      addToCart(id, 1, {
+        name: name,
+        price: price,
+        image: image
+      });
       setAddedToCart(true);
     }
   };
 
   const handleGoToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
-    window.location.hash = '#/cart';
+    window.location.hash = '/cart';
   };
 
   return (
