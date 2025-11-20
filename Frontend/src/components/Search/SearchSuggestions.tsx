@@ -1,5 +1,5 @@
 import { Search } from 'lucide-react';
-import { Product, getImageUrl } from '../utils/productUtils';
+import { Product, getImageUrl } from '../../utils/productUtils';
 
 interface SearchSuggestionsProps {
     suggestions: Product[];
@@ -41,7 +41,7 @@ export default function SearchSuggestions({ suggestions, onSelect, searchQuery }
                                     {product.name || product.title || 'Product'}
                                 </p>
                                 <p className="text-xs text-gray-600">
-                                    ₹{product.selling_price || product.price}
+                                    ${product.selling_price || product.price}
                                     {product.Catagory?.name && ` • ${product.Catagory.name}`}
                                 </p>
                             </div>

@@ -103,10 +103,10 @@ export default function ProductCard({ id, name, price, image, category, inStock,
         </h3>
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs xs:text-sm sm:text-base lg:text-lg font-bold text-amber-700">₹{price}</span>
+            <span className="text-xs xs:text-sm sm:text-base lg:text-lg font-bold text-amber-700">${price}</span>
             {oldPrice && oldPrice > price && (
               <>
-                <span className="text-[9px] xs:text-[10px] sm:text-xs text-gray-400 line-through">₹{oldPrice}</span>
+                <span className="text-[9px] xs:text-[10px] sm:text-xs text-gray-400 line-through">${oldPrice}</span>
                 <span className="bg-green-100 text-green-700 px-1.5 xs:px-2 py-0.5 rounded-full text-[8px] xs:text-[9px] sm:text-xs font-semibold">
                   Save {Math.round(((oldPrice - price) / oldPrice) * 100)}%
                 </span>

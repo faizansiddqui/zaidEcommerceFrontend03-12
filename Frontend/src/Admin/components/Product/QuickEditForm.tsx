@@ -45,7 +45,7 @@ export default function QuickEditForm({
           <div>
             <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
               <DollarSign size={18} />
-              MRP (₹) *
+              MRP ($) *
             </label>
             <input
               type="number"
@@ -69,7 +69,7 @@ export default function QuickEditForm({
           <div>
             <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
               <DollarSign size={18} />
-              Selling Price (₹) *
+              Selling Price ($) *
             </label>
             <input
               type="number"

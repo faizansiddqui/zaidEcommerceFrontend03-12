@@ -54,15 +54,15 @@ export default function ProductTable({ products, onEdit, onDelete, getImageUrl }
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{product.skuId}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{product.category}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">₹{product.sellingPrice}</div>
-                    <div className="text-xs text-gray-500 line-through">₹{product.mrp}</div>
+                    <div className="text-sm text-gray-900">${product.sellingPrice}</div>
+                    <div className="text-xs text-gray-500 line-through">${product.mrp}</div>
                     <div className="text-xs text-green-600">{product.discountPercentage}% off</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                     {typeof product.stock === 'number' ? product.stock : (
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${product.stock === 'in stock'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
                         }`}>
                         {product.stock}
                       </span>

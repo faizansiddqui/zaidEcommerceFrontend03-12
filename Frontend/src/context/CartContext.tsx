@@ -9,6 +9,7 @@ import {
 // @ts-expect-error - productDetails.js is a JavaScript file
 import { products } from "../productDetails";
 import { userAPI } from "../services/api";
+import { useAuth } from "./AuthContext";
 
 export interface CartItem {
     id: number;
@@ -44,15 +45,24 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: ReactNode }) {
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const { isAuthenticated } = useAuth();
 
     // Prevent saving to localStorage during first load
     const firstLoadRef = useRef(true);
 
     useEffect(() => {
         loadCart();
-    }, []);
+    }, [isAuthenticated]);
 
     const loadCart = async () => {
+        // If user is not authenticated, don't attempt to load from backend
+        if (!isAuthenticated) {
+            // Clear any existing cart items
+            setCartItems([]);
+            setIsLoading(false);
+            return;
+        }
+
         try {
             const response = await userAPI.getCart();
             if (response.data && response.data.cartItems) {
@@ -64,29 +74,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
             if (typeof error === 'object' && error !== null && 'response' in error) {
                 const axiosError = error as { response?: { status?: number; data?: unknown }; code?: string; message?: string };
                 if (axiosError.response?.status === 404) {
-                    console.warn("Cart endpoint /user/cart not available. Using localStorage only.");
+                    console.warn("Cart endpoint /user/cart not available.");
                 } else if (axiosError.response?.status === 403) {
-                    console.warn("Authentication required for cart. Using localStorage only.");
+                    console.warn("Authentication required for cart.");
                 } else if (axiosError.code === "ERR_NETWORK" || axiosError.message?.includes("CORS")) {
-                    console.warn("Network error loading cart. Using localStorage.");
+                    console.warn("Network error loading cart.");
                 } else {
-                    console.warn("Failed to load cart from backend. Using localStorage.");
+                    console.warn("Failed to load cart from backend.");
                 }
             } else {
-                console.warn("Failed to load cart from backend. Using localStorage.");
+                console.warn("Failed to load cart from backend.");
             }
         }
 
-        // Load from localStorage
-        const savedCart = localStorage.getItem("cart");
-        if (savedCart) {
-            try {
-                setCartItems(JSON.parse(savedCart));
-            } catch (error) {
-                console.error("Error loading cart from localStorage:", error);
-            }
-        }
-
+        // Don't load from localStorage when user is not authenticated
+        // Clear any existing cart items
+        setCartItems([]);
         setIsLoading(false);
     };
 
@@ -100,25 +103,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
             return;
         }
 
-        // Save to localStorage
-        localStorage.setItem("cart", JSON.stringify(cartItems));
-
-        // Save to backend (if exists)
-        userAPI.saveCart(cartItems as unknown as Record<string, unknown>[]).catch((error: unknown) => {
-            if (typeof error === 'object' && error !== null && 'response' in error) {
-                const axiosError = error as { response?: { status?: number }; code?: string; message?: string };
-                if (axiosError.response?.status !== 404) {
-                    if (axiosError.code === "ERR_NETWORK" || axiosError.message?.includes("CORS")) {
-                        console.warn("Network error saving cart. Cart saved to localStorage only.");
-                    } else {
-                        console.warn("Failed to save cart to backend. Cart saved to localStorage only.");
+        // Only save to backend when user is authenticated
+        if (isAuthenticated) {
+            // Save to backend (if exists)
+            userAPI.saveCart(cartItems as unknown as Record<string, unknown>[]).catch((error: unknown) => {
+                if (typeof error === 'object' && error !== null && 'response' in error) {
+                    const axiosError = error as { response?: { status?: number }; code?: string; message?: string };
+                    if (axiosError.response?.status !== 404) {
+                        if (axiosError.code === "ERR_NETWORK" || axiosError.message?.includes("CORS")) {
+                            console.warn("Network error saving cart.");
+                        } else {
+                            console.warn("Failed to save cart to backend.");
+                        }
                     }
+                } else {
+                    console.warn("Failed to save cart to backend.");
                 }
-            } else {
-                console.warn("Failed to save cart to backend. Cart saved to localStorage only.");
-            }
-        });
-    }, [cartItems, isLoading]);
+            });
+        }
+        // Don't save to localStorage when user is not authenticated
+    }, [cartItems, isLoading, isAuthenticated]);
 
     const addToCart = (
         productId: number,
@@ -201,7 +205,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
     };
 
     const saveCartToLocalStorage = () => {
-        localStorage.setItem("cart", JSON.stringify(cartItems));
+        // Don't save to localStorage when user is not authenticated
+        if (isAuthenticated) {
+            // This function is kept for backward compatibility but should not be used
+            // All cart persistence should happen through the backend
+        }
     };
 
     const getTotalPrice = () => {

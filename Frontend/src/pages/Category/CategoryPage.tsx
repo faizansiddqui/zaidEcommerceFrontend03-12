@@ -308,11 +308,11 @@ export default function CategoryPage({ onBack }: CategoryPageProps) {
                                                     </p>
                                                     <div className="flex items-center gap-2">
                                                         <span className="text-base font-bold text-amber-700">
-                                                            ₹{product.selling_price || product.price}
+                                                            ${product.selling_price || product.price}
                                                         </span>
                                                         {product.price > product.selling_price && (
                                                             <span className="text-xs text-gray-500 line-through">
-                                                                ₹{product.price}
+                                                                ${product.price}
                                                             </span>
                                                         )}
                                                     </div>

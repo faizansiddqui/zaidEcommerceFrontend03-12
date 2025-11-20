@@ -270,7 +270,7 @@ export default function OrdersList() {
                                                 </span>
                                             </td>
                                             <td className="py-3 px-4 text-sm font-medium text-gray-900">
-                                                ₹{order.Product?.selling_price || 'N/A'}
+                                                ${order.Product?.selling_price || 'N/A'}
                                             </td>
                                         </tr>
                                     );

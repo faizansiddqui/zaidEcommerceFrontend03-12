@@ -33,7 +33,7 @@ export default function FAQPage({ onBack }: FAQPageProps) {
         {
             category: 'Shipping',
             question: 'How long does delivery take?',
-            answer: 'Standard delivery takes 5-7 business days. Express delivery is available in major cities and takes 2-3 business days. Free delivery is available on orders above ₹999.'
+            answer: 'Standard delivery takes 5-7 business days. Express delivery is available in major cities and takes 2-3 business days. Free delivery is available on orders above $999.'
         },
         {
             category: 'Shipping',
@@ -43,7 +43,7 @@ export default function FAQPage({ onBack }: FAQPageProps) {
         {
             category: 'Shipping',
             question: 'What are the shipping charges?',
-            answer: 'Standard delivery costs ₹50, Express delivery costs ₹150. Free delivery is available on orders above ₹999.'
+            answer: 'Standard delivery costs $50, Express delivery costs $150. Free delivery is available on orders above $999.'
         },
         {
             category: 'Returns & Exchanges',

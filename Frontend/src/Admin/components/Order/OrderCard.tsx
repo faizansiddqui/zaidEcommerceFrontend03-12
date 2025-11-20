@@ -71,9 +71,9 @@ export default function OrderCard({ order, updatingOrderId, onStatusUpdate }: Or
                         <div className="mt-3 pt-3 border-t border-gray-200">
                             <p className="text-sm">
                                 <span className="font-medium text-gray-700">Price:</span>{' '}
-                                <span className="text-gray-900">₹{order.Product.selling_price}</span>
+                                <span className="text-gray-900">${order.Product.selling_price}</span>
                                 {order.Product.price > order.Product.selling_price && (
-                                    <span className="text-gray-500 line-through ml-2">₹{order.Product.price}</span>
+                                    <span className="text-gray-500 line-through ml-2">${order.Product.price}</span>
                                 )}
                             </p>
                         </div>
