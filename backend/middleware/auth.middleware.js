@@ -7,7 +7,7 @@ import {
 async function checkRefreshToken(refreshToken,req, res, next) {
   //If no Refresh
   if (!refreshToken) {
-    res.redirect(`${process.env.FRONTEND_ULR}/login`);
+   return res.redirect(`${process.env.FRONTEND_ULR}/login`);
   }
 
   const decoded = await varifyToken(refreshToken, process.env.JWT_SECRET);
@@ -70,4 +70,4 @@ export const authMiddleware = async (req, res, next) => {
   } catch (error) {
     console.log(error);
   }
-};
+};  

@@ -24,7 +24,7 @@ export const varifyToken = (token,secret)=>{
     try {
         return new Promise((resolve,reject)=>{
             jwt.verify(token,secret,(err,result)=>{
-                if(err) reject(new Error("Invalid"));
+                if(err) return reject(new Error("Invalid"));
   
                 
                 result.status = "ok";

@@ -8,7 +8,7 @@ import { v4 } from "uuid";
 import { User } from "../model/user.model.js";
 import Addresses from "../model/addresses.model.js";
 import AddToCart from "../model/addToCart.model.js";
-import { razorpay } from "../config/razorpay.js";
+import crypto from "crypto";
 import { Transaction, where, Op } from "sequelize";
 
 const getProductByCatagory = async (req, res) => {
@@ -86,166 +86,148 @@ const searchProduct = async (req, res) => {
   }
 };
 
-const order = async (req, res) => {
+
+
+export const order = async (req, res) => {
   try {
     const { quantity, address_id, product_id, decode_user } = req.body;
 
-    // 1. Required fields check
-    if (!decode_user || !address_id || !product_id || !quantity) {
-      return res.status(400).json({
-        error: "All required fields must be filled.",
-      });
+    if (!decode_user || !product_id || !quantity || !address_id) {
+      return res.status(400).json({ message: "Missing required fields" });
     }
 
-    //Check if address exist or not
-    const userAddess = await Addresses.findOne({
-      attributes: [
-        "phone1",
-        "phone2",
-        "state",
-        "city",
-        "pinCode",
-        "address",
-        "addressType",
-        "FullName",
-      ],
-      where: { id: address_id },
+    const userAddress = await Addresses.findOne({
+      where: { id: address_id }
     });
 
-    if (!userAddess) {
-      // return res.redirect(${process.env.FRONTEND_URL}/create-address)
-      return res.status(400).json({ msg: "Address not found" });
-      //frontend address create krke dobara ye route hit krega
+    if (!userAddress) {
+      return res.status(400).json({ message: "Address not found" });
     }
-
-
-
 
     const product = await Products.findOne({
-      attributes: ["quantity", "selling_price"],
       where: { product_id },
+      attributes: ["selling_price", "quantity"]
     });
-
-    // Check product exists
-    if (!product) {
-      return res.status(404).json({ msg: "Product not found" });
-    }
-
-    // Check requested quantity valid
 
     const qty = parseInt(quantity, 10);
-    if (isNaN(qty) || qty <= 0) return res.status(400).json({ msg: "Invalid quantity" });
-
-    if (product.quantity < qty) {
-      return res.status(400).json({ msg: "Requested quantity not available" });
+    if (!product || qty <= 0) {
+      return res.status(400).json({ message: "Invalid product or quantity" });
     }
 
-    const subtotal = parseFloat(product.selling_price) * qty; // rupees
-    const amountPaise = Math.round(subtotal * 100); // in paise
-
-    const localOrderId = v4();
-
-
-    // Create Razorpay order
-    const rOrder = await razorpay.orders.create({
-      amount: amountPaise,
-      currency: "INR",
-      receipt: localOrderId,
-      payment_capture: 1, // auto-capture; set to 0 if you want manual capture
-    });
+    if (product.quantity < qty) {
+      return res.status(400).json({ message: "Out of stock" });
+    }
 
 
-    //ORDER PAYLOAD
-    const payload = {
-      order_id: localOrderId,
+    const amountUSD = (product.selling_price * qty ).toFixed(2);
+
+    const txnid = "USD_" + v4();
+
+    // ✅ HASH for USD payments
+   const firstname = userAddress.FullName;
+const email = "test@email.com";
+
+const hashString =
+  `${process.env.PAYU_KEY}|${txnid}|${amountUSD}|USD_Payment|` +
+  `${firstname}|${email}|||||||||||${process.env.PAYU_SALT}`;
+    const hash = crypto
+      .createHash("sha512")
+      .update(hashString)
+      .digest("hex");
+
+    // ✅ Create DB Order
+    await Orders.create({
+      order_id: txnid,
       user_id: decode_user,
-      ...userAddess.dataValues,
       product_id,
       quantity: qty,
-      razorpay_order_id: rOrder.id,
-      totalAmount: amountPaise
-    };
-
-
-
-    // //CREATE USER ORDER
-    await Orders.create(payload);
-
-    // Return order info to client (client will open checkout)
-    return res.status(200).json({
-      status: true,
-      razorpay_order: rOrder,
-      local_order_id: localOrderId,
-      key: process.env.RAZORPAY_KEY_ID,
+      totalAmount: amountUSD,
+      FullName: userAddress.FullName,
+  phone1: userAddress.phone1,
+  phone2: userAddress.phone2,
+  state: userAddress.state,
+  city: userAddress.city,
+  pinCode: userAddress.pinCode,
+  address: userAddress.address,
+  addressType: userAddress.addressType
     });
-  } catch (error) {
-    console.log(error);
 
-    return res.status(500).json({ error: "Cannot create error try again" });
+    // ✅ Send to frontend
+    return res.status(200).json({
+      payuUrl: process.env.PAYU_BASE_URL,
+      params: {
+        key: process.env.PAYU_KEY,
+        txnid,
+        amount: amountUSD,
+        currency: "USD",
+        productinfo: "USD_Payment",
+        firstname: userAddress.FullName,
+        email: "test@email.com",
+        phone: userAddress.phone1,
+        surl: process.env.PAYU_SUCCESS_URL,
+        furl: process.env.PAYU_FAILURE_URL,
+        hash
+      }
+    });
+
+  } catch (error) {
+    console.error("USD PayU Order Error:", error);
+    res.status(500).json({ message: "USD PayU order failed" });
   }
 };
+
+
 
 
 export const verifyPayment = async (req, res) => {
   try {
     const {
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature,
-      order_id, // your local order id (receipt)
+      txnid,
+      status,
+      hash,
+      payuMoneyId,
+      amount
     } = req.body;
 
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !order_id) {
-      return res.status(400).json({ message: "Missing fields" });
-    }
+    const hashString =
+      `${process.env.PAYU_SALT}|${status}|||||||||||${amount}|USD_Payment|${txnid}|${process.env.PAYU_KEY}`;
 
-    // Verify signature
-    const body = razorpay_order_id + "|" + razorpay_payment_id;
-    const expectedSignature = crypto
-      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-      .update(body.toString())
+    const expectedHash = crypto
+      .createHash("sha512")
+      .update(hashString)
       .digest("hex");
 
-    if (expectedSignature !== razorpay_signature) {
-      return res.status(400).json({ message: "Invalid signature" });
+    if (hash !== expectedHash) {
+      return res.status(400).json({ message: "Hash mismatch" });
     }
 
-    // Find local order
-    const orderData = await Orders.findOne({ where: { order_id } });
-    if (!orderData) return res.status(404).json({ message: "Order not found" });
+    const order = await Orders.findOne({ where: { order_id: txnid } });
+    if (!order) return res.status(404).json({ message: "Order not found" });
 
-    // Idempotency: if already paid, return success
-    if (orderData.payment_status === "PAID") {
-      return res.json({ success: true, message: "Already marked PAID" });
-    }
-
-    // Use transaction to update stock + order atomically
-    await sequelize.transaction(async (t) => {
-      const product = await Products.findOne({ where: { product_id: orderData.product_id }, transaction: t, lock: t.LOCK.UPDATE });
-
-      if (!product) throw new Error("Product missing");
-
-      if (product.quantity < orderData.quantity) {
-        throw new Error("Insufficient stock at moment of verification");
-      }
-
-      // reduce stock
-      const newQty = product.quantity - orderData.quantity;
-      await Products.update({ quantity: newQty }, { where: { product_id: product.product_id }, transaction: t });
-
-      // Update order status
+    if (status === "success") {
       await Orders.update(
-        { payment_status: "PAID", razorpay_payment_id },
-        { where: { order_id }, transaction: t }
+        {
+          payment_status: "paid",
+          payu_payment_id: payuMoneyId
+        },
+        { where: { order_id: txnid } }
       );
-    });
+    } else {
+      await Orders.update(
+        { payment_status: "failed" },
+        { where: { order_id: txnid } }
+      );
+    }
 
-    return res.json({ success: true, message: "Payment verified and stock updated" });
-  } catch (error) {
-    console.error("verifyPayment error:", error);
-    return res.status(500).json({ error: error.message || "Verification failed" });
+    // return res.redirect(process.env.FRONTEND_URL + "/payment-status");
+    return res.status(200).json({Message:"Order create Successfully"});
+
+  } catch (err) {
+    console.error("PayU Dollar verify error:", err);
+    res.status(500).json({ message: "Verification failed" });
   }
 };
+
 
 const createAddress = async (req, res) => {
   const {
@@ -635,7 +617,6 @@ export {
   searchProduct,
   showProduct,
   getProductById,
-  order,
   createAddress,
 };
 

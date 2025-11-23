@@ -53,16 +53,16 @@ export const Orders = connection.define("Orders", {
     allowNull:false,
     defaultValue:1,
   },
-  razorpay_order_id:{
+  payu_payment_id:{
     type:DataTypes.STRING,
-    allowNull:false
+    allowNull:true
   },
   totalAmount:{
     type:DataTypes.STRING, //IN PAISE
     allowNull:false
   },
   payment_status:{
-    type:DataTypes.ENUM('paid','pending'),
+    type:DataTypes.ENUM('paid','pending','failed'),
     defaultValue:'pending'
   },
     user_id: {
