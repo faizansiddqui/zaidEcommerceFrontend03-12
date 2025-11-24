@@ -13,7 +13,7 @@ const connection = new Sequelize(process.env.CONNECTION_STRING,{
         console.log("Supabase Connected");        
     })
 
-    // await connection.sync({alter:true})
+    // await connection.sync({alter:true,force:true})
     
     
 
