@@ -54,6 +54,7 @@ export default function OrderDetailsPage({ orderId, onBack }: OrderDetailsPagePr
     const [error, setError] = useState<string | null>(null);
     const [isCancelling, setIsCancelling] = useState(false);
     const [cancelError, setCancelError] = useState<string | null>(null);
+    const [showCancelDialog, setShowCancelDialog] = useState(false);
 
     useEffect(() => {
         fetchOrderDetails();
@@ -166,6 +167,7 @@ export default function OrderDetailsPage({ orderId, onBack }: OrderDetailsPagePr
                     status: 'cancelled'
                 });
             }
+            setShowCancelDialog(false);
         } catch (error) {
             console.error('Failed to cancel order:', error);
 
@@ -191,6 +193,18 @@ export default function OrderDetailsPage({ orderId, onBack }: OrderDetailsPagePr
         } finally {
             setIsCancelling(false);
         }
+    };
+
+    const handleCancelConfirmation = () => {
+        setShowCancelDialog(true);
+    };
+
+    const closeCancelDialog = () => {
+        setShowCancelDialog(false);
+    };
+
+    const confirmCancelOrder = async () => {
+        await handleCancelOrder();
     };
 
     if (authLoading || isLoading) {
@@ -540,27 +554,32 @@ export default function OrderDetailsPage({ orderId, onBack }: OrderDetailsPagePr
                                 </div>
                             ) : null}
 
-                            {/* Cancel Order Button - Only show if order can be cancelled */}
-                            {shouldShowCancelButton(order) ? (
+                            {/* Cancel Order Section - Only show if order can be cancelled */}
+                            {shouldShowCancelButton(order) && (
                                 <div className="mt-6 pt-6 border-t border-gray-200">
                                     {cancelError && (
                                         <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
                                             {cancelError}
                                         </div>
                                     )}
-                                    <button
-                                        onClick={handleCancelOrder}
-                                        disabled={isCancelling}
-                                        className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-colors ${isCancelling
-                                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                            : 'bg-red-50 text-red-600 hover:bg-red-100'
-                                            }`}
-                                    >
-                                        <XCircle size={16} />
-                                        {isCancelling ? 'Cancelling...' : 'Cancel Order'}
-                                    </button>
+                                    <div className="bg-gray-50 rounded-lg p-4">
+                                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Cancel and Return Refund</h3>
+                                        <p className="text-gray-600 text-sm mb-4">
+                                            For refund contact the support on WhatsApp
+                                        </p>
+                                        <button
+                                            onClick={handleCancelConfirmation}
+                                            disabled={isCancelling}
+                                            className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${isCancelling
+                                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                                                }`}
+                                        >
+                                            {isCancelling ? 'Cancelling...' : 'Cancel Order'}
+                                        </button>
+                                    </div>
                                 </div>
-                            ) : null}
+                            )}
                         </div>
 
                         {/* Order Information Section - Added at the bottom of order summary */}
@@ -672,6 +691,35 @@ export default function OrderDetailsPage({ orderId, onBack }: OrderDetailsPagePr
                     </div>
                 </div>
             </div>
+
+            {/* Cancel Confirmation Dialog */}
+            {showCancelDialog && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+                        <h3 className="text-xl font-bold text-gray-900 mb-4">Confirm Cancellation</h3>
+                        <p className="text-gray-600 mb-6">Are you sure you want to cancel this order?</p>
+                        <div className="flex justify-end gap-3">
+                            <button
+                                onClick={closeCancelDialog}
+                                className="px-4 py-2 rounded-lg font-medium text-sm bg-amber-700 text-white hover:bg-amber-800 transition-colors"
+                            >
+                                No
+                            </button>
+                            <button
+                                onClick={confirmCancelOrder}
+                                disabled={isCancelling}
+                                className={
+                                    isCancelling
+                                        ? 'px-4 py-2 rounded-lg font-medium text-sm bg-gray-100 text-gray-400 cursor-not-allowed'
+                                        : 'px-4 py-2 rounded-lg font-medium text-sm bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                }
+                            >
+                                {isCancelling ? 'Cancelling...' : 'Yes'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
