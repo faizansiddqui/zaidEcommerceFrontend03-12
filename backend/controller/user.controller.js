@@ -248,6 +248,7 @@ export const verifyPayment = async (req, res) => {
       await Orders.update(
         {
           payment_status: "paid",
+          status:"confirm",
           payu_payment_id: mihpayid
         },
         { where: { order_id: orderId } }
