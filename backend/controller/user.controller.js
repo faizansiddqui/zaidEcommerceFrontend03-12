@@ -430,30 +430,71 @@ const getUserProfile = async (req, res) => {
 const getOrders = async (req, res) => {
   try {
     const { decode_user } = req.body;
+
     if (!decode_user) {
       return res.status(400).json({ message: "No token provided Login first" });
     }
 
     const orders = await Orders.findAll({
       where: { user_id: decode_user },
-      include: [{ model: Products, attributes: ['product_id', 'name', 'price', 'selling_price', 'product_image'] }]
+      include: [
+        {
+          model: OrderItems,
+          as: "items",
+          include: [
+            {
+              model: Products,
+              attributes: ["product_id", "name", "price", "selling_price", "product_image"]
+            }
+          ]
+        }
+      ]
     });
 
-    // Simplify payment information - always show PayU since it's the only payment method
-    const ordersWithPaymentInfo = orders.map(order => {
-      return {
-        ...order.toJSON(),
-        payment_method: 'PayU', // Always set to PayU since it's the only payment method
-        payu_transaction_id: order.payu_payment_id || null // Use the PayU payment ID as transaction ID
-      };
+    const ordersWithPaymentInfo = orders.map(order => ({
+      ...order.toJSON(),
+      payment_method: "PayU",
+      payu_transaction_id: order.payu_payment_id || null
+    }));
+
+    return res.status(200).json({
+      status: true,
+      orders: ordersWithPaymentInfo
     });
 
-    return res.status(200).json({ status: true, orders: ordersWithPaymentInfo });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Something went wrong" });
   }
 };
+
+// const getOrders = async (req, res) => {
+//   try {
+//     const { decode_user } = req.body;
+//     if (!decode_user) {
+//       return res.status(400).json({ message: "No token provided Login first" });
+//     }
+
+//     const orders = await Orders.findAll({
+//       where: { user_id: decode_user },
+//       include: [{ model: Products, attributes: ['product_id', 'name', 'price', 'selling_price', 'product_image'] }]
+//     });
+
+//     // Simplify payment information - always show PayU since it's the only payment method
+//     const ordersWithPaymentInfo = orders.map(order => {
+//       return {
+//         ...order.toJSON(),
+//         payment_method: 'PayU', // Always set to PayU since it's the only payment method
+//         payu_transaction_id: order.payu_payment_id || null // Use the PayU payment ID as transaction ID
+//       };
+//     });
+
+//     return res.status(200).json({ status: true, orders: ordersWithPaymentInfo });
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({ message: "Something went wrong" });
+//   }
+// };
 
 export const cancelOrder = async (req, res) => {
   try {

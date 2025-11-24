@@ -4,6 +4,7 @@ import { supabase } from "../config/supabase.config.js";
 import { connection } from "../config/db.js"
 import { v4 as uuidv4 } from "uuid";
 import Orders from "../model/orders.model.js";
+import { OrderItems } from "../model/orderItem.model.js";
 import Addresses from "../model/addresses.model.js";
 
 // const addSubcatagory = async (req, res) => {
@@ -171,20 +172,27 @@ const uploadProduct = async (req, res) => {
 
 
 
-
-
 const getOrders = async (req, res) => {
   try {
     const data = await Orders.findAll({
-      include: [{ model: Products }]
+      include: [
+        {
+          model: OrderItems,
+          as: "items",
+          include: [
+            {
+              model: Products
+            }
+          ]
+        }
+      ]
     });
 
-    // Simplify payment information - always show PayU since it's the only payment method
     const ordersWithPaymentInfo = data.map(order => {
       return {
         ...order.toJSON(),
-        payment_method: 'PayU', // Always set to PayU since it's the only payment method
-        payu_transaction_id: order.payu_payment_id || null // Use the PayU payment ID as transaction ID
+        payment_method: "PayU",
+        payu_transaction_id: order.payu_payment_id || null
       };
     });
 
@@ -192,12 +200,45 @@ const getOrders = async (req, res) => {
       return res.status(404).json({ message: "No orders found" });
     }
 
-    res.status(200).json({ status: true, orders: ordersWithPaymentInfo });
+    res.status(200).json({
+      status: true,
+      orders: ordersWithPaymentInfo
+    });
+
   } catch (error) {
     console.error("Error fetching orders:", error);
-    res.status(500).json({ message: "Something went wrong", error: error.message });
+    res.status(500).json({
+      message: "Something went wrong",
+      error: error.message
+    });
   }
 };
+
+// const getOrders = async (req, res) => {
+//   try {
+//     const data = await Orders.findAll({
+//       include: [{ model: Products }]
+//     });
+
+//     // Simplify payment information - always show PayU since it's the only payment method
+//     const ordersWithPaymentInfo = data.map(order => {
+//       return {
+//         ...order.toJSON(),
+//         payment_method: 'PayU', // Always set to PayU since it's the only payment method
+//         payu_transaction_id: order.payu_payment_id || null // Use the PayU payment ID as transaction ID
+//       };
+//     });
+
+//     if (ordersWithPaymentInfo.length === 0) {
+//       return res.status(404).json({ message: "No orders found" });
+//     }
+
+//     res.status(200).json({ status: true, orders: ordersWithPaymentInfo });
+//   } catch (error) {
+//     console.error("Error fetching orders:", error);
+//     res.status(500).json({ message: "Something went wrong", error: error.message });
+//   }
+// };
 
 const updateOrderStatus = async (req, res) => {
   try {
