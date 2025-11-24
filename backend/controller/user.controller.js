@@ -118,7 +118,7 @@ export const order = async (req, res) => {
       return res.status(400).json({ message: "Out of stock" });
     }
 
-  const email =  await User.findOne({
+  const userEmail =  await User.findOne({
       where:{id:decode_user},
       attributes:['email']
     })
@@ -129,7 +129,7 @@ export const order = async (req, res) => {
 
     // ✅ HASH for USD payments
    const firstname = userAddress.FullName;
-// const email = "test@email.com";
+const email = userEmail.email
 console.log(email);
 
 
