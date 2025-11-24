@@ -8,6 +8,7 @@ import { v4 } from "uuid";
 import { User } from "../model/user.model.js";
 import Addresses from "../model/addresses.model.js";
 import AddToCart from "../model/addToCart.model.js";
+import { OrderItems } from "../model/orderItem.model.js";
 import crypto from "crypto";
 import { Transaction, where, Op } from "sequelize";
 
@@ -90,9 +91,10 @@ const searchProduct = async (req, res) => {
 
 export const order = async (req, res) => {
   try {
-    const { quantity, address_id, product_id, decode_user } = req.body;
+    const { address_id, items, decode_user } = req.body;
 
-    if (!decode_user || !product_id || !quantity || !address_id) {
+    // 🔐 Validation
+    if (!decode_user || !address_id || !items || !items.length) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
@@ -104,57 +106,55 @@ export const order = async (req, res) => {
       return res.status(400).json({ message: "Address not found" });
     }
 
-    // Find the product and check quantity
-    const product = await Products.findOne({
-      where: { product_id },
-      attributes: ["selling_price", "quantity", "product_id"]
-    });
+    let totalAmount = 0;
+    const productCache = [];
 
-    const qty = parseInt(quantity, 10);
-    if (!product || qty <= 0) {
-      return res.status(400).json({ message: "Invalid product or quantity" });
+    // ✅ Stock check + amount calc
+    for (const item of items) {
+      const product = await Products.findOne({
+        where: { product_id: item.product_id },
+        attributes: ["selling_price", "quantity", "product_id"]
+      });
+
+      if (!product || product.quantity < item.quantity) {
+        return res.status(400).json({
+          message: `Out of stock: ${item.product_id}`
+        });
+      }
+
+      const lineAmount = product.selling_price * item.quantity;
+      totalAmount += lineAmount;
+
+      productCache.push({ product, quantity: item.quantity });
     }
 
-    if (product.quantity < qty) {
-      return res.status(400).json({ message: "Out of stock" });
-    }
-
-    // Decrease the product quantity
-    const newQuantity = product.quantity - qty;
-    await Products.update(
-      { quantity: newQuantity },
-      { where: { product_id: product.product_id } }
-    );
-
+    // ✅ Get user email
     const userEmail = await User.findOne({
       where: { id: decode_user },
       attributes: ['email']
-    })
+    });
 
-    const amountUSD = (product.selling_price * qty).toFixed(2);
-
-    const orderId = v4(); // Generate a unique order ID
-    const txnid = "USD_" + orderId; // Transaction ID based on order ID
-
-    // ✅ HASH for USD payments
     const firstname = userAddress.FullName;
-    const email = userEmail.email
+    const email = userEmail.email;
 
+    const amountUSD = totalAmount.toFixed(2);
+    const orderId = v4();
+    const txnid = "USD_" + orderId;
 
+    // ✅ HASH — Same as before
     const hashString =
       `${process.env.PAYU_KEY}|${txnid}|${amountUSD}|USD_Payment|` +
       `${firstname}|${email}|||||||||||${process.env.PAYU_SALT}`;
+
     const hash = crypto
       .createHash("sha512")
       .update(hashString)
       .digest("hex");
 
-    // ✅ Create DB Order
+    // ✅ Create main order
     await Orders.create({
-      order_id: orderId, // Use the order ID instead of transaction ID
+      order_id: orderId,
       user_id: decode_user,
-      product_id,
-      quantity: qty,
       totalAmount: amountUSD,
       FullName: userAddress.FullName,
       phone1: userAddress.phone1,
@@ -166,7 +166,23 @@ export const order = async (req, res) => {
       addressType: userAddress.addressType
     });
 
-    // ✅ Send to frontend
+    // ✅ Insert order items + reduce stock
+    for (const row of productCache) {
+      await OrderItems.create({
+        order_id: orderId,
+        product_id: row.product.product_id,
+        quantity: row.quantity,
+        price: row.product.selling_price
+      });
+
+      const newQty = row.product.quantity - row.quantity;
+      await Products.update(
+        { quantity: newQty },
+        { where: { product_id: row.product.product_id } }
+      );
+    }
+
+    // ✅ PayU response (UNCHANGED OUTPUT)
     return res.status(200).json({
       payuUrl: process.env.PAYU_BASE_URL,
       params: {
@@ -175,8 +191,8 @@ export const order = async (req, res) => {
         amount: amountUSD,
         currency: "USD",
         productinfo: "USD_Payment",
-        firstname: userAddress.FullName,
-        email: email,
+        firstname,
+        email,
         phone: userAddress.phone1,
         surl: process.env.PAYU_SUCCESS_URL,
         furl: process.env.PAYU_FAILURE_URL,
@@ -189,6 +205,7 @@ export const order = async (req, res) => {
     res.status(500).json({ message: "USD PayU order failed" });
   }
 };
+
 
 
 

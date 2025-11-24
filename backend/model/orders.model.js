@@ -73,14 +73,14 @@ export const Orders = connection.define("Orders", {
       key: 'id'
     }
   },
-  product_id: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'Products',
-      key: 'product_id'
-    }
-  },
+  // product_id: {
+  //   type: DataTypes.INTEGER,
+  //   allowNull: false,
+  //   references: {
+  //     model: 'Products',
+  //     key: 'product_id'
+  //   }
+  // },
 
 });
 
@@ -93,15 +93,15 @@ Orders.belongsTo(User, {
   foreignKey: "user_id",
 });
 
-Products.hasMany(Orders,{
-  foreignKey:"product_id",
-  onDelete:"CASCADE",
-  onUpdate:"SET NULL"
-})
+// Products.hasMany(Orders,{
+//   foreignKey:"product_id",
+//   onDelete:"CASCADE",
+//   onUpdate:"SET NULL"
+// })
 
-Orders.belongsTo(Products,{
-  foreignKey:"product_id"
-})
+// Orders.belongsTo(Products,{
+//   foreignKey:"product_id"
+// })
 
 
 export default Orders;
