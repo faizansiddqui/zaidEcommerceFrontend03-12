@@ -7,7 +7,8 @@ import {
 async function checkRefreshToken(refreshToken,req, res, next) {
   //If no Refresh
   if (!refreshToken) {
-   return res.redirect(`${process.env.FRONTEND_ULR}/login`);
+  //  return res.redirect(`${process.env.FRONTEND_ULR}/login`);
+  return res.status(401).json({Message:"Unauthorized user"})
   }
 
   const decoded = await varifyToken(refreshToken, process.env.JWT_SECRET);
