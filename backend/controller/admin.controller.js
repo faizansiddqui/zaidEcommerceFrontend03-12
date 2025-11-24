@@ -174,17 +174,30 @@ const uploadProduct = async (req, res) => {
 
 
 const getOrders = async (req, res) => {
-  const data = await Orders.findAll({
-    include: [{ model: Products }]
+  try {
+    const data = await Orders.findAll({
+      include: [{ model: Products }]
+    });
 
-  })
+    // Simplify payment information - always show PayU since it's the only payment method
+    const ordersWithPaymentInfo = data.map(order => {
+      return {
+        ...order.toJSON(),
+        payment_method: 'PayU', // Always set to PayU since it's the only payment method
+        payu_transaction_id: order.payu_payment_id || null // Use the PayU payment ID as transaction ID
+      };
+    });
 
-  if (getOrders.length === 0) {
-    return res.status(404).json({ message: "No orders found" })
+    if (ordersWithPaymentInfo.length === 0) {
+      return res.status(404).json({ message: "No orders found" });
+    }
+
+    res.status(200).json({ status: true, orders: ordersWithPaymentInfo });
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    res.status(500).json({ message: "Something went wrong", error: error.message });
   }
-
-  res.status(200).json({ status: true, orders: data })
-}
+};
 
 const updateOrderStatus = async (req, res) => {
   try {

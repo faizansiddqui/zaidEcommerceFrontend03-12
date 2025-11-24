@@ -104,9 +104,10 @@ export const order = async (req, res) => {
       return res.status(400).json({ message: "Address not found" });
     }
 
+    // Find the product and check quantity
     const product = await Products.findOne({
       where: { product_id },
-      attributes: ["selling_price", "quantity"]
+      attributes: ["selling_price", "quantity", "product_id"]
     });
 
     const qty = parseInt(quantity, 10);
@@ -118,24 +119,31 @@ export const order = async (req, res) => {
       return res.status(400).json({ message: "Out of stock" });
     }
 
-  const userEmail =  await User.findOne({
-      where:{id:decode_user},
-      attributes:['email']
+    // Decrease the product quantity
+    const newQuantity = product.quantity - qty;
+    await Products.update(
+      { quantity: newQuantity },
+      { where: { product_id: product.product_id } }
+    );
+
+    const userEmail = await User.findOne({
+      where: { id: decode_user },
+      attributes: ['email']
     })
 
-    const amountUSD = (product.selling_price * qty ).toFixed(2);
+    const amountUSD = (product.selling_price * qty).toFixed(2);
 
-    const txnid = "USD_" + v4();
+    const orderId = v4(); // Generate a unique order ID
+    const txnid = "USD_" + orderId; // Transaction ID based on order ID
 
     // ✅ HASH for USD payments
-   const firstname = userAddress.FullName;
-const email = userEmail.email
-console.log(email);
+    const firstname = userAddress.FullName;
+    const email = userEmail.email
 
 
-const hashString =
-  `${process.env.PAYU_KEY}|${txnid}|${amountUSD}|USD_Payment|` +
-  `${firstname}|${email}|||||||||||${process.env.PAYU_SALT}`;
+    const hashString =
+      `${process.env.PAYU_KEY}|${txnid}|${amountUSD}|USD_Payment|` +
+      `${firstname}|${email}|||||||||||${process.env.PAYU_SALT}`;
     const hash = crypto
       .createHash("sha512")
       .update(hashString)
@@ -143,19 +151,19 @@ const hashString =
 
     // ✅ Create DB Order
     await Orders.create({
-      order_id: txnid,
+      order_id: orderId, // Use the order ID instead of transaction ID
       user_id: decode_user,
       product_id,
       quantity: qty,
       totalAmount: amountUSD,
       FullName: userAddress.FullName,
-  phone1: userAddress.phone1,
-  phone2: userAddress.phone2,
-  state: userAddress.state,
-  city: userAddress.city,
-  pinCode: userAddress.pinCode,
-  address: userAddress.address,
-  addressType: userAddress.addressType
+      phone1: userAddress.phone1,
+      phone2: userAddress.phone2,
+      state: userAddress.state,
+      city: userAddress.city,
+      pinCode: userAddress.pinCode,
+      address: userAddress.address,
+      addressType: userAddress.addressType
     });
 
     // ✅ Send to frontend
@@ -213,7 +221,10 @@ export const verifyPayment = async (req, res) => {
       return res.status(400).json({ message: "Hash mismatch" });
     }
 
-    const order = await Orders.findOne({ where: { order_id: txnid } });
+    // Find the order using the transaction ID
+    const orderId = txnid.replace('USD_', '');
+    const order = await Orders.findOne({ where: { order_id: orderId } });
+
     if (!order) return res.status(404).json({ message: "Order not found" });
 
     if (status === "success") {
@@ -222,16 +233,19 @@ export const verifyPayment = async (req, res) => {
           payment_status: "paid",
           payu_payment_id: mihpayid
         },
-        { where: { order_id: txnid } }
+        { where: { order_id: orderId } }
       );
     } else {
       await Orders.update(
         { payment_status: "failed" },
-        { where: { order_id: txnid } }
+        { where: { order_id: orderId } }
       );
     }
 
-    return res.redirect(`${process.env.FRONTEND_URL}/orders`);
+    // Redirect to frontend order success page with the actual order ID
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const redirectUrl = `${frontendUrl}/order-success?orderId=${order.order_id}`;
+    return res.redirect(redirectUrl);
 
   } catch (err) {
     console.error("PayU verify error:", err);
@@ -408,16 +422,23 @@ const getOrders = async (req, res) => {
       include: [{ model: Products, attributes: ['product_id', 'name', 'price', 'selling_price', 'product_image'] }]
     });
 
-    return res.status(200).json({ status: true, orders });
+    // Simplify payment information - always show PayU since it's the only payment method
+    const ordersWithPaymentInfo = orders.map(order => {
+      return {
+        ...order.toJSON(),
+        payment_method: 'PayU', // Always set to PayU since it's the only payment method
+        payu_transaction_id: order.payu_payment_id || null // Use the PayU payment ID as transaction ID
+      };
+    });
+
+    return res.status(200).json({ status: true, orders: ordersWithPaymentInfo });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Something went wrong" });
-
-
   }
 };
 
-export const cancelOrder = async (req,res)=>{
+export const cancelOrder = async (req, res) => {
   try {
     const { order_id } = req.body;
     const user_id = req.body.decode_user; // Get user ID from middleware
@@ -429,14 +450,14 @@ export const cancelOrder = async (req,res)=>{
     const order = await Orders.findOne({
       where: { order_id: order_id, user_id: user_id }
     });
-    
+
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
     }
 
     await order.update({ status: "cancelled" });
     return res.status(200).json({ message: "Order cancelled successfully" });
-    
+
   } catch (error) {
     console.error("Error cancelling order:", error);
     res.status(500).json({ message: "Something went wrong cancelling order", error: error.message });
