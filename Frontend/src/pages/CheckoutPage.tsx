@@ -33,21 +33,10 @@ export default function CheckoutPage({ onBack }: CheckoutPageProps) {
     }
 
     // Check if user is authenticated and has a valid ID
-    const user = localStorage.getItem('user');
-    let userId = null;
-    if (user) {
-      try {
-        const userData = JSON.parse(user);
-        userId = userData.id;
-      } catch (e) {
-        console.error('Failed to parse user data:', e);
-      }
-    }
+    // const user = localStorage.getItem('token');
+   
 
-    if (!userId) {
-      alert('User not authenticated. Please log in again.');
-      return;
-    }
+   
 
     setIsProcessing(true);
 

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Package, ArrowLeft, Calendar } from 'lucide-react';
 import { userAPI } from '../services/api';
-import { navigateTo } from '../utils/navigation';
+import { useNavigation } from "../utils/navigation";
 import { useAuthProtection } from '../utils/authProtection';
 
 interface Product {
@@ -46,6 +46,8 @@ interface MyOrdersPageProps {
 }
 
 export default function MyOrdersPage({ onBack }: MyOrdersPageProps) {
+  const { go } = useNavigation();
+
   const { isLoading: authLoading } = useAuthProtection();
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -129,12 +131,12 @@ export default function MyOrdersPage({ onBack }: MyOrdersPageProps) {
     if (onBack) {
       onBack();
     } else {
-      navigateTo('/');
+      go('/');
     }
   };
 
   const handleOrderClick = (orderId: string) => {
-    navigateTo(`/order/${orderId}`);
+    go(`/order/${orderId}`);
   };
 
   const getProductImage = (product?: Product) => {

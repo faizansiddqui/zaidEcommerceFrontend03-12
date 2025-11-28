@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Check, Clock, Package, Truck, XCircle } from 'lucide-react';
 import { userAPI } from '../services/api';
-import { navigateTo } from '../utils/navigation';
+import { useNavigation } from "../utils/navigation";
 import { useAuthProtection } from '../utils/authProtection';
 
 interface Product {
@@ -55,6 +55,7 @@ export default function OrderDetailsPage({ orderId, onBack }: OrderDetailsPagePr
     const [isCancelling, setIsCancelling] = useState(false);
     const [cancelError, setCancelError] = useState<string | null>(null);
     const [showCancelDialog, setShowCancelDialog] = useState(false);
+    const { go } = useNavigation();
 
     useEffect(() => {
         fetchOrderDetails();
@@ -481,7 +482,7 @@ export default function OrderDetailsPage({ orderId, onBack }: OrderDetailsPagePr
                                                     src={getProductImage(item.Product)}
                                                     alt={item.Product.name}
                                                     className="w-32 h-32 object-cover rounded-lg cursor-pointer"
-                                                    onClick={() => navigateTo(`/product/${item.Product?.product_id}`)}
+                                                    onClick={() => go(`/product/${item.Product?.product_id}`)}
                                                 />
                                             </div>
                                         )}
@@ -521,7 +522,7 @@ export default function OrderDetailsPage({ orderId, onBack }: OrderDetailsPagePr
                                                 src={getProductImage(order.Product)}
                                                 alt={order.Product.name}
                                                 className="w-32 h-32 object-cover rounded-lg cursor-pointer"
-                                                onClick={() => navigateTo(`/product/${order.Product?.product_id}`)}
+                                                onClick={() => go(`/product/${order.Product?.product_id}`)}
                                             />
                                         </div>
                                     )}

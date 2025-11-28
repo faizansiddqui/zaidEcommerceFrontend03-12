@@ -6,7 +6,7 @@ import ProductImageGallery from './ProductImageGallery';
 import ProductInfo from './ProductInfo';
 import ProductActions from './ProductActions';
 import WishlistButton from './WishlistButton';
-import { navigateTo } from '../../utils/navigation';
+import { useNavigation } from "../../utils/navigation";
 import { Product } from '../../utils/productUtils';
 
 interface ProductSpecification {
@@ -41,6 +41,7 @@ export default function ProductDetails({ productId, onClose }: ProductDetailsPro
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
   const { addToCart } = useCart();
+  const { go } = useNavigation();
 
   useEffect(() => {
     loadProduct();
@@ -90,6 +91,7 @@ export default function ProductDetails({ productId, onClose }: ProductDetailsPro
   };
 
 
+
   const getImageArray = (productImage: string | string[] | { [key: string]: string } | undefined): string[] => {
     if (!productImage) return [];
     if (typeof productImage === 'string') {
@@ -107,8 +109,8 @@ export default function ProductDetails({ productId, onClose }: ProductDetailsPro
 
 
   const handleGoToCart = () => {
-    onClose();
-    navigateTo('/cart');
+    onClose();  
+    go('/cart');
   };
 
   if (isLoading) {

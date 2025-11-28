@@ -2,11 +2,13 @@ import { useWishlist } from '../context/WishlistContext';
 import { ArrowLeft, Heart, ShoppingCart, X } from 'lucide-react';
 import ProductCard from '../components/Product/ProductCard';
 import { useCart } from '../context/CartContext';
-import { navigateTo } from '../utils/navigation';
+import { useNavigation } from "../utils/navigation";
 import { Product } from '../utils/productUtils';
 import { useAuthProtection } from '../utils/authProtection';
 
 export default function WishlistPage() {
+    const { go } = useNavigation();
+
     useAuthProtection(); // Protect this route
     const { wishlistItems, removeFromWishlist } = useWishlist();
     const { addToCart } = useCart();
@@ -26,7 +28,7 @@ export default function WishlistPage() {
     };
 
     const handleBack = () => {
-        navigateTo('/profile');
+        go('/profile');
     };
 
     return (
@@ -51,7 +53,7 @@ export default function WishlistPage() {
                         <h2 className="text-2xl font-bold text-gray-900 mb-2">Your wishlist is empty</h2>
                         <p className="text-gray-600 mb-6">Start adding items you love to your wishlist</p>
                         <button
-                            onClick={() => navigateTo('/')}
+                            onClick={() => go('/')}
                             className="bg-amber-700 hover:bg-amber-800 text-white py-2 px-6 rounded-lg font-semibold transition-colors"
                         >
                             Continue Shopping

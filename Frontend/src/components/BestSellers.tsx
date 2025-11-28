@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { Star, Sparkles } from 'lucide-react';
 import { productAPI } from '../services/api';
 import { Product, getImageUrl, isProductBestSeller } from '../utils/productUtils';
-import { navigateTo } from '../utils/navigation';
+import { useNavigation } from "../utils/navigation";
 
 export default function BestSellers() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { go } = useNavigation();
+
 
   useEffect(() => {
     loadProducts();
@@ -35,7 +37,7 @@ export default function BestSellers() {
   };
 
   const handleProductClick = (productId: number) => {
-    navigateTo(`/product/${productId}`);
+    go(`/product/${productId}`);
   };
 
   // Load categories from centralized data file (not used for display)
@@ -151,7 +153,7 @@ export default function BestSellers() {
 
             <div className="text-center mt-6 xs:mt-8 sm:mt-10 lg:mt-12">
               <button
-                onClick={() => navigateTo('/categories')}
+                onClick={() => go('/categories')}
                 className="w-full xs:w-auto bg-amber-700 hover:bg-amber-800 text-white px-4 xs:px-6 sm:px-8 lg:px-12 py-2 xs:py-3 sm:py-3.5 lg:py-4 text-xs xs:text-sm sm:text-base lg:text-lg font-semibold transition-all sm:transform sm:hover:scale-105 uppercase tracking-wide rounded-lg shadow-lg"
               >
                 View All Products

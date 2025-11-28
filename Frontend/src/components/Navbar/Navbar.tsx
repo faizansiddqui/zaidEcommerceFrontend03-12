@@ -2,7 +2,7 @@ import { ShoppingCart, Search, Menu, X, ChevronDown, User, Package, Settings, Lo
 import { useState, useEffect, useRef } from 'react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
-import { navigateTo } from '../../utils/navigation';
+import { useNavigation } from "../../utils/navigation";
 import { productAPI } from '../../services/api';
 import SearchSuggestions from '../Search/SearchSuggestions';
 import { Product } from '../../utils/productUtils';
@@ -23,6 +23,9 @@ export default function Navbar({ onSearchChange }: NavbarProps) {
   const expandedSearchRef = useRef<HTMLDivElement>(null);
   const { getTotalItems, saveCartToLocalStorage } = useCart();
   const { isAuthenticated, logout } = useAuth();
+
+  const { go } = useNavigation();
+
 
   // Load all products for suggestions
   useEffect(() => {
@@ -53,7 +56,7 @@ export default function Navbar({ onSearchChange }: NavbarProps) {
   };
 
   const handleCartClick = () => {
-    navigateTo('/cart');
+    go('/cart');
   };
 
   const handleLogout = () => {
@@ -68,7 +71,7 @@ export default function Navbar({ onSearchChange }: NavbarProps) {
     const trimmedQuery = searchQuery.trim();
     if (trimmedQuery) {
       // Navigate to search page instead of categories page
-      navigateTo(`/search?q=${encodeURIComponent(trimmedQuery)}`);
+      go(`/search?q=${encodeURIComponent(trimmedQuery)}`);
       setShowSuggestions(false);
     }
   };
@@ -81,7 +84,7 @@ export default function Navbar({ onSearchChange }: NavbarProps) {
   const handleSuggestionSelect = (productId: number) => {
     setShowSuggestions(false);
     // Navigate to product details page
-    navigateTo(`/product/${productId}`);
+    go(`/product/${productId}`);
   };
 
   // Close profile dropdown when clicking outside
@@ -130,7 +133,7 @@ export default function Navbar({ onSearchChange }: NavbarProps) {
   }, [showSuggestions]);
 
   const handleCategoryClick = () => {
-    navigateTo('/categories');
+    go('/categories');
   };
 
   const handleSearchFocus = () => {
@@ -253,7 +256,7 @@ export default function Navbar({ onSearchChange }: NavbarProps) {
                         <button
                           onClick={() => {
                             setIsProfileDropdownOpen(false);
-                            navigateTo('/profile');
+                            go('/profile');
                           }}
                           className="w-full text-left flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors text-sm"
                         >
@@ -263,7 +266,7 @@ export default function Navbar({ onSearchChange }: NavbarProps) {
                         <button
                           onClick={() => {
                             setIsProfileDropdownOpen(false);
-                            navigateTo('/orders');
+                            go('/orders');
                           }}
                           className="w-full text-left flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors text-sm"
                         >
@@ -274,7 +277,7 @@ export default function Navbar({ onSearchChange }: NavbarProps) {
                         <button
                           onClick={() => {
                             setIsProfileDropdownOpen(false);
-                            navigateTo('/wishlist');
+                            go('/wishlist');
                           }}
                           className="w-full text-left flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors text-sm"
                         >
@@ -287,7 +290,7 @@ export default function Navbar({ onSearchChange }: NavbarProps) {
                         <button
                           onClick={() => {
                             setIsProfileDropdownOpen(false);
-                            navigateTo('/settings');
+                            go('/settings');
                           }}
                           className="w-full text-left flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors text-sm"
                         >
@@ -307,7 +310,7 @@ export default function Navbar({ onSearchChange }: NavbarProps) {
                       <button
                         onClick={() => {
                           setIsProfileDropdownOpen(false);
-                          navigateTo('/log');
+                          go('/log');
                         }}
                         className="w-full text-left flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors text-sm"
                       >
@@ -343,7 +346,7 @@ export default function Navbar({ onSearchChange }: NavbarProps) {
                     <button
                       onClick={() => {
                         setIsMenuOpen(false);
-                        navigateTo('/profile');
+                        go('/profile');
                       }}
                       className="block w-full text-left py-2 text-gray-700 hover:text-amber-700 hover:bg-amber-50 px-2 rounded transition-colors font-medium flex items-center gap-2"
                     >
@@ -353,7 +356,7 @@ export default function Navbar({ onSearchChange }: NavbarProps) {
                     <button
                       onClick={() => {
                         setIsMenuOpen(false);
-                        navigateTo('/orders');
+                        go('/orders');
                       }}
                       className="block w-full text-left py-2 text-gray-700 hover:text-amber-700 hover:bg-amber-50 px-2 rounded transition-colors font-medium flex items-center gap-2"
                     >
@@ -364,7 +367,7 @@ export default function Navbar({ onSearchChange }: NavbarProps) {
                     <button
                       onClick={() => {
                         setIsMenuOpen(false);
-                        navigateTo('/wishlist');
+                        go('/wishlist');
                       }}
                       className="block w-full text-left py-2 text-gray-700 hover:text-amber-700 hover:bg-amber-50 px-2 rounded transition-colors font-medium flex items-center gap-2"
                     >
@@ -377,7 +380,7 @@ export default function Navbar({ onSearchChange }: NavbarProps) {
                     <button
                       onClick={() => {
                         setIsMenuOpen(false);
-                        navigateTo('/settings');
+                        go('/settings');
                       }}
                       className="block w-full text-left py-2 text-gray-700 hover:text-amber-700 hover:bg-amber-50 px-2 rounded transition-colors font-medium flex items-center gap-2"
                     >
@@ -399,7 +402,7 @@ export default function Navbar({ onSearchChange }: NavbarProps) {
                   <button
                     onClick={() => {
                       setIsMenuOpen(false);
-                      navigateTo('/log');
+                      go('/log');
                     }}
                     className="block w-full text-left py-2 text-gray-700 hover:text-amber-700 hover:bg-amber-50 px-2 rounded transition-colors font-medium flex items-center gap-2"
                   >

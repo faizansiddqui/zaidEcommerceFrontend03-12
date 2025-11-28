@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { Star, Sparkles, Clock } from 'lucide-react';
 import { productAPI } from '../services/api';
 import { Product, getImageUrl } from '../utils/productUtils';
-import { navigateTo } from '../utils/navigation';
+import { useNavigation } from "../utils/navigation";
 
 export default function NewArrivals() {
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const { go } = useNavigation();
 
     useEffect(() => {
         loadProducts();
@@ -39,7 +40,7 @@ export default function NewArrivals() {
     };
 
     const handleProductClick = (productId: number) => {
-        navigateTo(`/product/${productId}`);
+        go(`/product/${productId}`);
     };
 
     const calculateDiscount = (price: number, oldPrice: number) => {
@@ -142,7 +143,7 @@ export default function NewArrivals() {
 
                 <div className="text-center mt-10">
                     <button
-                        onClick={() => navigateTo('/categories')}
+                        onClick={() => go('/categories')}
                         className="bg-amber-700 hover:bg-amber-800 text-white px-8 py-3 text-sm sm:text-base font-semibold transition-all sm:transform sm:hover:scale-105 uppercase tracking-wide rounded-lg shadow-lg"
                     >
                         Explore All New Items

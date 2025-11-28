@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Check } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
-import { navigateTo } from '../../utils/navigation';
+import { useNavigation } from "../../utils/navigation";
 
 interface OrderSuccessProps {
     onContinueShopping: () => void;
@@ -9,6 +9,8 @@ interface OrderSuccessProps {
 
 export default function OrderSuccess({ onContinueShopping }: OrderSuccessProps) {
     const { clearCart } = useCart();
+    const { go } = useNavigation();
+
 
     // Clear the cart when the component mounts
     useEffect(() => {
@@ -21,14 +23,14 @@ export default function OrderSuccess({ onContinueShopping }: OrderSuccessProps) 
 
     const handleViewOrder = () => {
         if (orderId) {
-            navigateTo(`/order/${orderId}`);
+            go(`/order/${orderId}`);
         } else {
             onContinueShopping();
         }
     };
 
     const handleContinueShopping = () => {
-        navigateTo('/');
+        go('/');
     };
 
     return (

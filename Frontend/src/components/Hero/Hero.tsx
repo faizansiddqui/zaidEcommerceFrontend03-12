@@ -1,7 +1,9 @@
 import { Star, ArrowRight, Sparkles } from 'lucide-react';
-import { navigateTo } from '../../utils/navigation';
+import { useNavigation } from "../../utils/navigation";
 
 export default function Hero() {
+  const { go } = useNavigation();
+
   return (
     <div className="relative bg-gradient-to-br from-amber-50 via-white to-amber-50 text-gray-900 overflow-hidden">
       {/* Decorative background elements */}
@@ -10,7 +12,7 @@ export default function Hero() {
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-amber-600 rounded-full blur-3xl"></div>
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-24">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-1 sm:py-16 lg:py-5">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           <div className="space-y-4 sm:space-y-6 lg:space-y-8 animate-fadeIn z-10 text-center lg:text-left">
             {/* Rating Badge */}
@@ -56,7 +58,7 @@ export default function Hero() {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4">
               <button
-                onClick={() => navigateTo('/categories')}
+                onClick={() => go('/categories')}
                 className="group w-full sm:w-auto bg-amber-700 hover:bg-amber-800 text-white px-6 sm:px-8 lg:px-10 py-3 sm:py-4 rounded-lg text-sm sm:text-base lg:text-lg font-semibold transition-all sm:transform sm:hover:scale-105 shadow-lg sm:hover:shadow-xl flex items-center justify-center gap-2"
               >
                 Shop Now
@@ -92,12 +94,12 @@ export default function Hero() {
 
           {/* Hero Image */}
           <div className="relative order-first lg:order-last">
-            <div className="relative aspect-[4/3] sm:aspect-square rounded-2xl overflow-hidden shadow-2xl">
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-100 to-amber-200"></div>
+            <div className="relative aspect-[4/3] sm:aspect-square rounded-2xl overflow-hidden">
+              <div className="absolute inset-0"></div>
               <img
-                src="/hero4.png"
+                src="/image.png"
                 alt="Islamic Home Decor"
-                className="relative w-full h-full object-contain sm:object-cover"
+                className="relative w-full rounded-md h-full object-contain sm:object-cover"
                 loading="eager"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none';

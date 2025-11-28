@@ -5,7 +5,7 @@ import ProductImageGallery from '../components/Product/ProductImageGallery';
 import ProductInfo from '../components/Product/ProductInfo';
 import ProductActions from '../components/Product/ProductActions';
 import WishlistButton from '../components/Product/WishlistButton';
-import { navigateTo } from '../utils/navigation';
+import { useNavigation } from "../utils/navigation";
 import { Product } from '../utils/productUtils';
 
 interface ProductSpecification {
@@ -40,6 +40,7 @@ export default function ProductDetailsPage({ productId, onBack }: ProductDetails
     const [quantity, setQuantity] = useState(1);
     const [addedToCart, setAddedToCart] = useState(false);
     const { addToCart } = useCart();
+    const { go } = useNavigation();
 
     useEffect(() => {
         loadProduct();
@@ -103,14 +104,14 @@ export default function ProductDetailsPage({ productId, onBack }: ProductDetails
     };
 
     const handleGoToCart = () => {
-        navigateTo('/cart');
+        go('/cart');
     };
 
     const handleBack = () => {
         if (onBack) {
             onBack();
         } else {
-            navigateTo('/');
+            go('/');
         }
     };
 

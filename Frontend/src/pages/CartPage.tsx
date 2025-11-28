@@ -3,13 +3,15 @@ import { useAuth } from '../context/AuthContext';
 import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft, Check } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { productAPI } from '../services/api';
-import { navigateTo } from '../utils/navigation';
+import { useNavigation } from "../utils/navigation";
 
 interface CartPageProps {
     onBack?: () => void;
 }
 
 export default function CartPage({ onBack }: CartPageProps) {
+    const { go } = useNavigation();
+
     const {
         cartItems,
         removeFromCart,
@@ -246,10 +248,10 @@ export default function CartPage({ onBack }: CartPageProps) {
                             <button
                                 onClick={() => {
                                     if (!isAuthenticated) {
-                                        navigateTo('/log');
+                                        go('/log');
                                         return;
                                     }
-                                    navigateTo('/checkout');
+                                    go('/checkout');
                                 }}
                                 className="w-full bg-amber-700 hover:bg-amber-800 text-white py-4 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all transform hover:scale-105 shadow-lg mb-4"
                             >

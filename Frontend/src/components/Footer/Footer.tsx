@@ -1,7 +1,9 @@
 import { Facebook, Instagram, Twitter, Youtube, Mail, Phone, MapPin } from 'lucide-react';
-import { navigateTo } from '../../utils/navigation';
+import { useNavigation } from "../../utils/navigation";
 
 export default function Footer() {
+  const { go } = useNavigation();
+
   return (
     <footer className="bg-gray-900 text-gray-300">
       <div className="max-w-7xl mx-auto px-2 xs:px-3 sm:px-4 lg:px-8 py-6 xs:py-8 sm:py-10 lg:py-12">
@@ -93,14 +95,14 @@ export default function Footer() {
         <div className="border-t border-gray-800 pt-4 xs:pt-6 sm:pt-8 text-center">
           <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-4">
             <button
-              onClick={() => navigateTo('/privacy')}
+              onClick={() => go('/privacy')}
               className="text-gray-400 hover:text-amber-400 transition-colors text-[10px] xs:text-xs sm:text-sm"
             >
               Privacy Policy
             </button>
             <span className="text-gray-600 hidden sm:inline">|</span>
             <button
-              onClick={() => navigateTo('/terms')}
+              onClick={() => go('/terms')}
               className="text-gray-400 hover:text-amber-400 transition-colors text-[10px] xs:text-xs sm:text-sm"
             >
               Terms of Service

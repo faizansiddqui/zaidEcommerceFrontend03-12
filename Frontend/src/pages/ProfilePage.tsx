@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { userAPI } from '../services/api';
 import AddressForm from '../components/AddressForm';
 import { ArrowLeft, Mail, Phone, MapPin, Home, Building, Plus, Edit, User } from 'lucide-react';
-import { navigateTo } from '../utils/navigation';
+import { useNavigation } from "../utils/navigation";
 
 interface Address {
     id: number;
@@ -22,6 +22,8 @@ interface Address {
 }
 
 export default function ProfilePage({ onBack }: { onBack?: () => void }) {
+    const { go } = useNavigation();
+
     const { user, isAuthenticated, logout } = useAuth();
     const [addresses, setAddresses] = useState<Address[]>([]);
     const [loading, setLoading] = useState(true);
@@ -52,7 +54,7 @@ export default function ProfilePage({ onBack }: { onBack?: () => void }) {
                         setError('Authentication required. Please log in again.');
                         // Redirect to login page
                         setTimeout(() => {
-                            navigateTo('/log');
+                            go('/log');
                         }, 2000);
                     } else {
                         setError('Failed to load addresses. Please try again later.');
@@ -106,7 +108,7 @@ export default function ProfilePage({ onBack }: { onBack?: () => void }) {
         if (onBack) {
             onBack();
         } else {
-            navigateTo('/');
+            go('/');
         }
     };
 
@@ -117,7 +119,7 @@ export default function ProfilePage({ onBack }: { onBack?: () => void }) {
                     <h2 className="text-2xl font-bold text-gray-900 mb-4">Please log in</h2>
                     <p className="text-gray-600 mb-6">You need to be logged in to view your profile.</p>
                     <button
-                        onClick={() => navigateTo('/log')}
+                        onClick={() => go('/log')}
                         className="w-full bg-amber-700 hover:bg-amber-800 text-white py-3 rounded-lg font-semibold transition-colors"
                     >
                         Go to Login
@@ -170,7 +172,7 @@ export default function ProfilePage({ onBack }: { onBack?: () => void }) {
                         {/* Quick Links Section */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
                             <button
-                                onClick={() => navigateTo('/orders')}
+                                onClick={() => go('/orders')}
                                 className="bg-white border border-gray-200 rounded-xl p-4 text-left hover:shadow-md transition-all"
                             >
                                 <div className="flex items-center gap-3">
@@ -187,7 +189,7 @@ export default function ProfilePage({ onBack }: { onBack?: () => void }) {
                             </button>
 
                             <button
-                                onClick={() => navigateTo('/wishlist')}
+                                onClick={() => go('/wishlist')}
                                 className="bg-white border border-gray-200 rounded-xl p-4 text-left hover:shadow-md transition-all"
                             >
                                 <div className="flex items-center gap-3">

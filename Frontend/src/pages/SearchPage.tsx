@@ -7,7 +7,7 @@ import Navbar from '../components/Navbar/Navbar';
 import Footer from '../components/Footer/Footer';
 import { Product, getImageUrl, isProductNew, isProductBestSeller } from '../utils/productUtils';
 // import { Navigate } from 'react-router-dom';
-import { navigateTo } from '../utils/navigation';
+import { useNavigation } from "../utils/navigation";
 
 interface SearchPageProps {
     onBack: () => void;
@@ -15,6 +15,8 @@ interface SearchPageProps {
 }
 
 export default function SearchPage({ onBack, onSearchChange }: SearchPageProps) {
+    const { go } = useNavigation();
+
     const [searchQuery, setSearchQuery] = useState('');
     const [products, setProducts] = useState<Product[]>([]);
     const [suggestions, setSuggestions] = useState<Product[]>([]);
@@ -128,7 +130,7 @@ export default function SearchPage({ onBack, onSearchChange }: SearchPageProps) 
 
     const handleProductClick = (productId: number) => {
         // Navigate to product details page instead of opening modal
-        navigateTo(`/product/${productId}`);
+        go(`/product/${productId}`);
     };
 
     return (

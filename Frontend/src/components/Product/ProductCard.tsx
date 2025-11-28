@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useCart } from '../../context/CartContext';
 import WishlistButton from './WishlistButton';
 import { Product } from '../../utils/productUtils';
-import { navigateTo } from '../../utils/navigation';
+import { useNavigation } from "../../utils/navigation";
 
 interface ProductCardProps {
   id: number;
@@ -21,6 +21,8 @@ export default function ProductCard({ id, name, price, image, category, inStock,
   const [isHovered, setIsHovered] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
   const { addToCart } = useCart();
+  const { go } = useNavigation();
+
 
   // Create a product object for the wishlist button
   const product: Product = {
@@ -47,11 +49,11 @@ export default function ProductCard({ id, name, price, image, category, inStock,
 
   const handleGoToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigateTo('/cart');
+    go('/cart');
   };
 
   const handleProductClick = () => {
-    navigateTo(`/product/${id}`);
+    go(`/product/${id}`);
   };
 
   // Only apply hover effects if not disabled

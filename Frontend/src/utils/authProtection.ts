@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { navigateTo } from './navigation';
+import { useNavigation } from "../utils/navigation";
 
 /**
  * Custom hook to protect routes that require authentication
@@ -8,11 +8,13 @@ import { navigateTo } from './navigation';
  * @param redirectTo Path to redirect to if not authenticated (default: '/log')
  */
 export const useAuthProtection = (redirectTo: string = '/log') => {
+    const { go } = useNavigation();
+
     const { isAuthenticated, isLoading } = useAuth();
 
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {
-            navigateTo(redirectTo);
+            go(redirectTo);
         }
     }, [isAuthenticated, isLoading, redirectTo]);
 
