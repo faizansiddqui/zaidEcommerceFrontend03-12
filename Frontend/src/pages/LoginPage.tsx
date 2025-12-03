@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mail, ArrowRight, CheckCircle, RefreshCw, AlertCircle } from 'lucide-react';
+import { Mail, ArrowRight, CheckCircle, RefreshCw } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigation } from "../utils/navigation";
 
@@ -19,7 +19,7 @@ export default function LoginPage({ onBack }: LoginPageProps) {
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-
+  
   // Resend timer states
   const [resendTimer, setResendTimer] = useState(0);
   const [isResendDisabled, setIsResendDisabled] = useState(false);
@@ -30,7 +30,7 @@ export default function LoginPage({ onBack }: LoginPageProps) {
       go('/');
       if (onBack) onBack();
     }
-  }, [isAuthenticated, user, onBack, go]);
+  }, [isAuthenticated, user, onBack]);
 
   // Cleanup timer on unmount
   useEffect(() => {
@@ -68,14 +68,10 @@ export default function LoginPage({ onBack }: LoginPageProps) {
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
-  const clearMessages = () => {
-    setError('');
-    setSuccess('');
-  };
-
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    clearMessages();
+    setError('');
+    setSuccess('');
     setCode('');
     setResendTimer(0);
     setIsResendDisabled(false);
@@ -100,9 +96,7 @@ export default function LoginPage({ onBack }: LoginPageProps) {
       setResendTimer(60);
       setIsResendDisabled(true);
     } catch (err: any) {
-      const errorMessage = err.message || 'Failed to send OTP. Please try again.';
-      console.error('handleEmailSubmit error:', errorMessage);
-      setError(errorMessage);
+      setError(err.message || 'Failed to send OTP. Please try again.');
       setStep('email');
     } finally {
       setIsSendingOtp(false);
@@ -111,7 +105,8 @@ export default function LoginPage({ onBack }: LoginPageProps) {
 
   const handleVerifyOtp = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    clearMessages();
+    setError('');
+    setSuccess('');
 
     if (!code.trim()) {
       setError('Please enter the OTP sent to your email.');
@@ -132,9 +127,7 @@ export default function LoginPage({ onBack }: LoginPageProps) {
         if (onBack) onBack();
       }, 600);
     } catch (err: any) {
-      const errorMessage = err.message || 'Invalid OTP. Please try again.';
-      console.error('handleVerifyOtp error:', errorMessage);
-      setError(errorMessage);
+      setError(err.message || 'Invalid OTP. Please try again.');
     } finally {
       setIsVerifying(false);
     }
@@ -142,7 +135,8 @@ export default function LoginPage({ onBack }: LoginPageProps) {
 
   const handleResend = async () => {
     if (isResendDisabled || isSendingOtp || isVerifying) return;
-    clearMessages();
+    setError('');
+    setSuccess('');
     setIsSendingOtp(true);
 
     try {
@@ -151,9 +145,7 @@ export default function LoginPage({ onBack }: LoginPageProps) {
       setResendTimer(60);
       setIsResendDisabled(true);
     } catch (err: any) {
-      const errorMessage = err.message || 'Failed to resend OTP. Please try again.';
-      console.error('handleResend error:', errorMessage);
-      setError(errorMessage);
+      setError(err.message || 'Failed to resend OTP. Please try again.');
     } finally {
       setIsSendingOtp(false);
     }
@@ -161,7 +153,8 @@ export default function LoginPage({ onBack }: LoginPageProps) {
 
   const handleBackToEmail = () => {
     setStep('email');
-    clearMessages();
+    setError('');
+    setSuccess('');
     setCode('');
     setResendTimer(0);
     setIsResendDisabled(false);
@@ -171,7 +164,7 @@ export default function LoginPage({ onBack }: LoginPageProps) {
 
   // Don't show the login page if user is already authenticated
   if (isAuthenticated) {
-    return <div className="flex items-center justify-center min-h-screen">Redirecting...</div>;
+    return <div>Redirecting...</div>;
   }
 
   return (
@@ -190,8 +183,7 @@ export default function LoginPage({ onBack }: LoginPageProps) {
           </div>
 
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
-              <AlertCircle size={20} className="text-red-600 flex-shrink-0 mt-0.5" />
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-red-600 text-sm">{error}</p>
             </div>
           )}
@@ -214,7 +206,7 @@ export default function LoginPage({ onBack }: LoginPageProps) {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-700 focus:border-amber-700 outline-none disabled:bg-gray-100"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-700 focus:border-amber-700 outline-none"
                   placeholder="your.email@example.com"
                   disabled={isSendingOtp}
                 />
@@ -223,7 +215,7 @@ export default function LoginPage({ onBack }: LoginPageProps) {
               <button
                 type="submit"
                 disabled={isSendingOtp}
-                className="w-full bg-amber-700 hover:bg-amber-800 disabled:bg-gray-400 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all transform hover:scale-105 shadow-lg disabled:transform-none disabled:cursor-not-allowed"
+                className="w-full bg-amber-700 hover:bg-amber-800 disabled:bg-gray-400 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all transform hover:scale-105 shadow-lg disabled:transform-none"
               >
                 {isSendingOtp ? (
                   <>
@@ -259,7 +251,7 @@ export default function LoginPage({ onBack }: LoginPageProps) {
                     value={code}
                     onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
                     maxLength={6}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-700 focus:border-amber-700 outline-none text-center tracking-widest text-lg disabled:bg-gray-100"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-700 focus:border-amber-700 outline-none text-center tracking-widest text-lg"
                     placeholder="Enter 6-digit code"
                     disabled={isVerifying || isSendingOtp}
                     autoFocus
@@ -269,7 +261,7 @@ export default function LoginPage({ onBack }: LoginPageProps) {
                 <button
                   type="submit"
                   disabled={isVerifying || isSendingOtp}
-                  className="w-full bg-amber-700 hover:bg-amber-800 disabled:bg-gray-400 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all disabled:cursor-not-allowed"
+                  className="w-full bg-amber-700 hover:bg-amber-800 disabled:bg-gray-400 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all"
                 >
                   {isVerifying ? (
                     <>
@@ -290,7 +282,7 @@ export default function LoginPage({ onBack }: LoginPageProps) {
                   type="button"
                   onClick={handleResend}
                   disabled={isVerifying || isSendingOtp || isResendDisabled}
-                  className="w-full bg-amber-700 hover:bg-amber-800 disabled:bg-gray-400 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all disabled:cursor-not-allowed"
+                  className="w-full bg-amber-700 hover:bg-amber-800 disabled:bg-gray-400 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all"
                 >
                   {isSendingOtp ? (
                     <>
@@ -315,7 +307,7 @@ export default function LoginPage({ onBack }: LoginPageProps) {
                   type="button"
                   onClick={handleBackToEmail}
                   disabled={isVerifying || isSendingOtp}
-                  className="w-full border-2 border-gray-300 hover:border-gray-400 text-gray-700 py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full border-2 border-gray-300 hover:border-gray-400 text-gray-700 py-3 rounded-lg font-semibold transition-colors disabled:opacity-50"
                 >
                   Use a different email
                 </button>
@@ -327,7 +319,7 @@ export default function LoginPage({ onBack }: LoginPageProps) {
             <button
               onClick={onBack}
               disabled={isSendingOtp || isVerifying}
-              className="mt-6 w-full text-gray-600 hover:text-amber-700 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="mt-6 w-full text-gray-600 hover:text-amber-700 transition-colors text-sm disabled:opacity-50"
             >
               ← Back to Home
             </button>

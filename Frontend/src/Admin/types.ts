@@ -6,6 +6,7 @@ export interface Product {
     title: string;
     description: string;
     mrp: number;
+    color: string,
     sellingPrice: number;
     discountPercentage: number;
     material: string;

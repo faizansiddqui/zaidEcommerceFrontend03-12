@@ -27,8 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const savedUser = localStorage.getItem('user');
       const isAuth = localStorage.getItem('isAuthenticated');
       if (savedUser && isAuth === 'true') {
-        const parsedUser = JSON.parse(savedUser);
-        setUser(parsedUser);
+        setUser(JSON.parse(savedUser));
       }
     } catch (e) {
       console.error('AuthProvider: failed to read localStorage', e);
@@ -45,8 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // backend should send OTP to email; no further action here
     } catch (err: any) {
       console.error('AuthProvider.sendOtp failed:', err);
-      const errorMessage = err.response?.data?.message || err.response?.data?.error || err.message || 'Failed to send OTP. Please try again.';
-      throw new Error(errorMessage);
+      throw new Error(err.response?.data?.message || 'Failed to send OTP. Please try again.');
     }
   };
 
@@ -58,8 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Adjust parsing below to match your backend response shape
       const success = res.data?.status ?? (res.data?.success ?? true);
       if (!success) {
-        const errorMessage = res.data?.message || 'OTP verification failed.';
-        throw new Error(errorMessage);
+        throw new Error(res.data?.message || 'OTP verification failed.');
       }
 
       const userData: User = {
@@ -76,8 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('isAuthenticated', 'true');
     } catch (err: any) {
       console.error('AuthProvider.verifyOtp failed:', err);
-      const errorMessage = err.response?.data?.message || err.response?.data?.error || err.message || 'Invalid OTP. Please try again.';
-      throw new Error(errorMessage);
+      throw new Error(err.response?.data?.message || 'Invalid OTP. Please try again.');
     }
   };
 
@@ -89,8 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Best-effort server logout (if endpoint exists)
     const apiUrl = import.meta.env.VITE_API_URL || 'https://islamicdecotweb.onrender.com';
-    fetch(`${apiUrl}/api/auth/logout`, { method: 'POST', credentials: 'include' }).catch((err) => {
-      console.warn('Logout server call failed:', err);
+    fetch(`${apiUrl}/api/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => {
       // ignore
     });
 

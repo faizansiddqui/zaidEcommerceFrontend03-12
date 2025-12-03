@@ -1,4 +1,4 @@
-import { ArrowLeft, Mail, Phone, MapPin, Facebook, Instagram, Youtube, Twitter, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, MapPin, Instagram, MessageCircle, Image, MessageSquare } from 'lucide-react';
 
 interface ContactPageProps {
     onBack: () => void;
@@ -36,7 +36,8 @@ export default function ContactPage({ onBack }: ContactPageProps) {
                                     <MapPin className="w-6 h-6 text-amber-600 flex-shrink-0 mt-1" />
                                     <div>
                                         <h3 className="font-medium text-gray-900">Address</h3>
-                                        <p className="text-gray-600">123 Abdulla ART Street, Kanpur, India</p>
+                                        <p className="text-gray-600">  Matia Mahal, Chandni Chowk,
+                                            Old Delhi – 110006 </p>
                                     </div>
                                 </div>
 
@@ -44,7 +45,7 @@ export default function ContactPage({ onBack }: ContactPageProps) {
                                     <Phone className="w-6 h-6 text-amber-600 flex-shrink-0 mt-1" />
                                     <div>
                                         <h3 className="font-medium text-gray-900">Phone</h3>
-                                        <a href="tel:+917408097278" className="text-gray-600 hover:text-amber-600 transition-colors">+91 (740) 809-7278</a>
+                                        <a href="tel:+917408097278" className="text-gray-600 hover:text-amber-600 transition-colors">+917652087193</a>
                                         <p className="text-sm text-gray-500">Mon-Sat, 9AM-6PM IST</p>
                                     </div>
                                 </div>
@@ -53,7 +54,7 @@ export default function ContactPage({ onBack }: ContactPageProps) {
                                     <Mail className="w-6 h-6 text-amber-600 flex-shrink-0 mt-1" />
                                     <div>
                                         <h3 className="font-medium text-gray-900">Email</h3>
-                                        <a href="mailto:info@abdullaislamicstore.com" className="text-gray-600 hover:text-amber-600 transition-colors">info@abdullaislamicstore.com</a>
+                                        <a href="mailto:info@abdullaislamicstore.com" className="text-gray-600 hover:text-amber-600 transition-colors">abdullahislamicstore88@gmail.com</a>
                                         <p className="text-sm text-gray-500">We'll respond within 24 hours</p>
                                     </div>
                                 </div>
@@ -63,7 +64,7 @@ export default function ContactPage({ onBack }: ContactPageProps) {
                                     <div>
                                         <h3 className="font-medium text-gray-900">WhatsApp</h3>
                                         <a
-                                            href="https://wa.me/917408097278?text=Hi%20Abdulla%20Islamic%20Store%2C%20I%20came%20across%20your%20website%20and%20would%20like%20to%20discuss%20about%20products.%20"
+                                            href="https://wa.me/917652087193?text=Hi%20Abdulla%20Islamic%20Store%2C%20I%20came%20across%20your%20website%20and%20would%20like%20to%20discuss%20about%20products.%20"
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="text-gray-600 hover:text-amber-600 transition-colors"
@@ -94,36 +95,29 @@ export default function ContactPage({ onBack }: ContactPageProps) {
                             </p>
                             <div className="flex gap-4 justify-center">
                                 <a
-                                    href="https://www.facebook.com"
+                                    href="https://pin.it/5BJuVrWiZ"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="p-3 bg-gray-100 hover:bg-amber-100 rounded-full transition-colors"
                                 >
-                                    <Facebook className="w-6 h-6 text-gray-700 hover:text-amber-600" />
+                                    <Image className="w-6 h-6 text-gray-700 hover:text-amber-600" />
                                 </a>
                                 <a
-                                    href="https://www.instagram.com"
+                                    href="Insta https://www.instagram.com/kiswah_kabah_islamic_store_33?igsh=MW9sajV0a2xxZmY0cA=="
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="p-3 bg-gray-100 hover:bg-amber-100 rounded-full transition-colors"
                                 >
                                     <Instagram className="w-6 h-6 text-gray-700 hover:text-amber-600" />
                                 </a>
+                              
                                 <a
-                                    href="https://www.youtube.com"
+                                    href="https://wa.me/message/IYL55KOEQJ4GK1"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="p-3 bg-gray-100 hover:bg-amber-100 rounded-full transition-colors"
                                 >
-                                    <Youtube className="w-6 h-6 text-gray-700 hover:text-amber-600" />
-                                </a>
-                                <a
-                                    href="https://www.twitter.com"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="p-3 bg-gray-100 hover:bg-amber-100 rounded-full transition-colors"
-                                >
-                                    <Twitter className="w-6 h-6 text-gray-700 hover:text-amber-600" />
+                                    <MessageSquare className="w-6 h-6 text-gray-700 hover:text-amber-600" />
                                 </a>
                             </div>
                         </div>

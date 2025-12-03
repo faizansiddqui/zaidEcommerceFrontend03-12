@@ -161,9 +161,9 @@ export default function TermsOfServicePage({ onBack }: TermsOfServicePageProps) 
                         </p>
                         <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                             <p className="text-gray-600">Abdulla Islamic Store</p>
-                            <p className="text-gray-600">Email: info@abdullaislamicstore.com</p>
-                            <p className="text-gray-600">Phone: +91 (740) 809-7278</p>
-                            <p className="text-gray-600">Address: 123 Abdulla ART Street, Kanpur, India</p>
+                            <p className="text-gray-600">Email: abdullahislamicstore88@gmail.com</p>
+                            <p className="text-gray-600">Phone: +91 (765) 208-7193</p>
+                            <p className="text-gray-600">Address: Matia Mahal, Chandni Chowk, Old Delhi – 110006</p>
                         </div>
                     </section>
                 </div>

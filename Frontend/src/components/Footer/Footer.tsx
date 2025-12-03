@@ -1,4 +1,4 @@
-import { Facebook, Instagram, Twitter, Youtube, Mail, Phone, MapPin } from 'lucide-react';
+import { Facebook, Instagram, Twitter, Youtube, Mail, Phone, MapPin, Images, MessageCircleCode, MessagesSquare } from 'lucide-react';
 import { useNavigation } from "../../utils/navigation";
 
 export default function Footer() {
@@ -15,40 +15,32 @@ export default function Footer() {
             <p className="text-gray-400 mb-3 xs:mb-4 text-[10px] xs:text-xs sm:text-sm leading-relaxed">
               Bringing spiritual beauty to your home with premium Abdulla Islamic Store and decor.
             </p>
-            <div className="flex gap-2 xs:gap-3">
-              <a
-                href="https://www.facebook.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-1.5 xs:p-2 bg-gray-800 hover:bg-amber-700 rounded-full transition-colors"
-              >
-                <Facebook size={16} className="xs:w-5 xs:h-5" />
-              </a>
-              <a
-                href="https://www.instagram.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-1.5 xs:p-2 bg-gray-800 hover:bg-amber-700 rounded-full transition-colors"
-              >
-                <Instagram size={16} className="xs:w-5 xs:h-5" />
-              </a>
-              <a
-                href="https://www.twitter.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-1.5 xs:p-2 bg-gray-800 hover:bg-amber-700 rounded-full transition-colors"
-              >
-                <Twitter size={16} className="xs:w-5 xs:h-5" />
-              </a>
-              <a
-                href="https://www.youtube.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-1.5 xs:p-2 bg-gray-800 hover:bg-amber-700 rounded-full transition-colors"
-              >
-                <Youtube size={16} className="xs:w-5 xs:h-5" />
-              </a>
-            </div>
+              <div className="flex gap-2 xs:gap-3">
+                <a
+                  href="https://pin.it/5BJuVrWiZ"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1.5 xs:p-2 bg-gray-800 hover:bg-amber-700 rounded-full transition-colors"
+                >
+                  <Images size={16} className="xs:w-5 xs:h-5"/>
+                </a>
+                <a
+                  href="Insta https://www.instagram.com/kiswah_kabah_islamic_store_33?igsh=MW9sajV0a2xxZmY0cA=="
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1.5 xs:p-2 bg-gray-800 hover:bg-amber-700 rounded-full transition-colors"
+                >
+                  <Instagram size={16} className="xs:w-5 xs:h-5" />
+                </a>
+                <a
+                  href="https://wa.me/message/IYL55KOEQJ4GK1"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1.5 xs:p-2 bg-gray-800 hover:bg-amber-700 rounded-full transition-colors"
+                >
+                  <MessagesSquare size={16} className="xs:w-5 xs:h-5" />
+                </a>
+              </div>
           </div>
 
           <div>
@@ -78,15 +70,15 @@ export default function Footer() {
             <ul className="space-y-2 xs:space-y-2.5 sm:space-y-3">
               <li className="flex items-start gap-1.5 xs:gap-2">
                 <MapPin size={14} className="xs:w-4 xs:h-4 sm:w-5 sm:h-5 flex-shrink-0 mt-0.5" />
-                <span className="text-[10px] xs:text-xs sm:text-sm">123 Abdulla ART Street, Kanpur, India</span>
+                <span className="text-[10px] xs:text-xs sm:text-sm">Matia Mahal, Chandni Chowk, Old Delhi – 110006</span>
               </li>
               <li className="flex items-center gap-1.5 xs:gap-2">
                 <Phone size={14} className="xs:w-4 xs:h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-                <a href="tel:+917408097278" className="text-[10px] xs:text-xs sm:text-sm hover:text-amber-400 transition-colors">+91 (740) 809-7278</a>
+                <a href="tel:+917408097278" className="text-[10px] xs:text-xs sm:text-sm hover:text-amber-400 transition-colors">+91 (765) 208-7193</a>
               </li>
               <li className="flex items-center gap-1.5 xs:gap-2">
                 <Mail size={14} className="xs:w-4 xs:h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-                <a href="mailto:info@abdullaislamicstore.com" className="text-[10px] xs:text-xs sm:text-sm hover:text-amber-400 transition-colors">info@abdullaislamicstore.com</a>
+                <a href="mailto:info@abdullaislamicstore.com" className="text-[10px] xs:text-xs sm:text-sm hover:text-amber-400 transition-colors">abdullahislamicstore88@gmail.com</a>
               </li>
             </ul>
           </div>
@@ -109,7 +101,7 @@ export default function Footer() {
             </button>
           </div>
           <p className="text-gray-400 text-[10px] xs:text-xs sm:text-sm">
-            © 2024 Abdulla Islamic Store. All rights reserved.
+            © 2025 Abdulla Islamic Store. All rights reserved.
           </p>
         </div>
       </div>
