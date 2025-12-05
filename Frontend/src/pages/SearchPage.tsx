@@ -154,33 +154,6 @@ export default function SearchPage({ onBack, onSearchChange }: SearchPageProps) 
             </div>
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                {/* Search Bar */}
-                <div className="mb-6">
-                    <form
-                        onSubmit={(e) => {
-                            e.preventDefault();
-                            if (searchQuery.trim()) {
-                                performSearch(searchQuery);
-                            }
-                        }}
-                        className="relative max-w-2xl mx-auto"
-                    >
-                        <input
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Search products..."
-                            className="w-full px-4 py-3 pr-12 rounded-lg border border-gray-300 focus:border-amber-700 focus:ring-2 focus:ring-amber-700 focus:ring-opacity-50 outline-none text-base"
-                        />
-                        <button
-                            type="submit"
-                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-amber-700 transition-colors"
-                        >
-                            <Search size={20} />
-                        </button>
-                    </form>
-                </div>
-
                 {/* Search Results */}
                 {isLoading ? (
                     <div className="flex items-center justify-center py-12">

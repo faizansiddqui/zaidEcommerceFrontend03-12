@@ -10,6 +10,7 @@ interface ProductFormData {
     title: string;
     price: string;
     selling_price: string;
+    selling_price_link: string;
     quantity: string;
     sku: string;
     description: string;
@@ -23,6 +24,7 @@ export default function ProductUploadForm() {
         title: '',
         price: '',
         selling_price: '',
+        selling_price_link: '',
         quantity: '',
         sku: '',
         description: '',
@@ -59,14 +61,54 @@ export default function ProductUploadForm() {
             setProductError('At least one image is required');
             return;
         }
-        if (!productForm.name.trim() || !productForm.title.trim() || !productForm.price || !productForm.selling_price || !productForm.quantity || !productForm.catagory.trim()) {
-            setProductError('Please fill in all required fields (name, title, price, selling price, quantity, category)');
+
+        // Validate required fields (all except SKU)
+        if (!productForm.name.trim()) {
+            setProductError('Product name is required');
             return;
         }
 
-        // Validate quantity is a positive integer
+        if (!productForm.title.trim()) {
+            setProductError('Title is required');
+            return;
+        }
+
+        if (!productForm.price || parseFloat(productForm.price.trim()) <= 0) {
+            setProductError('Valid price is required');
+            return;
+        }
+
+        if (!productForm.selling_price || parseFloat(productForm.selling_price.trim()) <= 0) {
+            setProductError('Valid selling price is required');
+            return;
+        }
+
+        if (!productForm.quantity || parseInt(productForm.quantity.trim()) < 0) {
+            setProductError('Valid quantity is required');
+            return;
+        }
+
+        if (!productForm.catagory.trim()) {
+            setProductError('Category is required');
+            return;
+        }
+
+        if (!productForm.description.trim()) {
+            setProductError('Description is required');
+            return;
+        }
+
+        // Validate numeric fields
+        const priceNum = parseFloat(productForm.price.trim());
+        const sellingPriceNum = parseFloat(productForm.selling_price.trim());
         const quantityNum = parseInt(productForm.quantity.trim());
-        if (!productForm.quantity.trim() || isNaN(quantityNum) || quantityNum < 0) {
+
+        if (isNaN(priceNum) || isNaN(sellingPriceNum) || isNaN(quantityNum)) {
+            setProductError('Price, selling price, and quantity must be valid numbers');
+            return;
+        }
+
+        if (quantityNum < 0) {
             setProductError('Quantity must be a valid positive number');
             return;
         }
@@ -87,33 +129,41 @@ export default function ProductUploadForm() {
             // Add product data according to backend
             formData.append('name', productForm.name.trim());
             formData.append('title', productForm.title.trim());
-            formData.append('price', productForm.price.trim());
-            formData.append('selling_price', productForm.selling_price.trim());
-            // Ensure quantity is sent as a valid number string (must be >= 0)
-            if (isNaN(quantityNum) || quantityNum < 0) {
-                throw new Error('Invalid quantity value. Please enter a valid positive number.');
+            formData.append('price', priceNum.toString());
+            formData.append('selling_price', sellingPriceNum.toString());
+            if (productForm.selling_price_link.trim()) {
+                formData.append('selling_price_link', productForm.selling_price_link.trim());
+            } else {
+                formData.append('selling_price_link', ''); // Send empty string if not provided
             }
             formData.append('quantity', quantityNum.toString());
             if (productForm.sku.trim()) {
-                formData.append('sku', productForm.sku);
+                formData.append('sku', productForm.sku.trim());
+            } else {
+                formData.append('sku', ''); // Send empty string if not provided
             }
             formData.append('description', productForm.description || '');
             formData.append('catagory', productForm.catagory);
 
+            // Log all form data for debugging
+            console.log('🔵 Form Data being sent:');
+            for (const [key, value] of formData.entries()) {
+                console.log(`  ${key}:`, value);
+            }
 
-            // Verify quantity in FormData
-            const quantityValue = formData.get('quantity');
-            console.log('🔵 Verified quantity in FormData:', quantityValue, 'Type:', typeof quantityValue);
-
-            // Add specification as JSON string if provided
+            // Add specification as JSON string if provided and valid
             if (productForm.specification.trim()) {
                 try {
+                    // Validate that it's proper JSON
                     const specs = JSON.parse(productForm.specification);
-                    formData.append('specification', JSON.stringify(specs));
-                } catch {
-                    setProductError('Invalid JSON format for specification');
-                    setIsUploadingProduct(false);
-                    return;
+                    // Only send if it's a valid object with content
+                    if (typeof specs === 'object' && specs !== null && Object.keys(specs).length > 0) {
+                        formData.append('specification', JSON.stringify(specs));
+                        console.log('🔵 Adding specification:', JSON.stringify(specs));
+                    }
+                } catch (parseError) {
+                    console.warn('⚠️ Invalid JSON in specification, skipping:', parseError);
+                    // Don't fail the whole request if specs are invalid, just skip them
                 }
             }
 
@@ -127,6 +177,7 @@ export default function ProductUploadForm() {
                 title: '',
                 price: '',
                 selling_price: '',
+                selling_price_link: '',
                 quantity: '',
                 sku: '',
                 description: '',
@@ -160,13 +211,13 @@ export default function ProductUploadForm() {
                 if (axiosError.response?.data) {
                     const errorData = axiosError.response.data;
                     // Show the actual error message from backend
-                    const backendError = errorData.error || errorData.err || errorData.message;
-                    errorMsg = backendError || JSON.stringify(errorData);
+                    const backendError = errorData.error || errorData.err || errorData.message || errorData.Message;
+                    errorMsg = (backendError || JSON.stringify(errorData)) as string;
 
                     // Provide helpful context for common errors
-                    if (backendError && backendError.includes('invalid input syntax for type integer')) {
+                    if (typeof backendError === 'string' && backendError.includes('invalid input syntax for type integer')) {
                         errorMsg = `Database Error: ${backendError}. The backend is trying to use a UUID where an integer is expected. This is a backend issue - check backend code for product_id usage.`;
-                    } else if (backendError && backendError.includes('not null')) {
+                    } else if (typeof backendError === 'string' && backendError.includes('not null')) {
                         errorMsg = `Database Error: ${backendError}. A required field is missing. Check if 'quantity' field needs to be set in backend.`;
                     }
                 } else {

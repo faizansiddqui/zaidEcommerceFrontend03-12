@@ -22,7 +22,6 @@ interface CartContextType {
     cartItems: CartItem[];
     addToCart: (
         productId: number,
-        quantity?: number,
         productData?: {
             name: string;
             price: number;
@@ -36,6 +35,10 @@ interface CartContextType {
     getTotalPrice: () => number;
     getTotalItems: () => number;
     saveCartToLocalStorage: () => void;
+    isInCart: (productId: number) => boolean;
+    buyNow: (productId: number) => void;
+    setBuyNowItem: (itemId: number | null) => void;
+    buyNowItemId: number | null; // Add this property
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -177,55 +180,46 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     const addToCart = (
         productId: number,
-        quantity: number = 1,
-        productData?: { name: string; price: number; selling_price?: number; image: string; stock?: number } // selling_price is already optional
-    ) => {
-        if (productData) {
-            // Determine the correct price to use
-            let priceToUse: number;
-            if (typeof productData.selling_price === 'number' && !isNaN(productData.selling_price) && productData.selling_price > 0) {
-                priceToUse = productData.selling_price;
-            } else if (typeof productData.price === 'number' && !isNaN(productData.price) && productData.price > 0) {
-                priceToUse = productData.price;
-            } else {
-                // Fallback to 0 if no valid price is found
-                priceToUse = 0;
-            }
-
-            setCartItems((prevItems) => {
-                const existingItem = prevItems.find((item) => item.id === productId);
-                if (existingItem) {
-                    return prevItems.map((item) =>
-                        item.id === productId
-                            ? { ...item, quantity: item.quantity + quantity, stock: productData.stock }
-                            : item
-                    );
-                } else {
-                    return [
-                        ...prevItems,
-                        {
-                            id: productId,
-                            name: productData.name,
-                            price: priceToUse,
-                            image: productData.image,
-                            quantity: quantity,
-                            stock: productData.stock,
-                        },
-                    ];
-                }
-            });
-
-            // Save to backend if authenticated
-            if (isAuthenticated) {
-                userAPI.addToCart(productId, quantity).catch((error) => {
-                    console.warn("Failed to add item to cart on backend:", error);
-                });
-            }
-            return;
+        productData?: {
+            name: string;
+            price: number;
+            image: string;
+            stock?: number;
         }
+    ) => {
+        // Enforce maximum quantity of 1 per product
+        const enforcedQuantity = 1;
 
-        // If no productData provided, we can't add to cart without it
-        console.warn(`Product data not provided for product ${productId}`);
+        setCartItems((prevItems) => {
+            const existingItem = prevItems.find((item) => item.id === productId);
+
+            if (existingItem) {
+                // If item already exists, update its quantity to 1
+                return prevItems.map((item) =>
+                    item.id === productId ? { ...item, quantity: enforcedQuantity } : item
+                );
+            } else if (productData) {
+                // If item doesn't exist and productData is provided, add new item with quantity 1
+                const newItem: CartItem = {
+                    id: productId,
+                    name: productData.name,
+                    price: productData.price,
+                    image: productData.image,
+                    quantity: enforcedQuantity,
+                    stock: productData.stock
+                };
+                return [...prevItems, newItem];
+            }
+
+            return prevItems;
+        });
+
+        // Save to backend if authenticated
+        if (isAuthenticated) {
+            userAPI.addToCart(productId, enforcedQuantity).catch((error) => {
+                console.warn("Failed to add item to cart on backend:", error);
+            });
+        }
     };
 
     const removeFromCart = (productId: number) => {
@@ -239,21 +233,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const updateQuantity = (productId: number, quantity: number) => {
-        // Ensure quantity is at least 1
-        if (quantity < 1) {
-            quantity = 1;
-        }
-        
+    const updateQuantity = (productId: number) => {
+        // Enforce maximum quantity of 1 per product
+        const enforcedQuantity = 1;
+
         setCartItems((prevItems) =>
             prevItems.map((item) =>
-                item.id === productId ? { ...item, quantity } : item
+                item.id === productId ? { ...item, quantity: enforcedQuantity } : item
             )
         );
 
         // Update on backend if authenticated
         if (isAuthenticated) {
-            userAPI.updateCartItem(productId, quantity).catch((error) => {
+            userAPI.updateCartItem(productId, enforcedQuantity).catch((error) => {
                 console.warn("Failed to update cart item on backend:", error);
             });
         }
@@ -286,6 +278,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return cartItems.reduce((total, item) => total + item.quantity, 0);
     };
 
+    // Add this new method to check if a product is in the cart
+    const isInCart = (productId: number) => {
+        return cartItems.some(item => item.id === productId);
+    };
+
+    // Add this new method for buying a single item
+    const [buyNowItemId, setBuyNowItem] = useState<number | null>(null);
+
+    const buyNow = (productId: number) => {
+        // Set the buy now item ID
+        setBuyNowItem(productId);
+        // Navigation is now handled by the component that calls this function
+    };
+
     return (
         <CartContext.Provider
             value={{
@@ -297,6 +303,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 getTotalPrice,
                 getTotalItems,
                 saveCartToLocalStorage,
+                isInCart,
+                buyNow,
+                setBuyNowItem,
+                buyNowItemId, // Add this property to the context value
             }}
         >
             {children}

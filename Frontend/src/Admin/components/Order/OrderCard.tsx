@@ -54,9 +54,9 @@ export default function OrderCard({ order, updatingOrderId, onStatusUpdate }: Or
                                 {productName}
                             </p>
                         </div>
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1.5 ${getStatusColor(order.status, order.payment_status)}`}>
-                            {getStatusIcon(order.status, order.payment_status)}
-                            {getDisplayStatus(order.status, order.payment_status)}
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1.5 ${getStatusColor(order.status)}`}>
+                            {getStatusIcon(order.status)}
+                            {getDisplayStatus(order.status)}
                         </span>
                     </div>
 
@@ -104,14 +104,12 @@ export default function OrderCard({ order, updatingOrderId, onStatusUpdate }: Or
                         </p>
                     </div>
 
-                    {/* Status Update Buttons - Only show if payment is not failed and not automatically confirmed */}
-                    {(order.payment_status !== 'failed' && !((order.payment_status === 'success' || order.payment_status === 'paid') && order.status.toLowerCase() === 'pending')) && (
-                        <OrderStatusButtons
-                            order={order}
-                            updatingOrderId={updatingOrderId}
-                            onStatusUpdate={onStatusUpdate}
-                        />
-                    )}
+                    {/* Status Update Buttons - Show for all orders */}
+                    <OrderStatusButtons
+                        order={order}
+                        updatingOrderId={updatingOrderId}
+                        onStatusUpdate={onStatusUpdate}
+                    />
                 </div>
             </div>
         </div>

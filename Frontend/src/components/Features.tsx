@@ -16,7 +16,7 @@ export default function Features() {
         },
         {
             icon: RotateCcw,
-            title: '7-Day Returns',
+            title: '30-Days Returns',
             description: 'Easy return and exchange policy',
             color: 'bg-amber-50 text-amber-600'
         },

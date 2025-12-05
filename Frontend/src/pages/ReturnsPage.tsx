@@ -30,7 +30,7 @@ export default function ReturnsPage({ onBack }: ReturnsPageProps) {
                             <h2 className="text-xl font-semibold">Return Policy</h2>
                         </div>
                         <p className="text-gray-600 mb-4">
-                            We want you to be completely satisfied with your purchase. If you're not happy with your order, you can return it within <strong>7 days</strong> of delivery for a full refund or exchange.
+                            We want you to be completely satisfied with your purchase. If you're not happy with your order, you can return it within <strong> 30 days</strong> of delivery for a full refund or exchange.
                         </p>
                         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
                             <p className="text-sm text-amber-800 font-medium">
@@ -86,7 +86,7 @@ export default function ReturnsPage({ onBack }: ReturnsPageProps) {
                             </li>
                             <li className="flex items-start gap-2">
                                 <span className="text-red-600 mt-1">✗</span>
-                                <span>Returns requested after 7 days of delivery</span>
+                                <span>Returns requested after 30 days of delivery</span>
                             </li>
                         </ul>
                     </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Check, Clock, Package, Truck, XCircle } from 'lucide-react';
+import { getDisplayStatus } from '../Admin/components/Order/OrderStatusUtils';
 import { userAPI } from '../services/api';
 import { useNavigation } from "../utils/navigation";
 import { useAuthProtection } from '../utils/authProtection';
@@ -80,20 +81,7 @@ export default function OrderDetailsPage({ orderId, onBack }: OrderDetailsPagePr
                 // Find the specific order
                 const foundOrder = orders.find(o => o.order_id === orderId);
                 if (foundOrder) {
-                    // If payment failed, set order status to 'payment failed'
-                    if (foundOrder.payment_status === 'failed') {
-                        setOrder({ ...foundOrder, status: 'payment failed' });
-                    }
-                    // If payment is successful (paid/success) and order is pending, automatically confirm the order
-                    else if ((foundOrder.payment_status === 'success' || foundOrder.payment_status === 'paid') && foundOrder.status?.toLowerCase() === 'pending') {
-                        setOrder({ ...foundOrder, status: 'confirmed' });
-                    }
-                    // If order is pending (and payment is not successful), automatically set status to 'payment failed'
-                    else if (foundOrder.status?.toLowerCase() === 'pending') {
-                        setOrder({ ...foundOrder, status: 'payment failed' });
-                    } else {
-                        setOrder(foundOrder);
-                    }
+                    setOrder(foundOrder);
                 } else {
                     setError('Order not found');
                 }
@@ -280,17 +268,7 @@ export default function OrderDetailsPage({ orderId, onBack }: OrderDetailsPagePr
         : (order.Product ? getProductPrice(order.Product) : 0);
 
     // Determine the current status index for progress tracking
-    const getStatusIndex = (status?: string, paymentStatus?: string) => {
-        // If payment failed, show payment failed status
-        if (paymentStatus === 'failed' || status?.toLowerCase() === 'payment failed') {
-            return 1; // Show progress to payment failed status
-        }
-
-        // If payment is successful (paid/success) and order was pending, show confirmed status
-        if ((paymentStatus === 'success' || paymentStatus === 'paid') && status?.toLowerCase() === 'pending') {
-            return 1; // Show progress to confirmed status
-        }
-
+    const getStatusIndex = (status?: string) => {
         if (!status) return 0;
 
         // Normalize status string
@@ -314,8 +292,7 @@ export default function OrderDetailsPage({ orderId, onBack }: OrderDetailsPagePr
         // Explicit status mapping for better reliability
         switch (normalizedStatus) {
             case 'pending':
-            case 'payment failed':
-                return 1; // Show progress to payment failed status
+                return 1; // Show progress to pending status
             case 'confirm':
             case 'confirmed':
                 return 1;
@@ -331,45 +308,34 @@ export default function OrderDetailsPage({ orderId, onBack }: OrderDetailsPagePr
         }
     };
 
-    const statusIndex = getStatusIndex(order.status, order.payment_status);
+    const statusIndex = getStatusIndex(order.status);
 
-    // Updated status steps to include cancelled, payment failed, and RTO status
-    const statusSteps = order.payment_status === 'failed' || order.status?.toLowerCase() === 'payment failed'
+    // Updated status steps to include cancelled and RTO status
+    const statusSteps = order.status === 'cancelled'
         ? [
             { name: 'Payment in Pending', icon: Clock, color: 'bg-amber-500' },
-            { name: 'Payment Failed', icon: XCircle, color: 'bg-red-500' }
+            { name: 'Cancelled', icon: XCircle, color: 'bg-red-500' }
         ]
-        : (order.payment_status === 'success' || order.payment_status === 'paid') && order.status?.toLowerCase() === 'pending'
+        : order.status === 'reject' || order.status === 'rejected'
             ? [
                 { name: 'Payment in Pending', icon: Clock, color: 'bg-amber-500' },
-                { name: 'Payment Confirmed', icon: Check, color: 'bg-blue-500' },
-                { name: 'On the Way', icon: Truck, color: 'bg-indigo-500' },
-                { name: 'Delivered', icon: Check, color: 'bg-green-500' }
+                { name: 'Rejected', icon: XCircle, color: 'bg-red-500' }
             ]
-            : order.status === 'cancelled'
+
+            : order.status === 'rto'
                 ? [
                     { name: 'Payment in Pending', icon: Clock, color: 'bg-amber-500' },
-                    { name: 'Cancelled', icon: XCircle, color: 'bg-red-500' }
+                    { name: 'Payment Confirmed', icon: Check, color: 'bg-blue-500' },
+                    { name: 'On the Way', icon: Truck, color: 'bg-indigo-500' },
+                    { name: 'Delivered', icon: Check, color: 'bg-green-500' },
+                    { name: 'RTO', icon: XCircle, color: 'bg-orange-500' }
                 ]
-                : order.status === 'reject' || order.status === 'rejected'
-                    ? [
-                        { name: 'Payment in Pending', icon: Clock, color: 'bg-amber-500' },
-                        { name: 'Rejected', icon: XCircle, color: 'bg-red-500' }
-                    ]
-                    : order.status === 'rto'
-                        ? [
-                            { name: 'Payment in Pending', icon: Clock, color: 'bg-amber-500' },
-                            { name: 'Payment Confirmed', icon: Check, color: 'bg-blue-500' },
-                            { name: 'On the Way', icon: Truck, color: 'bg-indigo-500' },
-                            { name: 'Delivered', icon: Check, color: 'bg-green-500' },
-                            { name: 'RTO', icon: XCircle, color: 'bg-orange-500' }
-                        ]
-                        : [
-                            { name: 'Payment in Pending', icon: Clock, color: 'bg-amber-500' },
-                            { name: 'Payment Confirmed', icon: Check, color: 'bg-blue-500' },
-                            { name: 'On the Way', icon: Truck, color: 'bg-indigo-500' },
-                            { name: 'Delivered', icon: Check, color: 'bg-green-500' }
-                        ];
+                : [
+                    { name: 'Payment in Pending', icon: Clock, color: 'bg-amber-500' },
+                    { name: 'Payment Confirmed', icon: Check, color: 'bg-blue-500' },
+                    { name: 'On the Way', icon: Truck, color: 'bg-indigo-500' },
+                    { name: 'Delivered', icon: Check, color: 'bg-green-500' }
+                ];
 
     const shouldShowCancelButton = (order: Order) => {
         // Don't show cancel button if more than 24 hours have passed since order creation
@@ -381,11 +347,11 @@ export default function OrderDetailsPage({ orderId, onBack }: OrderDetailsPagePr
             return false;
         }
 
-        // Don't show cancel button for delivered, cancelled, rejected, RTO, or payment failed orders
+        // Don't show cancel button for delivered, cancelled, rejected, or RTO orders
         const statusLower = order.status?.toLowerCase();
         if (statusLower === 'delivered' || statusLower === 'cancelled' ||
-            statusLower === 'rejected' || statusLower === 'reject' || statusLower === 'rto' ||
-            statusLower === 'payment failed') {
+            statusLower === 'rejected' || statusLower === 'reject' ||
+            statusLower === 'rto') {
             return false;
         }
 
@@ -447,29 +413,22 @@ export default function OrderDetailsPage({ orderId, onBack }: OrderDetailsPagePr
                         <div className="bg-white rounded-xl shadow-md p-6">
                             <div className="flex items-center justify-between mb-6">
                                 <h2 className="text-2xl font-bold text-gray-900">Order #{order.order_id.slice(0, 8)}</h2>
-                                <span className={`px-4 py-2 rounded-lg font-semibold ${order.payment_status === 'failed' || order.status?.toLowerCase() === 'payment failed'
+                                <span className={`px-4 py-2 rounded-lg font-semibold ${order.status === 'cancelled'
                                     ? 'bg-red-100 text-red-700'
-                                    : (order.payment_status === 'success' || order.payment_status === 'paid') && order.status?.toLowerCase() === 'pending'
-                                        ? 'bg-blue-100 text-blue-700'
-                                        : order.status === 'cancelled'
-                                            ? 'bg-red-100 text-red-700'
-                                            : order.status === 'delivered'
-                                                ? 'bg-green-100 text-green-700'
-                                                : order.status === 'confirm' || order.status === 'confirmed'
-                                                    ? 'bg-blue-100 text-blue-700'
-                                                    : order.status === 'reject' || order.status === 'rejected'
-                                                        ? 'bg-red-100 text-red-700'
-                                                        : order.status === 'rto'
-                                                            ? 'bg-orange-100 text-orange-700'
-                                                            : order.status === 'out_for_delivery' || order.status === 'out for delivery' || order.status === 'ongoing'
-                                                                ? 'bg-indigo-100 text-indigo-700'
-                                                                : 'bg-amber-100 text-amber-700'
+                                    : order.status === 'delivered'
+                                        ? 'bg-green-100 text-green-700'
+                                        : order.status === 'confirm' || order.status === 'confirmed'
+                                            ? 'bg-blue-100 text-blue-700'
+                                            : order.status === 'reject' || order.status === 'rejected'
+                                                ? 'bg-red-100 text-red-700'
+
+                                                : order.status === 'rto'
+                                                    ? 'bg-orange-100 text-orange-700'
+                                                    : order.status === 'out_for_delivery' || order.status === 'out for delivery' || order.status === 'ongoing'
+                                                        ? 'bg-indigo-100 text-indigo-700'
+                                                        : 'bg-amber-100 text-amber-700'
                                     }`}>
-                                    {order.payment_status === 'failed' || order.status?.toLowerCase() === 'payment failed'
-                                        ? 'Payment Failed'
-                                        : (order.payment_status === 'success' || order.payment_status === 'paid') && order.status?.toLowerCase() === 'pending'
-                                            ? 'Confirmed'
-                                            : order.status ? order.status.charAt(0).toUpperCase() + order.status.slice(1).replace('_', ' ') : 'Pending in Confirmation'}
+                                    {order.status ? getDisplayStatus(order.status) : 'Pending in Confirmation'}
                                 </span>
                             </div>
 
@@ -488,11 +447,11 @@ export default function OrderDetailsPage({ orderId, onBack }: OrderDetailsPagePr
                                         )}
                                         <div className="flex-1">
                                             <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                                                {item.Product?.name || 'Product'}
+                                                {(item.Product?.name || 'Product').length > 30 ? `${(item.Product?.name || 'Product').substring(0, 30)}...` : (item.Product?.name || 'Product')}
                                             </h3>
 
                                             {item.Product?.description && (
-                                                <p className="text-gray-600 mb-4">{item.Product.description}</p>
+                                                <p className="text-gray-600 mb-4">{item.Product.description.length > 100 ? `${item.Product.description.substring(0, 100)}...` : item.Product.description}</p>
                                             )}
 
                                             <div className="space-y-2">
@@ -528,11 +487,11 @@ export default function OrderDetailsPage({ orderId, onBack }: OrderDetailsPagePr
                                     )}
                                     <div className="flex-1">
                                         <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                                            {order.Product?.name || 'Product'}
+                                            {(order.Product?.name || 'Product').length > 30 ? `${(order.Product?.name || 'Product').substring(0, 30)}...` : (order.Product?.name || 'Product')}
                                         </h3>
 
                                         {order.Product?.description && (
-                                            <p className="text-gray-600 mb-4">{order.Product.description}</p>
+                                            <p className="text-gray-600 mb-4">{order.Product.description.length > 100 ? `${order.Product.description.substring(0, 100)}...` : order.Product.description}</p>
                                         )}
 
                                         <div className="space-y-2">

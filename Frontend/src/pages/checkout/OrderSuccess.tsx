@@ -5,17 +5,20 @@ import { useNavigation } from "../../utils/navigation";
 
 interface OrderSuccessProps {
     onContinueShopping: () => void;
+    clearCartOnSuccess?: boolean; // Optional prop to control cart clearing
 }
 
-export default function OrderSuccess({ onContinueShopping }: OrderSuccessProps) {
+export default function OrderSuccess({ onContinueShopping, clearCartOnSuccess = false }: OrderSuccessProps) {
     const { clearCart } = useCart();
     const { go } = useNavigation();
 
 
-    // Clear the cart when the component mounts
+    // Clear the cart when the component mounts only if explicitly requested
     useEffect(() => {
-        clearCart();
-    }, []);
+        if (clearCartOnSuccess) {
+            clearCart();
+        }
+    }, [clearCartOnSuccess, clearCart]);
 
     // Get order ID from URL query parameters
     const urlParams = new URLSearchParams(window.location.search);

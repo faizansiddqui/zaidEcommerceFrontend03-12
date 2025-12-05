@@ -290,8 +290,7 @@ export default function MyOrdersPage({ onBack }: MyOrdersPageProps) {
                       <div className="text-right">
                         <p className="text-xs md:text-sm text-gray-600">
                           <span className="font-medium">
-                            {order.status?.toLowerCase() === 'payment failed' ? 'Payment Failed' :
-                              order.status ? order.status.charAt(0).toUpperCase() + order.status.slice(1) : 'Pending'}
+                            {order.status ? order.status.charAt(0).toUpperCase() + order.status.slice(1) : 'Pending'}
                           </span>
                         </p>
                       </div>
@@ -307,8 +306,7 @@ export default function MyOrdersPage({ onBack }: MyOrdersPageProps) {
                       <div className="text-right">
                         <h4 className="text-xs text-gray-600">
                           <span className="font-medium">
-                            {order.status?.toLowerCase() === 'payment failed' ? 'Payment Failed' :
-                              order.status ? order.status.charAt(0).toUpperCase() + order.status.slice(1) : 'Pending'}
+                            {order.status ? order.status.charAt(0).toUpperCase() + order.status.slice(1) : 'Pending'}
                           </span>
                         </h4>
                       </div>

@@ -45,7 +45,7 @@ export default function ContactPage({ onBack }: ContactPageProps) {
                                     <Phone className="w-6 h-6 text-amber-600 flex-shrink-0 mt-1" />
                                     <div>
                                         <h3 className="font-medium text-gray-900">Phone</h3>
-                                        <a href="tel:+917408097278" className="text-gray-600 hover:text-amber-600 transition-colors">+917652087193</a>
+                                        <a href="tel:+917652087193" className="text-gray-600 hover:text-amber-600 transition-colors">+917652087193</a>
                                         <p className="text-sm text-gray-500">Mon-Sat, 9AM-6PM IST</p>
                                     </div>
                                 </div>
@@ -54,7 +54,7 @@ export default function ContactPage({ onBack }: ContactPageProps) {
                                     <Mail className="w-6 h-6 text-amber-600 flex-shrink-0 mt-1" />
                                     <div>
                                         <h3 className="font-medium text-gray-900">Email</h3>
-                                        <a href="mailto:info@abdullaislamicstore.com" className="text-gray-600 hover:text-amber-600 transition-colors">abdullahislamicstore88@gmail.com</a>
+                                        <a href="mailto:abdullahislamicstore88@gmail.com" className="text-gray-600 hover:text-amber-600 transition-colors">abdullahislamicstore88@gmail.com</a>
                                         <p className="text-sm text-gray-500">We'll respond within 24 hours</p>
                                     </div>
                                 </div>
@@ -103,7 +103,7 @@ export default function ContactPage({ onBack }: ContactPageProps) {
                                     <Image className="w-6 h-6 text-gray-700 hover:text-amber-600" />
                                 </a>
                                 <a
-                                    href="Insta https://www.instagram.com/kiswah_kabah_islamic_store_33?igsh=MW9sajV0a2xxZmY0cA=="
+                                    href="https://www.instagram.com/kiswah_kabah_islamic_store_33?igsh=MW9sajV0a2xxZmY0cA=="
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="p-3 bg-gray-100 hover:bg-amber-100 rounded-full transition-colors"

@@ -1,8 +1,11 @@
+import { useState, useEffect } from 'react';
+
 interface ProductFormData {
     name: string;
     title: string;
     price: string;
     selling_price: string;
+    selling_price_link: string;
     quantity: string;
     sku: string;
     description: string;
@@ -15,6 +18,11 @@ interface Category {
     name: string;
 }
 
+interface Specification {
+    key: string;
+    value: string;
+}
+
 interface ProductFormFieldsProps {
     productForm: ProductFormData;
     categories: Category[];
@@ -22,6 +30,83 @@ interface ProductFormFieldsProps {
 }
 
 export default function ProductFormFields({ productForm, categories, onFormChange }: ProductFormFieldsProps) {
+    const [specifications, setSpecifications] = useState<Specification[]>([]);
+    const [newSpecKey, setNewSpecKey] = useState('');
+    const [newSpecValue, setNewSpecValue] = useState('');
+
+    // Initialize specifications from existing specification JSON
+    useEffect(() => {
+        if (productForm.specification) {
+            try {
+                const parsed = JSON.parse(productForm.specification);
+                if (typeof parsed === 'object' && parsed !== null) {
+                    const specArray = Object.entries(parsed).map(([key, value]) => ({
+                        key,
+                        value: String(value)
+                    }));
+                    setSpecifications(specArray);
+                }
+            } catch (e) {
+                // If parsing fails, keep default specifications
+                console.warn('Failed to parse specification JSON', e);
+            }
+        } else {
+            // If no specification, initialize with empty array
+            setSpecifications([]);
+        }
+    }, [productForm.specification]);
+
+    // Update the specification JSON whenever specifications change
+    useEffect(() => {
+        // Only update if we have specifications with non-empty keys
+        if (specifications.some(spec => spec.key.trim() !== '')) {
+            const specObject = specifications.reduce((acc, spec) => {
+                if (spec.key.trim() !== '') {
+                    acc[spec.key] = spec.value;
+                }
+                return acc;
+            }, {} as Record<string, string>);
+
+            const specString = JSON.stringify(specObject);
+            if (specString !== productForm.specification) {
+                onFormChange('specification', specString);
+            }
+        } else {
+            // If no valid specifications, set to empty string
+            if (productForm.specification !== '') {
+                onFormChange('specification', '');
+            }
+        }
+    }, [specifications]);
+
+    const updateSpecification = (index: number, field: 'key' | 'value', value: string) => {
+        const updatedSpecs = [...specifications];
+        updatedSpecs[index] = { ...updatedSpecs[index], [field]: value };
+        setSpecifications(updatedSpecs);
+    };
+
+    const removeSpecification = (index: number) => {
+        const updatedSpecs = [...specifications];
+        updatedSpecs.splice(index, 1);
+        setSpecifications(updatedSpecs);
+    };
+
+    const addSpecification = () => {
+        if (newSpecKey.trim() !== '') {
+            setSpecifications([...specifications, { key: newSpecKey, value: newSpecValue }]);
+            setNewSpecKey('');
+            setNewSpecValue('');
+        }
+    };
+
+    const addPredefinedSpecification = (key: string) => {
+        // Check if this key already exists
+        const exists = specifications.some(spec => spec.key.toLowerCase() === key.toLowerCase());
+        if (!exists) {
+            setSpecifications([...specifications, { key, value: '' }]);
+        }
+    };
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -52,7 +137,7 @@ export default function ProductFormFields({ productForm, categories, onFormChang
 
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-              Price($) <span className="text-red-500">*</span>
+                    Price($) <span className="text-red-500">*</span>
                 </label>
                 <input
                     type="number"
@@ -66,7 +151,7 @@ export default function ProductFormFields({ productForm, categories, onFormChang
 
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-        Selling Price($) <span className="text-red-500">*</span>
+                    Selling Price($) <span className="text-red-500">*</span>
                 </label>
                 <input
                     type="number"
@@ -75,6 +160,19 @@ export default function ProductFormFields({ productForm, categories, onFormChang
                     onChange={(e) => onFormChange('selling_price', e.target.value)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-700 focus:border-amber-700 outline-none"
                     required
+                />
+            </div>
+
+            <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Selling Price Link
+                </label>
+                <input
+                    type="text"
+                    value={productForm.selling_price_link}
+                    onChange={(e) => onFormChange('selling_price_link', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-700 focus:border-amber-700 outline-none"
+                    placeholder="https://example.com/product-price"
                 />
             </div>
 
@@ -143,18 +241,111 @@ export default function ProductFormFields({ productForm, categories, onFormChang
 
             <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Specification (JSON format)
+                    Specifications
                 </label>
-                <textarea
-                    value={productForm.specification}
-                    onChange={(e) => onFormChange('specification', e.target.value)}
-                    rows={4}
-                    placeholder='{"Material": "Cotton", "Size": "Large"}'
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-700 focus:border-amber-700 outline-none font-mono text-sm"
-                />
-                <p className="mt-1 text-xs text-gray-500">Enter specifications as JSON object</p>
+
+                {/* Predefined specification buttons */}
+                <div className="mb-4 flex flex-wrap gap-2">
+                    <button
+                        type="button"
+                        onClick={() => addPredefinedSpecification('Material')}
+                        className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-sm hover:bg-amber-200 transition-colors"
+                    >
+                        + Material
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => addPredefinedSpecification('Dimensions')}
+                        className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-sm hover:bg-amber-200 transition-colors"
+                    >
+                        + Dimensions
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => addPredefinedSpecification('Weight')}
+                        className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-sm hover:bg-amber-200 transition-colors"
+                    >
+                        + Weight
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => addPredefinedSpecification('Color')}
+                        className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-sm hover:bg-amber-200 transition-colors"
+                    >
+                        + Color
+                    </button>
+                </div>
+
+                {/* Specification inputs */}
+                <div className="space-y-3">
+                    {specifications.map((spec, index) => (
+                        <div key={index} className="grid grid-cols-12 gap-2 items-start">
+                            <div className="col-span-5">
+                                <input
+                                    type="text"
+                                    value={spec.key}
+                                    onChange={(e) => updateSpecification(index, 'key', e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-700 focus:border-amber-700 outline-none text-sm"
+                                    placeholder="Property"
+                                />
+                            </div>
+                            <div className="col-span-6">
+                                <input
+                                    type="text"
+                                    value={spec.value}
+                                    onChange={(e) => updateSpecification(index, 'value', e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-700 focus:border-amber-700 outline-none text-sm"
+                                    placeholder="Value"
+                                />
+                            </div>
+                            <div className="col-span-1">
+                                <button
+                                    type="button"
+                                    onClick={() => removeSpecification(index)}
+                                    className="text-red-500 hover:text-red-700"
+                                >
+                                    ×
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Add new specification */}
+                <div className="mt-4 grid grid-cols-12 gap-2 items-start">
+                    <div className="col-span-5">
+                        <input
+                            type="text"
+                            value={newSpecKey}
+                            onChange={(e) => setNewSpecKey(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-700 focus:border-amber-700 outline-none text-sm"
+                            placeholder="New Property"
+                        />
+                    </div>
+                    <div className="col-span-6">
+                        <input
+                            type="text"
+                            value={newSpecValue}
+                            onChange={(e) => setNewSpecValue(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-700 focus:border-amber-700 outline-none text-sm"
+                            placeholder="Value"
+                        />
+                    </div>
+                    <div className="col-span-1">
+                        <button
+                            type="button"
+                            onClick={addSpecification}
+                            className="w-full h-9 bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-colors"
+                        >
+                            +
+                        </button>
+                    </div>
+                </div>
+
+                <p className="mt-2 text-xs text-gray-500">
+                    Add product specifications like material, dimensions, weight, etc.
+                </p>
             </div>
         </div>
     );
 }
-

@@ -1,5 +1,5 @@
 import { ShoppingCart, ArrowRight } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCart } from '../../context/CartContext';
 import WishlistButton from './WishlistButton';
 import { Product } from '../../utils/productUtils';
@@ -20,9 +20,13 @@ interface ProductCardProps {
 export default function ProductCard({ id, name, price, image, category, inStock, badge, oldPrice, disableHover = false }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
-  const { addToCart } = useCart();
+  const { addToCart, isInCart } = useCart(); // Add isInCart to the destructuring
   const { go } = useNavigation();
 
+  useEffect(() => {
+    // Check if product is already in cart
+    setAddedToCart(isInCart(id));
+  }, [id, isInCart]);
 
   // Create a product object for the wishlist button
   const product: Product = {
@@ -38,12 +42,26 @@ export default function ProductCard({ id, name, price, image, category, inStock,
     e.stopPropagation();
     if (inStock) {
       // Pass product data to addToCart
-      addToCart(id, 1, {
+      addToCart(id, {
         name: name,
         price: price,
         image: image
       });
       setAddedToCart(true);
+    }
+  };
+
+  const handleBuyNow = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (inStock) {
+      // Add to cart and redirect to checkout
+      addToCart(id, {
+        name: name,
+        price: price,
+        image: image
+      });
+      // Redirect to checkout page
+      go('/checkout');
     }
   };
 
@@ -115,21 +133,31 @@ export default function ProductCard({ id, name, price, image, category, inStock,
               <ArrowRight size={14} className="xs:w-4 xs:h-4" />
             </button>
           ) : (
-            <button
-              onClick={handleAddToCart}
-              className="w-full bg-amber-700 hover:bg-amber-800 text-white py-1.5 xs:py-2 rounded-lg font-semibold flex items-center justify-center gap-1 xs:gap-2 sm:transition-colors text-xs xs:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={!inStock}
-            >
-              <ShoppingCart size={14} className="xs:w-4 xs:h-4" />
-              Add to Cart
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={handleAddToCart}
+                className="flex-1 bg-amber-700 hover:bg-amber-800 text-white py-1.5 xs:py-2 rounded-lg font-semibold flex items-center justify-center gap-1 xs:gap-2 sm:transition-colors text-xs xs:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!inStock}
+              >
+                <ShoppingCart size={14} className="xs:w-4 xs:h-4" />
+                Add to Cart
+              </button>
+              {inStock && (
+                <button
+                  onClick={handleBuyNow}
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-1.5 xs:py-2 rounded-lg font-semibold flex items-center justify-center gap-1 xs:gap-2 sm:transition-colors text-xs xs:text-sm"
+                >
+                  Buy Now
+                </button>
+              )}
+            </div>
           )}
         </div>
       </div>
 
       <div className="p-2 xs:p-2.5 sm:p-3 lg:p-4">
         <h3 className={`font-semibold text-[10px] xs:text-xs sm:text-sm text-gray-900 mb-1 xs:mb-1.5 sm:mb-2 line-clamp-2 min-h-[2rem] xs:min-h-[2.25rem] sm:min-h-[2.5rem] ${shouldApplyHover ? 'sm:group-hover:text-amber-700 sm:transition-colors' : ''}`}>
-          {name}
+          {name.length > 30 ? `${name.substring(0, 30)}...` : name}
         </h3>
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2 flex-wrap">

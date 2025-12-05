@@ -44,17 +44,7 @@ export interface Order {
     items?: OrderItem[]; // Add items array
 }
 
-export const getDisplayStatus = (status: string, paymentStatus?: string): string => {
-    // If payment status is failed, show Payment Failed regardless of order status
-    if (paymentStatus === 'failed') {
-        return 'Payment Failed';
-    }
-
-    // If payment is successful (paid or success) and order is pending, show Confirmed
-    if ((paymentStatus === 'success' || paymentStatus === 'paid') && status.toLowerCase() === 'pending') {
-        return 'Confirmed';
-    }
-
+export const getDisplayStatus = (status: string): string => {
     // Default to pending if no status provided
     if (!status) return 'Pending';
 
@@ -73,23 +63,14 @@ export const getDisplayStatus = (status: string, paymentStatus?: string): string
             return 'RTO';
         case 'reject':
         case 'rejected':
-            return 'Reject';
+            return 'Payment Failed';
+            break;
         default:
             return status.charAt(0).toUpperCase() + status.slice(1);
     }
 };
 
-export const getStatusColor = (status: string, paymentStatus?: string) => {
-    // If payment status is failed, show red color
-    if (paymentStatus === 'failed') {
-        return 'bg-red-100 text-red-800';
-    }
-
-    // If payment is successful (paid or success) and order is pending, show blue (confirmed) color
-    if ((paymentStatus === 'success' || paymentStatus === 'paid') && status.toLowerCase() === 'pending') {
-        return 'bg-blue-100 text-blue-800';
-    }
-
+export const getStatusColor = (status: string) => {
     // Default to pending if no status provided
     if (!status) return 'bg-amber-100 text-amber-800';
 
@@ -109,22 +90,13 @@ export const getStatusColor = (status: string, paymentStatus?: string) => {
         case 'reject':
         case 'rejected':
             return 'bg-red-100 text-red-800';
+            break;
         default:
             return 'bg-gray-100 text-gray-800';
     }
 };
 
-export const getStatusIcon = (status: string, paymentStatus?: string) => {
-    // If payment status is failed, show XCircle icon
-    if (paymentStatus === 'failed') {
-        return <XCircle size={16} />;
-    }
-
-    // If payment is successful (paid or success) and order is pending, show CheckCircle icon
-    if ((paymentStatus === 'success' || paymentStatus === 'paid') && status.toLowerCase() === 'pending') {
-        return <CheckCircle size={16} />;
-    }
-
+export const getStatusIcon = (status: string) => {
     // Default to pending if no status provided
     if (!status) return <Clock size={16} />;
 
@@ -144,6 +116,7 @@ export const getStatusIcon = (status: string, paymentStatus?: string) => {
         case 'reject':
         case 'rejected':
             return <XCircle size={16} />;
+            break;
         default:
             return <Clock size={16} />;
     }

@@ -97,7 +97,7 @@ export default function Hero() {
             <div className="relative aspect-[4/3] sm:aspect-square rounded-2xl overflow-hidden">
               <div className="absolute inset-0"></div>
               <img
-                src="/image.png"
+                src="/hero.jpg"
                 alt="Islamic Home Decor"
                 className="relative w-full rounded-md h-full object-contain sm:object-cover"
                 loading="eager"

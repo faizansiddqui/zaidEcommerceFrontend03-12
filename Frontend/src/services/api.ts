@@ -250,6 +250,21 @@ export const productAPI = {
     const message = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to load categories';
     throw new Error(message);
   }),
+
+  // Review APIs
+  addProductReview: (reviewData: FormData) => api.post('/user/product-reviews', reviewData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }).catch((error: any) => {
+    console.error('addProductReview failed:', error);
+    const message = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to add review';
+    throw new Error(message);
+  }),
+
+  getProductReviews: (productId: number) => api.get(`/user/get-product-reviews/${productId}`).catch((error: any) => {
+    console.error('getProductReviews failed:', error);
+    const message = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to load reviews';
+    throw new Error(message);
+  }),
 };
 
 // Admin API
@@ -287,8 +302,21 @@ export const adminAPI = {
       throw new Error(message);
     }),
 
+  updateFullProduct: (productId: number, formData: FormData) =>
+    api.patch(`/admin/update-product/${productId}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }).catch((error: any) => {
+      console.error('updateFullProduct failed:', error);
+      const message = error.response?.data?.message || error.response?.data?.error || error.message || `Failed to update product ${productId}`;
+      throw new Error(message);
+    }),
+
   getOrders: () => api.get('/admin/get-orders').catch((error: any) => {
     console.error('adminGetOrders failed:', error);
+    // If it's a 404 (no orders found), return a successful response with empty orders
+    if (error.response?.status === 404) {
+      return { data: { status: true, orders: [] } };
+    }
     const message = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to load admin orders';
     throw new Error(message);
   }),
@@ -297,6 +325,13 @@ export const adminAPI = {
     api.patch('/admin/update-order-status', { order_id: orderId, status }).catch((error: any) => {
       console.error('updateOrderStatus failed:', error);
       const message = error.response?.data?.message || error.response?.data?.error || error.message || `Failed to update order status for ${orderId}`;
+      throw new Error(message);
+    }),
+
+  deleteProduct: (productId: number) =>
+    api.delete('/admin/delete-product', { data: { productId } }).catch((error: any) => {
+      console.error('deleteProduct failed:', error);
+      const message = error.response?.data?.message || error.response?.data?.error || error.message || `Failed to delete product ${productId}`;
       throw new Error(message);
     }),
 };

@@ -2,7 +2,6 @@ import { X, Tag, Package, DollarSign, FileText, Settings, Grid, AlertCircle, Sav
 import { ProductFormData } from '../../types';
 import { categories } from '../../types';
 import ImageUpload from './ImageUpload';
-import FeaturesInput from './FeaturesInput';
 
 interface ProductFormProps {
     formData: ProductFormData;
@@ -86,7 +85,7 @@ export default function ProductForm({
                     <div>
                         <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                             <Package size={18} />
-                            SKU ID *
+                            SKU ID
                         </label>
                         <input
                             type="text"
@@ -179,6 +178,22 @@ export default function ProductForm({
 
                     <div>
                         <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                            <DollarSign size={18} />
+                            Selling Price Link
+                        </label>
+                        <input
+                            type="text"
+                            value={formData.sellingPriceLink || ''}
+                            onChange={(e) => {
+                                updateField('sellingPriceLink', e.target.value);
+                            }}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-700 focus:border-amber-700 outline-none"
+                            placeholder="https://example.com/product-price"
+                        />
+                      </div>
+
+                    <div>
+                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                             <Tag size={18} />
                             Discount (%)
                         </label>
@@ -203,38 +218,19 @@ export default function ProductForm({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Material *
+                                Specification *
                             </label>
                             <input
                                 type="text"
-                                value={formData.material}
-                                onChange={(e) => updateField('material', e.target.value)}
+                                value={formData.specification}
+                                onChange={(e) => updateField('specification', e.target.value)}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-700 focus:border-amber-700 outline-none"
-                                placeholder="e.g., Cotton, Silk, etc."
+                                placeholder="e.g., Material: Cotton, Dimensions: 10x10x5 cm"
                             />
-                            {errors.material && (
+                            {errors.specification && (
                                 <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
                                     <AlertCircle size={14} />
-                                    {errors.material}
-                                </p>
-                            )}
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Dimensions *
-                            </label>
-                            <input
-                                type="text"
-                                value={formData.dimensions}
-                                onChange={(e) => updateField('dimensions', e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-700 focus:border-amber-700 outline-none"
-                                placeholder="e.g., 10x10x5 cm"
-                            />
-                            {errors.dimensions && (
-                                <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                                    <AlertCircle size={14} />
-                                    {errors.dimensions}
+                                    {errors.specification}
                                 </p>
                             )}
                         </div>
@@ -281,7 +277,8 @@ export default function ProductForm({
                             <select
                                 value={formData.stock as string}
                                 onChange={(e) => {
-                                    updateField('stock', e.target.value as 'in stock' | 'out of stock');
+                                    const value = e.target.value === 'out of stock' ? 'in stock' : e.target.value as number | 'in stock';
+                                    updateField('stock', value);
                                 }}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-700 focus:border-amber-700 outline-none"
                             >
@@ -322,12 +319,6 @@ export default function ProductForm({
                     )}
                 </div>
 
-                {/* Features */}
-                <FeaturesInput
-                    features={formData.features}
-                    error={errors.features}
-                    onChange={(features) => updateField('features', features)}
-                />
 
                 {/* Form Actions */}
                 <div className="flex items-center justify-end gap-4 pt-4 border-t border-gray-200">

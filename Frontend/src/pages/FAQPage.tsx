@@ -28,7 +28,7 @@ export default function FAQPage({ onBack }: FAQPageProps) {
         {
             category: 'Orders & Payment',
             question: 'Can I modify or cancel my order?',
-            answer: 'Orders can be modified or cancelled within 2 hours of placement. After that, please contact our customer service for assistance.'
+            answer: 'Orders cannot be modified but cancelled within 24 hours of placement. After that, please contact our customer service for assistance.'
         },
         {
             category: 'Shipping',
@@ -38,7 +38,7 @@ export default function FAQPage({ onBack }: FAQPageProps) {
         {
             category: 'Shipping',
             question: 'Do you ship internationally?',
-            answer: 'Currently, we only ship within India. International shipping will be available soon. Subscribe to our newsletter to get notified.'
+            answer: 'Yes, we ship all over the world. International shipping will be available.'
         },
         {
             category: 'Shipping',
@@ -48,7 +48,7 @@ export default function FAQPage({ onBack }: FAQPageProps) {
         {
             category: 'Returns & Exchanges',
             question: 'What is your return policy?',
-            answer: 'We accept returns within 7 days of delivery. Items must be unused, in original packaging with tags intact. Please contact us to initiate a return.'
+            answer: 'We accept returns within 30 days of delivery. Items must be unused, in original packaging with tags intact. Please contact us to initiate a return.'
         },
         {
             category: 'Returns & Exchanges',
@@ -78,13 +78,8 @@ export default function FAQPage({ onBack }: FAQPageProps) {
         {
             category: 'Account',
             question: 'Do I need an account to place an order?',
-            answer: 'No, you can checkout as a guest. However, creating an account helps you track orders easily and enjoy a faster checkout experience.'
+            answer: 'Yes, you cannot checkout as a guest. However, creating an account helps you track orders easily and enjoy a faster checkout experience.'
         },
-        {
-            category: 'Account',
-            question: 'How do I reset my password?',
-            answer: 'Click on "Login" and select "Forgot Password". You will receive a verification code on your registered email to reset your password.'
-        }
     ];
 
     const categories = Array.from(new Set(faqs.map(faq => faq.category)));
@@ -167,13 +162,13 @@ export default function FAQPage({ onBack }: FAQPageProps) {
                     </p>
                     <div className="flex flex-col sm:flex-row gap-3 justify-center items-center text-sm">
                         <a
-                            href="mailto:info@abdullaislamicstore.com"
+                            href="mailto:abdullahislamicstore88@gmail.com"
                             className="text-amber-700 hover:text-amber-800 font-medium"
                         >
-                            📧 info@abdullaislamicstore.com
+                            📧 abdullahislamicstore88@gmail.com
                         </a>
                         <span className="hidden sm:inline text-gray-400">|</span>
-                        <span className="text-gray-700">📞 +91 (740) 809-7278</span>
+                        <span className="text-gray-700">📞 +91 76520 87193</span>
                     </div>
                 </div>
             </div>

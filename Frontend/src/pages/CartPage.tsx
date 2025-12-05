@@ -1,6 +1,5 @@
 import { useCart } from '../context/CartContext';
-import { useAuth } from '../context/AuthContext';
-import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft, Check } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { productAPI } from '../services/api';
 import { useNavigation } from "../utils/navigation";
@@ -10,26 +9,20 @@ interface CartPageProps {
 }
 
 export default function CartPage({ onBack }: CartPageProps) {
-    const { go } = useNavigation();
-
     const {
         cartItems,
         removeFromCart,
         updateQuantity,
         clearCart,
-        getTotalPrice,
         getTotalItems,
+        buyNow,
     } = useCart();
-    const { isAuthenticated } = useAuth();
+    const { go } = useNavigation();
     const [productStocks, setProductStocks] = useState<Record<number, number>>({});
-    const [loadingStocks, setLoadingStocks] = useState(false);
-
-    const total = getTotalPrice();
 
     // Fetch stock information for cart items
     useEffect(() => {
         const fetchStocks = async () => {
-            setLoadingStocks(true);
             const stocks: Record<number, number> = {};
 
             for (const item of cartItems) {
@@ -61,7 +54,6 @@ export default function CartPage({ onBack }: CartPageProps) {
                 }
             }
 
-            setLoadingStocks(false);
         };
 
         if (cartItems.length > 0) {
@@ -73,7 +65,7 @@ export default function CartPage({ onBack }: CartPageProps) {
         if (onBack) {
             onBack();
         } else {
-            window.location.hash = '';
+            go('/');
         }
     };
 
@@ -129,11 +121,11 @@ export default function CartPage({ onBack }: CartPageProps) {
 
                 <div className="grid lg:grid-cols-3 gap-8">
                     {/* Cart Items */}
-                    <div className="lg:col-span-2 space-y-4">
+                    <div className="lg:col-span-3 space-y-6">
                         {cartItems.map((item) => (
                             <div
                                 key={item.id}
-                                className="bg-white rounded-xl shadow-md p-6 flex flex-col sm:flex-row gap-6"
+                                className="bg-white rounded-xl shadow-md p-6 flex flex-col sm:flex-row gap-6 hover:shadow-lg transition-shadow"
                             >
                                 <div className="flex-shrink-0">
                                     <img
@@ -145,16 +137,41 @@ export default function CartPage({ onBack }: CartPageProps) {
 
                                 <div className="flex-1 flex flex-col justify-between">
                                     <div>
-                                        <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                                            {item.name}
-                                        </h3>
-                                        <p className="text-2xl font-bold text-amber-700 mb-2">
-                                            ${item.price}
-                                        </p>
+                                        <div className="flex flex-wrap items-start justify-between gap-4">
+                                            <div>
+                                                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                                                    {item.name}
+                                                </h3>
+                                                <p className="text-2xl font-bold text-amber-700 mb-2">
+                                                    ${item.price.toFixed(2)}
+                                                </p>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => {
+                                                        // Buy now this specific item
+                                                        buyNow(item.id);
+                                                        // Navigate to checkout with state
+                                                        go('/checkout', { state: { buyNowItemId: item.id } });
+                                                    }}
+                                                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors"
+                                                >
+                                                    Buy Now
+                                                </button>
+                                                <button
+                                                    onClick={() => removeFromCart(item.id)}
+                                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                    title="Remove item"
+                                                >
+                                                    <Trash2 size={20} />
+                                                </button>
+                                            </div>
+                                        </div>
+
                                         {productStocks[item.id] !== undefined && (
                                             <div className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${productStocks[item.id] >= 1
-                                                    ? 'bg-green-100 text-green-800'
-                                                    : 'bg-red-100 text-red-800'
+                                                ? 'bg-green-100 text-green-800'
+                                                : 'bg-red-100 text-red-800'
                                                 }`}>
                                                 {productStocks[item.id] >= 1
                                                     ? `In Stock`
@@ -168,11 +185,7 @@ export default function CartPage({ onBack }: CartPageProps) {
                                         <div className="flex flex-col gap-2">
                                             <div className="flex items-center border border-gray-300 rounded-lg">
                                                 <button
-                                                    onClick={() => {
-                                                        if (item.quantity > 1) {
-                                                            updateQuantity(item.id, item.quantity - 1);
-                                                        }
-                                                    }}
+                                                    onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
                                                     disabled={item.quantity <= 1}
                                                     className="px-4 py-2 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                                 >
@@ -183,17 +196,10 @@ export default function CartPage({ onBack }: CartPageProps) {
                                                 </span>
                                                 <button
                                                     onClick={() => {
-                                                        const availableStock = productStocks[item.id] ?? item.stock ?? 0;
-                                                        if (availableStock >= 1 && item.quantity < availableStock) {
-                                                            updateQuantity(item.id, item.quantity + 1);
-                                                        }
+                                                        const maxStock = productStocks[item.id] ?? item.stock ?? 10;
+                                                        updateQuantity(item.id, Math.min(maxStock, item.quantity + 1));
                                                     }}
-                                                    disabled={
-                                                        loadingStocks ||
-                                                        !productStocks[item.id] ||
-                                                        productStocks[item.id] < 1 ||
-                                                        item.quantity >= (productStocks[item.id] ?? item.stock ?? 0)
-                                                    }
+                                                    disabled={productStocks[item.id] !== undefined && item.quantity >= productStocks[item.id]}
                                                     className="px-4 py-2 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                                 >
                                                     <Plus size={16} />
@@ -207,17 +213,10 @@ export default function CartPage({ onBack }: CartPageProps) {
                                             )}
                                         </div>
 
-                                        <div className="flex items-center gap-4">
+                                        <div className="flex items-center">
                                             <span className="text-xl font-bold text-gray-900">
                                                 ${(item.price * item.quantity).toFixed(2)}
                                             </span>
-                                            <button
-                                                onClick={() => removeFromCart(item.id)}
-                                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                title="Remove item"
-                                            >
-                                                <Trash2 size={20} />
-                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -231,45 +230,8 @@ export default function CartPage({ onBack }: CartPageProps) {
                             Clear Cart
                         </button>
                     </div>
-
-                    {/* Order Summary */}
-                    <div className="lg:col-span-1">
-                        <div className="bg-white rounded-xl shadow-md p-6 sticky top-8">
-                            
-                            <div className="border-t border-gray-200 pt-4 mb-6">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-xl font-bold text-gray-900">Total</span>
-                                    <span className="text-2xl font-bold text-amber-700">
-                                        ${total.toFixed(2)}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <button
-                                onClick={() => {
-                                    if (!isAuthenticated) {
-                                        go('/log');
-                                        return;
-                                    }
-                                    go('/checkout');
-                                }}
-                                className="w-full bg-amber-700 hover:bg-amber-800 text-white py-4 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all transform hover:scale-105 shadow-lg mb-4"
-                            >
-                                <Check size={20} />
-                                Proceed to Checkout
-                            </button>
-
-                            <button
-                                onClick={handleBack}
-                                className="w-full border-2 border-gray-300 hover:border-amber-700 text-gray-700 hover:text-amber-700 py-3 rounded-lg font-semibold transition-colors"
-                            >
-                                Continue Shopping
-                            </button>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
     );
 }
-

@@ -32,20 +32,8 @@ export default function OrdersList() {
             const response = await adminAPI.getOrders();
 
             if (response.data.status && Array.isArray(response.data.orders)) {
-                // Process orders to automatically update status based on payment status
+                // Use orders as received from backend without automatic status updates
                 const processedOrders = response.data.orders.map((order: Order) => {
-                    // If payment failed, set order status to 'payment failed'
-                    if (order.payment_status === 'failed') {
-                        return { ...order, status: 'payment failed' };
-                    }
-                    // If payment is successful (paid or success) and order is pending, automatically confirm the order
-                    else if ((order.payment_status === 'success' || order.payment_status === 'paid') && order.status.toLowerCase() === 'pending') {
-                        return { ...order, status: 'confirmed' };
-                    }
-                    // If order is pending (and payment is not successful), automatically set status to 'payment failed'
-                    else if (order.status.toLowerCase() === 'pending') {
-                        return { ...order, status: 'payment failed' };
-                    }
                     return order;
                 });
                 setOrders(processedOrders);
@@ -155,8 +143,7 @@ export default function OrdersList() {
                     return statusLower === 'confirm' || statusLower === 'confirmed';
                 } else if (statusFilter === 'ongoing') {
                     return statusLower === 'pending' || statusLower === 'ongoing';
-                } else if (statusFilter === 'payment failed') {
-                    return statusLower === 'payment failed';
+
                 } else {
                     return statusLower === statusFilter;
                 }
@@ -313,9 +300,9 @@ export default function OrdersList() {
                                                 })}
                                             </td>
                                             <td className="py-3 px-4">
-                                                <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${getStatusColor(order.status, order.payment_status)}`}>
-                                                    {getStatusIcon(order.status, order.payment_status)}
-                                                    {getDisplayStatus(order.status, order.payment_status)}
+                                                <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${getStatusColor(order.status)}`}>
+                                                    {getStatusIcon(order.status)}
+                                                    {getDisplayStatus(order.status)}
                                                 </span>
                                             </td>
                                             <td className="py-3 px-4 text-sm font-medium text-gray-900">

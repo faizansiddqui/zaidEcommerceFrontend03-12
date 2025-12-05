@@ -1,4 +1,4 @@
-import { Facebook, Instagram, Twitter, Youtube, Mail, Phone, MapPin, Images, MessageCircleCode, MessagesSquare } from 'lucide-react';
+import { Instagram, Mail, Phone, MapPin, Images, MessagesSquare } from 'lucide-react';
 import { useNavigation } from "../../utils/navigation";
 
 export default function Footer() {
@@ -25,7 +25,7 @@ export default function Footer() {
                   <Images size={16} className="xs:w-5 xs:h-5"/>
                 </a>
                 <a
-                  href="Insta https://www.instagram.com/kiswah_kabah_islamic_store_33?igsh=MW9sajV0a2xxZmY0cA=="
+                  href="https://www.instagram.com/kiswah_kabah_islamic_store_33?igsh=MW9sajV0a2xxZmY0cA=="
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-1.5 xs:p-2 bg-gray-800 hover:bg-amber-700 rounded-full transition-colors"
@@ -49,7 +49,7 @@ export default function Footer() {
               <li><a href="/categories" className="hover:text-amber-400 transition-colors text-[10px] xs:text-xs sm:text-sm">All Categories</a></li>
               <li><a href="/categories" className="hover:text-amber-400 transition-colors text-[10px] xs:text-xs sm:text-sm">Kiswah Collection</a></li>
               <li><a href="/categories" className="hover:text-amber-400 transition-colors text-[10px] xs:text-xs sm:text-sm">Islamic Arts</a></li>
-              <li><a href="/categories" className="hover:text-amber-400 transition-colors text-[10px] xs:text-xs sm:text-sm">Hijab</a></li>
+              <li><a href="/" className="hover:text-amber-400 transition-colors text-[10px] xs:text-xs sm:text-sm">Bestsellers</a></li>
               <li><a href="/" className="hover:text-amber-400 transition-colors text-[10px] xs:text-xs sm:text-sm">New Arrivals</a></li>
             </ul>
           </div>
@@ -74,11 +74,11 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-1.5 xs:gap-2">
                 <Phone size={14} className="xs:w-4 xs:h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-                <a href="tel:+917408097278" className="text-[10px] xs:text-xs sm:text-sm hover:text-amber-400 transition-colors">+91 (765) 208-7193</a>
+                <a href="tel:+917652087193" className="text-[10px] xs:text-xs sm:text-sm hover:text-amber-400 transition-colors">+91 (765) 208-7193</a>
               </li>
               <li className="flex items-center gap-1.5 xs:gap-2">
                 <Mail size={14} className="xs:w-4 xs:h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-                <a href="mailto:info@abdullaislamicstore.com" className="text-[10px] xs:text-xs sm:text-sm hover:text-amber-400 transition-colors">abdullahislamicstore88@gmail.com</a>
+                <a href="mailto:abdullahislamicstore88@gmail.com" className="text-[10px] xs:text-xs sm:text-sm hover:text-amber-400 transition-colors">abdullahislamicstore88@gmail.com</a>
               </li>
             </ul>
           </div>

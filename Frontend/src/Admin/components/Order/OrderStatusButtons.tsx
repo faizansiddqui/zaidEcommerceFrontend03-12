@@ -21,23 +21,23 @@ export default function OrderStatusButtons({ order, updatingOrderId, onStatusUpd
         }
 
         // If order is RTO, reject, or cancelled, disable all buttons
-        if (currentStatus === 'rto' || currentStatus === 'reject' || currentStatus === 'rejected' || currentStatus === 'cancelled' || currentStatus === 'payment failed') {
+        if (currentStatus === 'rto' || currentStatus === 'reject' || currentStatus === 'rejected' || currentStatus === 'cancelled') {
             return true;
         }
 
         if (currentStatus === 'confirm' || currentStatus === 'confirmed') {
-            if (buttonStatusLower === 'confirm' || buttonStatusLower === 'confirmed') {
-                return true;
-            }
-            return false;
+            // Only allow ongoing and RTO buttons
+            return !(buttonStatusLower === 'ongoing' || buttonStatusLower === 'rto');
         }
 
         if (currentStatus === 'ongoing') {
-            if (buttonStatusLower === 'confirm' || buttonStatusLower === 'confirmed' ||
-                buttonStatusLower === 'ongoing') {
-                return true;
-            }
-            return false;
+            // Only allow delivered and RTO buttons
+            return !(buttonStatusLower === 'delivered' || buttonStatusLower === 'rto');
+        }
+
+        // For pending orders, only allow confirm and reject buttons
+        if (currentStatus === 'pending') {
+            return !(buttonStatusLower === 'confirm' || buttonStatusLower === 'reject');
         }
 
         return false;
@@ -56,25 +56,24 @@ export default function OrderStatusButtons({ order, updatingOrderId, onStatusUpd
             return buttonStatusLower === 'rto';
         }
 
-        // If payment failed, don't show any buttons
-        if (currentStatus === 'payment failed') {
+        // If order is rejected, don't show any other buttons
+        if (currentStatus === 'reject' || currentStatus === 'rejected') {
             return false;
         }
 
-        if (currentStatus === 'pending') {
-            // If payment is successful (paid), automatically show as confirmed (no need for manual confirm)
-            if (order.payment_status === 'success' || order.payment_status === 'paid') {
-                return false; // Don't show confirm button if payment is already successful
-            }
-            return buttonStatusLower === 'confirm' || buttonStatusLower === 'reject';
-        }
-
+        // If order is confirmed, show only ongoing and RTO buttons
         if (currentStatus === 'confirm' || currentStatus === 'confirmed') {
-            return buttonStatusLower !== 'confirm' && buttonStatusLower !== 'confirmed';
+            return buttonStatusLower === 'ongoing' || buttonStatusLower === 'rto';
         }
 
+        // If order is ongoing, show delivered and RTO buttons
         if (currentStatus === 'ongoing') {
-            return buttonStatusLower !== 'confirm' && buttonStatusLower !== 'ongoing';
+            return buttonStatusLower === 'delivered' || buttonStatusLower === 'rto';
+        }
+
+        // For pending orders, show only confirm and reject by default
+        if (currentStatus === 'pending') {
+            return buttonStatusLower === 'confirm' || buttonStatusLower === 'reject';
         }
 
         return true;
@@ -134,6 +133,7 @@ export default function OrderStatusButtons({ order, updatingOrderId, onStatusUpd
                         Reject
                     </button>
                 )}
+
                 {updatingOrderId === order.order_id && (
                     <span className="text-sm text-gray-500 flex items-center gap-1.5">
                         <RefreshCw size={14} className="animate-spin" />

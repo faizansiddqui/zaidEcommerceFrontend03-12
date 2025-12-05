@@ -25,11 +25,15 @@ export default function ProductInfo({
     specifications,
     quantity
 }: ProductInfoProps) {
+    // Calculate average rating (for demo purposes, we'll use a fixed value)
+    const averageRating = 4.5;
+    const reviewCount = 128;
+
     return (
         <div className="space-y-4 sm:space-y-5 lg:space-y-6">
             <div>
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2 sm:mb-3 lg:mb-4">
-                    {name || title || 'Product'}
+                    {(name || title || 'Product').length > 30 ? `${(name || title || 'Product').substring(0, 30)}...` : (name || title || 'Product')}
                 </h1>
                 <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 mb-3 sm:mb-4">
                     <div className="flex items-center">
@@ -41,11 +45,13 @@ export default function ProductInfo({
                             />
                         ))}
                     </div>
-                    <span className="text-sm sm:text-base text-gray-600">(Reviews)</span>
+                    <span className="text-sm sm:text-base text-gray-600">
+                        {averageRating} ({reviewCount} reviews)
+                    </span>
                 </div>
                 {description && (
                     <p className="text-sm sm:text-base lg:text-lg text-gray-600 leading-relaxed">
-                        {description}
+                        {description.length > 100 ? `${description.substring(0, 100)}...` : description}
                     </p>
                 )}
             </div>

@@ -19,7 +19,11 @@ export default function WishlistPage() {
 
     const handleAddToCart = async (product: Product) => {
         try {
-            await addToCart(product.product_id, 1);
+            await addToCart(product.product_id, {
+                name: product.name,
+                price: product.selling_price,
+                image: typeof product.product_image === 'string' ? product.product_image : Array.isArray(product.product_image) ? product.product_image[0] : Object.values(product.product_image)[0]
+            });
             // Optionally remove from wishlist after adding to cart
             // await removeFromWishlist(product.product_id);
         } catch (error) {

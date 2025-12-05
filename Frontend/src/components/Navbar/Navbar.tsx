@@ -176,22 +176,33 @@ export default function Navbar({ onSearchChange }: NavbarProps) {
 
         <div className="max-w-7xl mx-auto px-2 xs:px-3 sm:px-4 lg:px-8">
           <div className="flex justify-between items-center h-12 xs:h-14 sm:h-16 lg:h-20">
-            <button
-              className="lg:hidden p-2"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-            >
-              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-
-            <div className="flex-1 flex justify-center lg:justify-start min-w-0">
-              <a href="/" className="text-xs xs:text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold text-gray-900 hover:text-amber-700 transition-colors truncate px-2">
-                Abdulla Islamic Store
+            {/* Logo and Store Name */}
+            <div className="flex items-center min-w-0">
+              <a href="/" className="flex items-center px-2">
+                <img
+                  src="/logo.jpg"
+                  alt="Abdulla Islamic Store Logo"
+                  className="h-8 xs:h-9 sm:h-10 md:h-12 lg:h-14 w-auto"
+                />
+                <span className="ml-2 text-xs xs:text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold text-gray-900 hover:text-amber-700 transition-colors truncate hidden xs:inline">
+                  Abdulla Islamic Store
+                </span>
               </a>
             </div>
 
+            {/* Search Icon for Mobile */}
+            <button
+              className="lg:hidden p-2 text-gray-700"
+              onClick={() => setIsSearchExpanded(!isSearchExpanded)}
+            >
+              <Search size={24} />
+            </button>
+
+
+
             {/* Search - Always visible, responsive size */}
             <div
-              className={`flex flex-1 max-w-md mx-2 xs:mx-3 sm:mx-4 lg:mx-6 ${isSearchExpanded ? 'hidden' : 'block'}`}
+              className={`hidden lg:flex flex-1 max-w-md mx-2 xs:mx-3 sm:mx-4 lg:mx-6 ${isSearchExpanded ? 'hidden' : 'block'}`}
               ref={searchContainerRef}
             >
               <form onSubmit={handleSearchSubmit} className="relative w-full">
@@ -237,6 +248,15 @@ export default function Navbar({ onSearchChange }: NavbarProps) {
                   </span>
                 )}
               </button>
+
+              {/* Hamburger Menu - Right side on mobile */}
+              <button
+                className="lg:hidden py-2"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+              >
+                {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              </button>
+
               {/* Profile - Hidden on mobile */}
               <div className="hidden sm:block relative" ref={profileDropdownRef}>
                 <button

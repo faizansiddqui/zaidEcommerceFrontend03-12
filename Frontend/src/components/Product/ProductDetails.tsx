@@ -5,6 +5,7 @@ import { productAPI } from '../../services/api';
 import ProductImageGallery from './ProductImageGallery';
 import ProductInfo from './ProductInfo';
 import ProductActions from './ProductActions';
+import ProductReviews from './ProductReviews';
 import WishlistButton from './WishlistButton';
 import { useNavigation } from "../../utils/navigation";
 import { Product } from '../../utils/productUtils';
@@ -38,15 +39,21 @@ export default function ProductDetails({ productId, onClose }: ProductDetailsPro
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedImage, setSelectedImage] = useState(0);
-  const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
-  const { addToCart } = useCart();
+  const { cartItems, addToCart, isInCart } = useCart(); // Add cartItems to the destructuring
   const { go } = useNavigation();
 
   useEffect(() => {
     loadProduct();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productId]);
+
+  // Add effect to update addedToCart when cart changes
+  useEffect(() => {
+    if (product) {
+      setAddedToCart(isInCart(product.product_id));
+    }
+  }, [cartItems, product, isInCart]);
 
   const loadProduct = async () => {
     setIsLoading(true);
@@ -77,7 +84,7 @@ export default function ProductDetails({ productId, onClose }: ProductDetailsPro
   const handleAddToCart = () => {
     if (product) {
       // Pass product data to addToCart
-      addToCart(product.product_id, quantity, {
+      addToCart(product.product_id, {
         name: product.name || product.title || 'Product',
         price: product.selling_price || product.price,
         image: Array.isArray(product.product_image)
@@ -109,8 +116,27 @@ export default function ProductDetails({ productId, onClose }: ProductDetailsPro
 
 
   const handleGoToCart = () => {
-    onClose();  
+    onClose();
     go('/cart');
+  };
+
+  const handleBuyNow = () => {
+    if (product) {
+      // Add to cart first
+      addToCart(product.product_id, {
+        name: product.name || product.title || 'Product',
+        price: product.selling_price || product.price,
+        image: Array.isArray(product.product_image)
+          ? product.product_image[0]
+          : typeof product.product_image === 'string'
+            ? product.product_image
+            : Object.values(product.product_image)[0] || ''
+      });
+
+      // Then navigate to checkout
+      onClose();
+      go('/checkout');
+    }
   };
 
   if (isLoading) {
@@ -189,13 +215,19 @@ export default function ProductDetails({ productId, onClose }: ProductDetailsPro
 
               <ProductActions
                 quantity={product.quantity}
-                selectedQuantity={quantity}
-                onQuantityDecrease={() => setQuantity(Math.max(1, quantity - 1))}
-                onQuantityIncrease={() => setQuantity(quantity + 1)}
+                selectedQuantity={1} // Always set to 1
+                onQuantityDecrease={() => { }} // Disable decrease
+                onQuantityIncrease={() => { }} // Disable increase
                 onAddToCart={handleAddToCart}
+                onBuyNow={handleBuyNow}
                 addedToCart={addedToCart}
                 onGoToCart={handleGoToCart}
               />
+            </div>
+
+            {/* Product Reviews Section */}
+            <div className="mt-8">
+              <ProductReviews productId={product.product_id} />
             </div>
           </div>
         </div>

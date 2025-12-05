@@ -13,7 +13,7 @@ export default function SearchSuggestions({ suggestions, onSelect, searchQuery }
     }
 
     return (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl z-50 max-h-96 overflow-y-auto sm:left-auto sm:right-auto sm:w-full sm:min-w-[400px]">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl z-50 max-h-96 overflow-y-auto w-full min-w-[200px]">
             <div className="p-3">
                 <div className="text-xs text-gray-500 px-3 py-2 font-medium">
                     Suggestions ({suggestions.length})
@@ -25,6 +25,11 @@ export default function SearchSuggestions({ suggestions, onSelect, searchQuery }
                             key={product.product_id}
                             onMouseDown={(e) => {
                                 e.preventDefault(); // Prevent blur event
+                                onSelect(product.product_id);
+                            }}
+                            onTouchEnd={(e) => {
+                                // Handle touch events for mobile devices
+                                e.preventDefault();
                                 onSelect(product.product_id);
                             }}
                             className="w-full flex items-center gap-4 px-3 py-3 hover:bg-amber-50 rounded-lg transition-colors text-left"

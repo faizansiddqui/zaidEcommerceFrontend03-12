@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { adminAPI } from '../../../services/api';
 import AlertMessage from '../Admin/AlertMessage';
 import EditProductModal from './EditProductModal';
-import { Package, RefreshCw, Edit } from 'lucide-react';
+import FullEditProductModal from './FullEditProductModal';
+import { Package, RefreshCw, Edit, Trash2 } from 'lucide-react';
 
 interface Product {
     product_id: number;
@@ -19,6 +20,11 @@ interface Product {
         id: number;
         name: string;
     };
+    ProductSpecifications?: Array<{
+        spec_id: number;
+        key: string;
+        value: string;
+    }>;
 }
 
 export default function ProductsList() {
@@ -28,6 +34,8 @@ export default function ProductsList() {
     const [success, setSuccess] = useState('');
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isFullEditModalOpen, setIsFullEditModalOpen] = useState(false);
+    const [deletingProductId, setDeletingProductId] = useState<number | null>(null);
 
     const fetchProducts = async () => {
         setLoading(true);
@@ -78,11 +86,12 @@ export default function ProductsList() {
 
     const handleEdit = (product: Product) => {
         setEditingProduct(product);
-        setIsEditModalOpen(true);
+        setIsFullEditModalOpen(true);
     };
 
     const handleCloseModal = () => {
         setIsEditModalOpen(false);
+        setIsFullEditModalOpen(false);
         setEditingProduct(null);
     };
 
@@ -105,6 +114,45 @@ export default function ProductsList() {
             const errorMessage = err instanceof Error ? err.message : 'Failed to update product. Please try again.';
             setError(errorMessage);
             throw err; // Re-throw to let the modal handle it
+        }
+    };
+
+    const handleFullSave = async (productId: number, formData: FormData) => {
+        try {
+            await adminAPI.updateFullProduct(productId, formData);
+
+            // Refresh the products list to show updated data
+            await fetchProducts();
+
+            setSuccess('Product updated successfully!');
+            setTimeout(() => setSuccess(''), 3000);
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to update product. Please try again.';
+            setError(errorMessage);
+            throw err; // Re-throw to let the modal handle it
+        }
+    };
+
+    const handleDelete = async (productId: number) => {
+        // Confirm deletion
+        if (!window.confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+            return;
+        }
+
+        setDeletingProductId(productId);
+        try {
+            await adminAPI.deleteProduct(productId);
+
+            // Remove the product from the local state
+            setProducts(prevProducts => prevProducts.filter(p => p.product_id !== productId));
+
+            setSuccess('Product deleted successfully!');
+            setTimeout(() => setSuccess(''), 3000);
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to delete product. Please try again.';
+            setError(errorMessage);
+        } finally {
+            setDeletingProductId(null);
         }
     };
 
@@ -187,13 +235,13 @@ export default function ProductsList() {
                                             )}
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                                            <div className="text-sm font-medium text-gray-900">{product.name.length > 30 ? `${product.name.substring(0, 30)}...` : product.name}</div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="text-sm text-gray-900">{product.title || '-'}</div>
+                                            <div className="text-sm text-gray-900">{(product.title || '-').length > 30 ? `${(product.title || '-').substring(0, 30)}...` : (product.title || '-')}</div>
                                             {product.description && (
                                                 <div className="text-xs text-gray-500 truncate max-w-xs mt-1">
-                                                    {product.description}
+                                                    {product.description.length > 100 ? `${product.description.substring(0, 100)}...` : product.description}
                                                 </div>
                                             )}
                                         </td>
@@ -224,13 +272,25 @@ export default function ProductsList() {
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                             {product.sku || '-'}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium flex gap-2">
                                             <button
                                                 onClick={() => handleEdit(product)}
                                                 className="text-amber-700 hover:text-amber-800 p-2 hover:bg-amber-50 rounded-lg transition-colors"
                                                 title="Edit Product"
                                             >
                                                 <Edit size={18} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(product.product_id)}
+                                                disabled={deletingProductId === product.product_id}
+                                                className="text-red-600 hover:text-red-800 p-2 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                title="Delete Product"
+                                            >
+                                                {deletingProductId === product.product_id ? (
+                                                    <RefreshCw size={18} className="animate-spin" />
+                                                ) : (
+                                                    <Trash2 size={18} />
+                                                )}
                                             </button>
                                         </td>
                                     </tr>
@@ -241,11 +301,20 @@ export default function ProductsList() {
                 </div>
             )}
 
+            {/* Old quick edit modal - kept for reference */}
             <EditProductModal
                 product={editingProduct}
                 isOpen={isEditModalOpen}
                 onClose={handleCloseModal}
                 onSave={handleSave}
+            />
+
+            {/* New full edit modal with image support */}
+            <FullEditProductModal
+                product={editingProduct}
+                isOpen={isFullEditModalOpen}
+                onClose={handleCloseModal}
+                onSave={handleFullSave}
             />
         </div>
     );
