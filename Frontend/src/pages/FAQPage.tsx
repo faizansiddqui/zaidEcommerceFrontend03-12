@@ -53,7 +53,7 @@ export default function FAQPage({ onBack }: FAQPageProps) {
         {
             category: 'Returns & Exchanges',
             question: 'How do I return an item?',
-            answer: 'Contact our customer service at info@abdullaislamicstore.com or call +91 (740) 809-7278. We will provide you with return authorization and instructions.'
+            answer: 'Contact our customer service at a mailto:abdullahislamicstore88@gmail.com or call +917652087193. We will provide you with return authorization and instructions.'
         },
         {
             category: 'Returns & Exchanges',
