@@ -100,10 +100,8 @@ export default function CheckoutPage({ onBack }: CheckoutPageProps) {
     }
   };
 
-
-
   if (orderPlaced) {
-    return <OrderSuccess onContinueShopping={handleContinueShopping} clearCartOnSuccess={true} />;
+    return <OrderSuccess onContinueShopping={handleContinueShopping} clearCartOnSuccess={false} />;
   }
 
   // Show loading while checking authentication

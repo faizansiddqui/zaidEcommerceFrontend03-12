@@ -282,9 +282,6 @@ export default function CategoryPage({ onBack, onSearchChange }: CategoryPagePro
                                                     src={imageUrl}
                                                     alt={product.name || 'Product'}
                                                     className="w-full h-full object-cover"
-                                                    onError={(e) => {
-                                                        (e.target as HTMLImageElement).src = 'https://via.placeholder.com/96?text=No+Image';
-                                                    }}
                                                 />
                                                 {(!product.quantity || product.quantity < 1) && (
                                                     <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">

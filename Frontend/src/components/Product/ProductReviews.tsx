@@ -1,8 +1,41 @@
 import { useState, useEffect } from 'react';
-import { Star, Plus, BadgeCheck } from 'lucide-react';
+import { Star, Plus, BadgeCheck, X } from 'lucide-react';
 import { productAPI } from '../../services/api';
 import ReviewForm from './ReviewForm';
 import { useAuth } from '../../context/AuthContext';
+
+// Add interface for ImageModal props
+interface ImageModalProps {
+    imageUrl: string;
+    onClose: () => void;
+}
+
+// Add ImageModal component
+const ImageModal = ({ imageUrl, onClose }: ImageModalProps) => {
+    return (
+        <div
+            className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4"
+            onClick={onClose}
+        >
+            <div
+                className="relative max-w-4xl max-h-[90vh]"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <button
+                    onClick={onClose}
+                    className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors"
+                >
+                    <X size={32} />
+                </button>
+                <img
+                    src={imageUrl}
+                    alt="Review"
+                    className="max-w-full max-h-[80vh] object-contain"
+                />
+            </div>
+        </div>
+    );
+};
 
 interface Review {
     id: number;
@@ -26,6 +59,8 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [showReviewForm, setShowReviewForm] = useState(false);
+    const [showImageModal, setShowImageModal] = useState(false);
+    const [currentImageUrl, setCurrentImageUrl] = useState('');
 
     useEffect(() => {
         loadReviews();
@@ -125,7 +160,8 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
                 </div>
             ) : (
                 <>
-                    <div className="space-y-4">
+                    {/* Review Items */}
+                    <div className="space-y-6">
                         {reviews.slice(0, visibleReviews).map((review) => (
                             <div key={review.id} className="border p-4 rounded-lg shadow-sm bg-white">
                                 {/* Rating */}
@@ -138,21 +174,30 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
                                     <Star size={15} className="fill-current text-white" />
                                 </div>
 
-                                {/* Media (Image) */}
-                                {review.review_image && (
-                                    <img
-                                        className="w-40 h-40 rounded-md border mb-3 object-cover"
-                                        src={mediaSource(review.review_image)}
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).src = 'https://via.placeholder.com/150?text=No+Image';
-                                        }}
-                                    />
-                                )}
+                                {/* Media (Image) and Content in a single line */}
+                                <div className="flex gap-4 mb-3">
+                                    {review.review_image && (
+                                        <div className="flex-shrink-0">
+                                            <img
+                                                className="w-20 h-20 rounded-md border object-cover cursor-pointer"
+                                                src={mediaSource(review.review_image)}
+                                                onClick={() => {
+                                                    setCurrentImageUrl(mediaSource(review.review_image));
+                                                    setShowImageModal(true);
+                                                }}
+                                                onError={(e) => {
+                                                    (e.target as HTMLImageElement).src = 'https://via.placeholder.com/150?text=No+Image';
+                                                }}
+                                            />
+                                        </div>
+                                    )}
 
-
-                                {/* Title + Text */}
-                                <h4 className="font-semibold text-gray-800 mb-1">{review.review_title}</h4>
-                                <p className="text-gray-700 mb-3">{review.review_text}</p>
+                                    <div className="flex-1">
+                                        {/* Title + Text */}
+                                        <h4 className="font-semibold text-gray-800 mb-1">{review.review_title}</h4>
+                                        <p className="text-gray-700">{review.review_text}</p>
+                                    </div>
+                                </div>
 
                                 {/* Footer */}
                                 <div className="text-sm text-gray-600 flex items-center gap-2">
@@ -170,6 +215,14 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
                             </div>
                         ))}
                     </div>
+
+                    {/* Image Modal */}
+                    {showImageModal && (
+                        <ImageModal
+                            imageUrl={currentImageUrl}
+                            onClose={() => setShowImageModal(false)}
+                        />
+                    )}
 
                     {/* SHOW MORE BUTTON */}
                     {visibleReviews < reviews.length && (

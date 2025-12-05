@@ -250,6 +250,11 @@ export default function FullEditProductModal({ product, isOpen, onClose, onSave 
             newErrors.sellingPrice = 'Selling price cannot be greater than MRP';
         }
 
+        // NEW: Validate selling price link is required
+        if (!formData.sellingPriceLink.trim()) {
+            newErrors.sellingPriceLink = 'Selling price link is required';
+        }
+
         try {
             if (formData.specification) {
                 JSON.parse(formData.specification);
@@ -472,7 +477,7 @@ export default function FullEditProductModal({ product, isOpen, onClose, onSave 
                         {/* Selling Price Link */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Selling Price Link
+                                Selling Price Link <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
@@ -482,6 +487,11 @@ export default function FullEditProductModal({ product, isOpen, onClose, onSave 
                                 placeholder="https://example.com/product-link"
                                 disabled={loading}
                             />
+                            {errors.sellingPriceLink && (
+                                <p className="mt-1 text-sm text-red-600">
+                                    {errors.sellingPriceLink}
+                                </p>
+                            )}
                         </div>
 
                         {/* Quantity/Stock */}

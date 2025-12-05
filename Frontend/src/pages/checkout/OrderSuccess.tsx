@@ -26,7 +26,7 @@ export default function OrderSuccess({ onContinueShopping, clearCartOnSuccess = 
 
     const handleViewOrder = () => {
         if (orderId) {
-            go(`/order/${orderId}`);
+            go("/orders");
         } else {
             onContinueShopping();
         }

@@ -165,7 +165,7 @@ export default function ProductFormFields({ productForm, categories, onFormChang
 
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Selling Price Link
+                    Selling Price Link <span className="text-red-500">*</span>
                 </label>
                 <input
                     type="text"
@@ -173,6 +173,7 @@ export default function ProductFormFields({ productForm, categories, onFormChang
                     onChange={(e) => onFormChange('selling_price_link', e.target.value)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-700 focus:border-amber-700 outline-none"
                     placeholder="https://example.com/product-price"
+                    required
                 />
             </div>
 

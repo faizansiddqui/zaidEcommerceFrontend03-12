@@ -83,6 +83,12 @@ export default function ProductUploadForm() {
             return;
         }
 
+        // NEW: Validate selling price link is required
+        if (!productForm.selling_price_link.trim()) {
+            setProductError('Selling price link is required');
+            return;
+        }
+
         if (!productForm.quantity || parseInt(productForm.quantity.trim()) < 0) {
             setProductError('Valid quantity is required');
             return;
@@ -121,8 +127,7 @@ export default function ProductUploadForm() {
             const formData = new FormData();
 
             // Add images
-            productImages.forEach((image, index) => {
-                console.log(`🔵 Adding image ${index + 1}:`, image.name, image.type, image.size);
+            productImages.forEach((image) => {
                 formData.append('images', image);
             });
 
@@ -145,12 +150,6 @@ export default function ProductUploadForm() {
             formData.append('description', productForm.description || '');
             formData.append('catagory', productForm.catagory);
 
-            // Log all form data for debugging
-            console.log('🔵 Form Data being sent:');
-            for (const [key, value] of formData.entries()) {
-                console.log(`  ${key}:`, value);
-            }
-
             // Add specification as JSON string if provided and valid
             if (productForm.specification.trim()) {
                 try {
@@ -159,7 +158,6 @@ export default function ProductUploadForm() {
                     // Only send if it's a valid object with content
                     if (typeof specs === 'object' && specs !== null && Object.keys(specs).length > 0) {
                         formData.append('specification', JSON.stringify(specs));
-                        console.log('🔵 Adding specification:', JSON.stringify(specs));
                     }
                 } catch (parseError) {
                     console.warn('⚠️ Invalid JSON in specification, skipping:', parseError);
@@ -167,8 +165,7 @@ export default function ProductUploadForm() {
                 }
             }
 
-            const response = await adminAPI.uploadProduct(formData);
-            console.log('🟢 Product upload successful:', response);
+            await adminAPI.uploadProduct(formData);
             setProductSuccess('Product uploaded successfully!');
 
             // Reset form

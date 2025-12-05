@@ -164,8 +164,6 @@ export default function ProfilePageTabs({ onBack }: { onBack?: () => void }) {
         go(`/order/${orderId}`);
     };
 
-
-
     useAuthProtection();
 
     const fetchOrdersData = async () => {
@@ -585,10 +583,9 @@ export default function ProfilePageTabs({ onBack }: { onBack?: () => void }) {
                 );
             }
             case 'wishlist': {
-                const handleRemoveFromWishlist = async (productId: number) => {
+                const handleRemoveFromWishlist = async () => {
                     // Implementation would go here if we had access to removeFromWishlist
                     // For now, we'll just log it
-                    console.log('Remove from wishlist:', productId);
                 };
 
                 const handleAddToCartFromWishlist = async (product: WishlistProduct) => {
@@ -627,7 +624,7 @@ export default function ProfilePageTabs({ onBack }: { onBack?: () => void }) {
                                 {wishlistItems.map((product: WishlistProduct) => (
                                     <div key={product.product_id} className="bg-white rounded-xl shadow-md overflow-hidden relative">
                                         <button
-                                            onClick={() => handleRemoveFromWishlist(product.product_id)}
+                                            onClick={() => handleRemoveFromWishlist()}
                                             className="absolute top-3 right-3 bg-white rounded-full p-1 shadow-md hover:bg-gray-100 transition-colors z-10"
                                         >
                                             <X size={20} className="text-gray-600" />

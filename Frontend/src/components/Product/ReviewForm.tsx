@@ -64,6 +64,12 @@ export default function ReviewForm({ productId, userEmail, onReviewSubmitted, on
             return;
         }
 
+        // Check if image is required and not provided
+        if (!image) {
+            setError('Please upload an image for your review');
+            return;
+        }
+
         setLoading(true);
         setError('');
 
@@ -113,8 +119,8 @@ export default function ReviewForm({ productId, userEmail, onReviewSubmitted, on
                                 <Star
                                     size={24}
                                     className={`${star <= (hoverRating || rating)
-                                            ? 'text-yellow-400 fill-current'
-                                            : 'text-gray-300'
+                                        ? 'text-yellow-400 fill-current'
+                                        : 'text-gray-300'
                                         }`}
                                 />
                             </button>
@@ -155,7 +161,7 @@ export default function ReviewForm({ productId, userEmail, onReviewSubmitted, on
                 {/* Image Upload */}
                 <div className="mb-6">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Add Photo (Optional)
+                        Add Photo <span className="text-red-500">*</span> (Max 1)
                     </label>
                     <div className="flex items-center space-x-4">
                         <label className="flex flex-col items-center justify-center w-24 h-24 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-amber-400 transition-colors">

@@ -102,10 +102,6 @@ export default function BestSellers() {
                         src={imageUrl}
                         alt={product.name || product.title || 'Product'}
                         className="w-full h-full object-cover sm:group-hover:scale-110 sm:transition-transform sm:duration-500"
-                        loading="lazy"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400?text=No+Image';
-                        }}
                       />
                       {product.quantity === 0 && (
                         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">

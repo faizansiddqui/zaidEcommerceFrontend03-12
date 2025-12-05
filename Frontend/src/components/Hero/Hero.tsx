@@ -99,11 +99,7 @@ export default function Hero() {
               <img
                 src="/hero.jpg"
                 alt="Islamic Home Decor"
-                className="relative w-full rounded-md h-full object-contain sm:object-cover"
-                loading="eager"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
+                className="relative w-full mt-1 rounded-md h-full object-cover sm:object-cover"
               />
               {/* Decorative elements */}
               <div className="absolute top-4 right-4 w-20 h-20 bg-amber-700/20 rounded-full blur-xl"></div>
