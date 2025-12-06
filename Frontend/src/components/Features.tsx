@@ -4,8 +4,8 @@ export default function Features() {
     const features = [
         {
             icon: Truck,
-            title: 'Free Shipping',
-            description: 'Free delivery on orders above $999',
+            title: 'Fast Delivery',
+            description: 'Fast & Secure delivery',
             color: 'bg-blue-50 text-blue-600'
         },
         {

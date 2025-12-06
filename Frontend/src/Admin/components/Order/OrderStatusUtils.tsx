@@ -23,6 +23,7 @@ export interface Order {
     address: string;
     city: string;
     state: string;
+    country: string;
     pinCode: string;
     phone1: string;
     phone2?: string;
@@ -33,6 +34,7 @@ export interface Order {
     payu_payment_id?: string; // Add payu_payment_id property
     payu_transaction_id?: string; // Add payu_transaction_id property
     payment_status?: string; // Add payment_status property
+    addressType?: string; // Add addressType property
     Product?: {
         product_id: number;
         name: string;

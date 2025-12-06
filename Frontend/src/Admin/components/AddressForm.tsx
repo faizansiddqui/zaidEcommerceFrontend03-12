@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { userAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { X } from 'lucide-react';
+import { getLocationFromPinCode } from '../../utils/geonamesApi';
+// Import libphonenumber-js functions
+import { parsePhoneNumber, isValidPhoneNumber } from 'libphonenumber-js';
 
 interface Address {
     id?: number;
@@ -24,6 +27,7 @@ interface AddressFormProps {
 
 export default function AddressForm({ address, onSubmit, onCancel }: AddressFormProps) {
     const { user } = useAuth();
+
     const [formData, setFormData] = useState<Address>({
         FullName: address?.FullName || '',
         phone1: address?.phone1 || '',
@@ -38,15 +42,94 @@ export default function AddressForm({ address, onSubmit, onCancel }: AddressForm
 
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isFetchingLocation, setIsFetchingLocation] = useState(false);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
 
         // Clear error when user starts typing
         if (errors[name]) {
-            setErrors(prev => ({ ...prev, [name]: '' }));
+            setErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors[name];
+                return newErrors;
+            });
         }
+
+        // Auto-detect country from phone number
+        if (name === 'phone1' || name === 'phone2') {
+            detectCountryFromPhoneNumber(name, value);
+        }
+
+        // Auto-fetch location data when PIN code is entered
+        if (name === 'pinCode' && value.length >= 3) {
+            handlePinCodeChange(value);
+        }
+    };
+
+    const detectCountryFromPhoneNumber = (fieldName: string, phoneNumber: string) => {
+        // Process phone numbers both with and without + prefix
+        if (phoneNumber.length >= 10) {
+            try {
+                let phoneNumberToParse = phoneNumber;
+
+                // If the phone number doesn't start with +, assume it's an Indian number and prepend +91
+                if (!phoneNumber.startsWith('+')) {
+                    // Assume India as default country (you can modify this logic as needed)
+                    phoneNumberToParse = `+91${phoneNumber}`;
+                }
+
+                // Parse the phone number to get country information
+                const parsedNumber = parsePhoneNumber(phoneNumberToParse);
+                if (parsedNumber) {
+                    // Update the phone field with the formatted number
+                    setFormData(prev => ({ ...prev, [fieldName]: parsedNumber.formatInternational() }));
+
+                    // Log the parsed information for debugging
+                    // Removed for production
+                }
+            } catch {
+                // If parsing fails, silently continue without updating country
+                // Debug info removed for production
+            }
+        }
+    };
+
+    // Define a type for the debounce timer
+    type WindowWithTimer = Window & typeof globalThis & { pinCodeDebounceTimer?: NodeJS.Timeout };
+
+    const handlePinCodeChange = async (pinCode: string) => {
+        // Debounce the API call - only fetch when user stops typing for 500ms
+        const win = window as WindowWithTimer;
+        if (win.pinCodeDebounceTimer) {
+            clearTimeout(win.pinCodeDebounceTimer);
+        }
+        win.pinCodeDebounceTimer = setTimeout(async () => {
+            if (pinCode.length >= 3 && pinCode.length <= 20) {
+                setIsFetchingLocation(true);
+                try {
+                    const locationData = await getLocationFromPinCode(pinCode);
+                    if (locationData) {
+                        setFormData(prev => ({
+                            ...prev,
+                            country: locationData.country || prev.country,
+                            state: locationData.state || prev.state,
+                            city: locationData.city || prev.city
+                        }));
+                    }
+                } catch {
+                    // Error fetching location data - silently continue
+                    // Optionally, show an error message to the user
+                    setErrors(prev => ({
+                        ...prev,
+                        pinCode: 'Unable to fetch location data. Please enter manually.'
+                    }));
+                } finally {
+                    setIsFetchingLocation(false);
+                }
+            }
+        }, 500);
     };
 
     const validateForm = () => {
@@ -58,12 +141,12 @@ export default function AddressForm({ address, onSubmit, onCancel }: AddressForm
 
         if (!formData.phone1.trim()) {
             newErrors.phone1 = 'Phone number is required';
-        } else if (!/^\d{10}$/.test(formData.phone1)) {
-            newErrors.phone1 = 'Phone number must be 10 digits';
+        } else if (!isValidPhoneNumber(formData.phone1)) {
+            newErrors.phone1 = 'Please enter a valid phone number with country code (e.g., +1234567890)';
         }
 
-        if (formData.phone2 && !/^\d{10}$/.test(formData.phone2)) {
-            newErrors.phone2 = 'Alternative phone number must be 10 digits';
+        if (formData.phone2 && formData.phone2.trim() && !isValidPhoneNumber(formData.phone2)) {
+            newErrors.phone2 = 'Please enter a valid alternative phone number with country code (e.g., +1234567890)';
         }
 
         if (!formData.country.trim()) {
@@ -80,8 +163,8 @@ export default function AddressForm({ address, onSubmit, onCancel }: AddressForm
 
         if (!formData.pinCode.trim()) {
             newErrors.pinCode = 'PIN code is required';
-        } else if (!/^\d{6}$/.test(formData.pinCode)) {
-            newErrors.pinCode = 'PIN code must be 6 digits';
+        } else if (!/^\d{3,20}$/.test(formData.pinCode)) {
+            newErrors.pinCode = 'Enter pin code';
         }
 
         if (!formData.address.trim()) {
@@ -99,7 +182,9 @@ export default function AddressForm({ address, onSubmit, onCancel }: AddressForm
 
         if (!validateForm()) return;
 
-        if (!user?.id) {
+        // More explicit check for user authentication
+        // Allow users with email but no ID (temporary fix for authentication issue)
+        if (!user || (!user.id && !user.email) || (user.id === '' && !user.email)) {
             setErrors({ form: 'User not authenticated' });
             return;
         }
@@ -120,18 +205,35 @@ export default function AddressForm({ address, onSubmit, onCancel }: AddressForm
             } else {
                 // Create new address
                 // For create, backend expects phoneNo and alt_Phone
+
+                // Use user ID if available, otherwise try to get from localStorage or use a fallback
+                let finalUserId = user.id;
+                if (!finalUserId || finalUserId === '') {
+                    // Try to get user from localStorage as fallback
+                    try {
+                        const savedUser = localStorage.getItem('user');
+                        if (savedUser) {
+                            const parsedUser = JSON.parse(savedUser);
+                            finalUserId = parsedUser.id;
+                            // Got userId from localStorage
+                        }
+                    } catch {
+                        // Error parsing user from localStorage
+                    }
+                }
+
                 const createData = {
                     ...formData,
                     phoneNo: formData.phone1,
                     alt_Phone: formData.phone2,
-                    decode_user: user.id,
+                    decode_user: finalUserId,
                 };
                 await userAPI.createAddress(createData);
             }
 
             onSubmit(formData);
         } catch (error: unknown) {
-            console.error('Error saving address:', error);
+            // Error saving address
             const errorMessage = error instanceof Error ? error.message : 'Failed to save address. Please try again.';
             setErrors({ form: errorMessage });
         } finally {
@@ -149,14 +251,14 @@ export default function AddressForm({ address, onSubmit, onCancel }: AddressForm
                         </h2>
                         <button
                             onClick={onCancel}
-                            className="text-gray-500 hover:text-gray-700 transition-colors"
+                            className="text-gray-500 hover:text-gray-700 transition-colors p-2 rounded-lg hover:bg-gray-100"
                         >
                             <X size={24} />
                         </button>
                     </div>
 
                     {errors.form && (
-                        <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+                        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
                             <p className="text-red-700 text-sm">{errors.form}</p>
                         </div>
                     )}
@@ -188,9 +290,10 @@ export default function AddressForm({ address, onSubmit, onCancel }: AddressForm
                                     value={formData.phone1}
                                     onChange={handleChange}
                                     className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-700 focus:border-amber-700 outline-none ${errors.phone1 ? 'border-red-500' : 'border-gray-300'}`}
-                                    placeholder="Enter 10-digit phone number"
+                                    placeholder="Enter phone number with + country code and 10-13 digits (e.g., +1234567890)"
                                 />
                                 {errors.phone1 && <p className="mt-1 text-sm text-red-600">{errors.phone1}</p>}
+                                <p className="mt-1 text-xs text-gray-500">Enter with country code. We'll auto-detect your country.</p>
                             </div>
 
                             <div>
@@ -203,9 +306,10 @@ export default function AddressForm({ address, onSubmit, onCancel }: AddressForm
                                     value={formData.phone2 || ''}
                                     onChange={handleChange}
                                     className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-700 focus:border-amber-700 outline-none ${errors.phone2 ? 'border-red-500' : 'border-gray-300'}`}
-                                    placeholder="Enter 10-digit phone number (optional)"
+                                    placeholder="Enter phone number with + country code and 10-13 digits (e.g., +1234567890)"
                                 />
                                 {errors.phone2 && <p className="mt-1 text-sm text-red-600">{errors.phone2}</p>}
+                                <p className="mt-1 text-xs text-gray-500">Optional, with country code</p>
                             </div>
 
                             <div>
@@ -257,14 +361,21 @@ export default function AddressForm({ address, onSubmit, onCancel }: AddressForm
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     PIN Code *
                                 </label>
-                                <input
-                                    type="text"
-                                    name="pinCode"
-                                    value={formData.pinCode}
-                                    onChange={handleChange}
-                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-700 focus:border-amber-700 outline-none ${errors.pinCode ? 'border-red-500' : 'border-gray-300'}`}
-                                    placeholder="Enter 6-digit PIN code"
-                                />
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        name="pinCode"
+                                        value={formData.pinCode}
+                                        onChange={handleChange}
+                                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-700 focus:border-amber-700 outline-none ${errors.pinCode ? 'border-red-500' : 'border-gray-300'}`}
+                                        placeholder="Enter PIN code"
+                                    />
+                                    {isFetchingLocation && (
+                                        <div className="absolute right-3 top-2.5">
+                                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-amber-700"></div>
+                                        </div>
+                                    )}
+                                </div>
                                 {errors.pinCode && <p className="mt-1 text-sm text-red-600">{errors.pinCode}</p>}
                             </div>
 
@@ -311,24 +422,32 @@ export default function AddressForm({ address, onSubmit, onCancel }: AddressForm
                                         <span className="ml-2 text-gray-700">Work</span>
                                     </label>
                                 </div>
+                                {errors.addressType && <p className="mt-1 text-sm text-red-600">{errors.addressType}</p>}
                             </div>
                         </div>
 
-                        <div className="flex justify-end space-x-4 pt-6">
+                        <div className="flex justify-end gap-4 pt-6">
                             <button
                                 type="button"
                                 onClick={onCancel}
-                                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
                                 disabled={isSubmitting}
+                                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
                             >
                                 Cancel
                             </button>
                             <button
                                 type="submit"
-                                className="px-6 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-colors disabled:opacity-50"
                                 disabled={isSubmitting}
+                                className="px-6 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-colors disabled:opacity-50 flex items-center gap-2"
                             >
-                                {isSubmitting ? 'Saving...' : address?.id ? 'Update Address' : 'Add Address'}
+                                {isSubmitting ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                        Saving...
+                                    </>
+                                ) : (
+                                    'Save Address'
+                                )}
                             </button>
                         </div>
                     </form>

@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react';
 import { userAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { X } from 'lucide-react';
-import type { Country, State } from 'state-country';
+import type { State } from 'state-country';
+import { getLocationFromPinCode } from '../utils/geonamesApi';
+// Import libphonenumber-js functions
+import { parsePhoneNumber, isValidPhoneNumber } from 'libphonenumber-js';
 
 interface Address {
     id?: number;
@@ -25,6 +28,7 @@ interface AddressFormProps {
 
 export default function AddressForm({ address, onSubmit, onCancel }: AddressFormProps) {
     const { user } = useAuth();
+
     const [formData, setFormData] = useState<Address>({
         FullName: address?.FullName || '',
         phone1: address?.phone1 || '',
@@ -40,76 +44,121 @@ export default function AddressForm({ address, onSubmit, onCancel }: AddressForm
     // State for available states based on selected country
     const [availableStates, setAvailableStates] = useState<string[]>([]);
 
-    // State for countries and states data
-    const [countriesList, setCountriesList] = useState<string[]>([]);
-    const [countriesAndStates, setCountriesAndStates] = useState<Record<string, string[]>>({});
-    const [loading, setLoading] = useState(true);
-
-    // Load country data when component mounts
-    useEffect(() => {
-        const loadCountryData = async () => {
-            try {
-                const stateCountry = await import('state-country');
-                const sc = stateCountry.default;
-
-                // Get all countries
-                const allCountries: Country[] = sc.getAllCountries();
-
-                // Create country list and state map
-                const countryList: string[] = [];
-                const countryStateMap: Record<string, string[]> = {};
-
-                // Process countries
-                allCountries.forEach((country: Country) => {
-                    countryList.push(country.name);
-
-                    // Get states for this country
-                    const countryStates: State[] = sc.getAllStatesInCountry(country.name);
-                    countryStateMap[country.name] = countryStates.map((state: State) => state.name);
-                });
-
-                setCountriesList(countryList);
-                setCountriesAndStates(countryStateMap);
-
-                // Set default country if none selected
-                if (!formData.country && countryList.length > 0) {
-                    setFormData(prev => ({ ...prev, country: countryList[0] }));
-                }
-            } catch (error) {
-                console.error('Failed to load country data:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        loadCountryData();
-    }, []);
-
-    // Initialize available states based on selected country
-    useEffect(() => {
-        const states = countriesAndStates[formData.country] || [];
-        setAvailableStates(states);
-    }, [formData.country, countriesAndStates]);
-
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isFetchingLocation, setIsFetchingLocation] = useState(false);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    // Load states when country changes
+    useEffect(() => {
+        if (formData.country) {
+            try {
+                // Dynamically import state-country to avoid require() error
+                import('state-country').then((module) => {
+                    const stateCountry = module.default;
+                    const states = stateCountry.getAllStatesInCountry(formData.country);
+                    setAvailableStates(states.map((state: State) => state.name));
+
+                    // Reset state if it's not in the available states
+                    if (formData.state && !states.some((s: State) => s.name === formData.state)) {
+                        setFormData(prev => ({ ...prev, state: '' }));
+                    }
+                }).catch((error) => {
+                    console.error('Error loading states:', error);
+                    setAvailableStates([]);
+                });
+            } catch (error) {
+                console.error('Error loading states:', error);
+                setAvailableStates([]);
+            }
+        } else {
+            setAvailableStates([]);
+        }
+    }, [formData.country]);
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
 
         // Clear error when user starts typing
         if (errors[name]) {
-            setErrors(prev => ({ ...prev, [name]: '' }));
+            setErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors[name];
+                return newErrors;
+            });
         }
 
-        // Handle country change to update available states
-        if (name === 'country') {
-            const countryStates = countriesAndStates[value] || [];
-            setAvailableStates(countryStates);
-            // Reset state selection when country changes
-            setFormData(prev => ({ ...prev, state: '' }));
+        // Auto-detect country from phone number
+        if (name === 'phone1' || name === 'phone2') {
+            detectCountryFromPhoneNumber(name, value);
         }
+
+        // Auto-fetch location data when PIN code is entered
+        if (name === 'pinCode' && value.length >= 3) {
+            handlePinCodeChange(value);
+        }
+    };
+
+    const detectCountryFromPhoneNumber = (fieldName: string, phoneNumber: string) => {
+        // Process phone numbers both with and without + prefix
+        if (phoneNumber.length >= 10) {
+            try {
+                let phoneNumberToParse = phoneNumber;
+
+                // If the phone number doesn't start with +, assume it's an Indian number and prepend +91
+                if (!phoneNumber.startsWith('+')) {
+                    // Assume India as default country (you can modify this logic as needed)
+                    phoneNumberToParse = `+91${phoneNumber}`;
+                }
+
+                // Parse the phone number to get country information
+                const parsedNumber = parsePhoneNumber(phoneNumberToParse);
+                if (parsedNumber) {
+                    // Update the phone field with the formatted number
+                    setFormData(prev => ({ ...prev, [fieldName]: parsedNumber.formatInternational() }));
+
+                }
+            } catch {
+                // If parsing fails, silently continue without updating country
+                // Debug info removed for production
+            }
+        }
+    };
+
+    // Define a type for the debounce timer
+    type WindowWithTimer = Window & typeof globalThis & { pinCodeDebounceTimer?: NodeJS.Timeout };
+
+    const handlePinCodeChange = async (pinCode: string) => {
+        // Debounce the API call - only fetch when user stops typing for 500ms
+        const win = window as WindowWithTimer;
+        if (win.pinCodeDebounceTimer) {
+            clearTimeout(win.pinCodeDebounceTimer);
+        }
+        win.pinCodeDebounceTimer = setTimeout(async () => {
+            if (pinCode.length >= 3 && pinCode.length <= 20) {
+                setIsFetchingLocation(true);
+                try {
+                    const locationData = await getLocationFromPinCode(pinCode);
+                    if (locationData) {
+                        setFormData(prev => ({
+                            ...prev,
+                            country: locationData.country || prev.country,
+                            state: locationData.state || prev.state,
+                            city: locationData.city || prev.city
+                        }));
+                    }
+                } catch (error) {
+                    console.error('Error fetching location data:', error);
+                    // Optionally, show an error message to the user
+                    setErrors(prev => ({
+                        ...prev,
+                        pinCode: 'Unable to fetch location data. Please enter manually.'
+                    }));
+                } finally {
+                    setIsFetchingLocation(false);
+                }
+            }
+        }, 500);
     };
 
     const validateForm = () => {
@@ -121,12 +170,12 @@ export default function AddressForm({ address, onSubmit, onCancel }: AddressForm
 
         if (!formData.phone1.trim()) {
             newErrors.phone1 = 'Phone number is required';
-        } else if (!/^\d{10}$/.test(formData.phone1)) {
-            newErrors.phone1 = 'Phone number must be 10 digits';
+        } else if (!isValidPhoneNumber(formData.phone1)) {
+            newErrors.phone1 = 'Please enter a valid phone number with country code (e.g., +1234567890)';
         }
 
-        if (formData.phone2 && !/^\d{10}$/.test(formData.phone2)) {
-            newErrors.phone2 = 'Alternative phone number must be 10 digits';
+        if (formData.phone2 && formData.phone2.trim() && !isValidPhoneNumber(formData.phone2)) {
+            newErrors.phone2 = 'Please enter a valid alternative phone number with country code (e.g., +1234567890)';
         }
 
         if (!formData.country.trim()) {
@@ -143,14 +192,18 @@ export default function AddressForm({ address, onSubmit, onCancel }: AddressForm
 
         if (!formData.pinCode.trim()) {
             newErrors.pinCode = 'PIN code is required';
-        } else if (!/^\d{6}$/.test(formData.pinCode)) {
-            newErrors.pinCode = 'PIN code must be 6 digits';
+        } else if (!/^\d{3,20}$/.test(formData.pinCode)) {
+            newErrors.pinCode = 'Enter a valid PIN code';
         }
 
         if (!formData.address.trim()) {
             newErrors.address = 'Address is required';
         } else if (formData.address.length < 10) {
             newErrors.address = 'Address must be at least 10 characters';
+        }
+
+        if (!formData.addressType) {
+            newErrors.addressType = 'Please select an address type';
         }
 
         setErrors(newErrors);
@@ -162,49 +215,18 @@ export default function AddressForm({ address, onSubmit, onCancel }: AddressForm
 
         if (!validateForm()) return;
 
+        // More explicit check for user authentication
+        // Allow users with email but no ID (temporary fix for authentication issue)
+        if (!user || (!user.id && !user.email) || (user.id === '' && !user.email)) {
+            setErrors({ form: 'User not authenticated. Please log out and log back in.' });
+            return;
+        }
+
+        const userId = user?.id;
+
         setIsSubmitting(true);
 
         try {
-            let userId = user?.id;
-
-            // If user ID is missing, try to get it from profile
-            if (!userId || userId === '') {
-                try {
-                    const profileResponse = await userAPI.getProfile();
-
-                    // Try different paths to extract profile data
-                    const profileData = profileResponse.data?.data || profileResponse.data?.user || profileResponse.data?.profile || profileResponse.data;
-
-                    if (profileData && profileData.id) {
-                        userId = profileData.id;
-                    } else {
-                        // Try to get user ID from the main user object
-                        if (profileData && typeof profileData === 'object' && 'user' in profileData) {
-                            const userData = (profileData as { user?: { id?: string } }).user;
-                            if (userData && userData.id) {
-                                userId = userData.id;
-                            }
-                        }
-                        // Try to get user ID from localStorage
-                        if ((!userId || userId === '') && profileData && typeof profileData === 'object' && 'email' in profileData) {
-                            const savedUser = localStorage.getItem('user');
-                            if (savedUser) {
-                                try {
-                                    const userData = JSON.parse(savedUser);
-                                    if (userData && userData.id) {
-                                        userId = userData.id;
-                                    }
-                                } catch (parseError) {
-                                    console.error('Error parsing localStorage user data:', parseError);
-                                }
-                            }
-                        }
-                    }
-                } catch (profileError) {
-                    console.error('Error fetching user profile:', profileError);
-                }
-            }
-
             if (address?.id) {
                 // Update existing address
                 // For update, backend expects phone1 and phone2
@@ -212,22 +234,35 @@ export default function AddressForm({ address, onSubmit, onCancel }: AddressForm
                     ...formData,
                     phone1: formData.phone1,
                     phone2: formData.phone2,
-                    address_id: address.id,
-                    decode_user: userId, // Add user ID for update
+                    address_id: address.id
                 };
                 await userAPI.updateAddress(address.id, updateData);
             } else {
                 // Create new address
                 // For create, backend expects phoneNo and alt_Phone
-                if (!userId || userId === '') {
-                    throw new Error('Unable to retrieve user ID for address creation. Please log out and log back in.');
+
+                // Use user ID if available, otherwise try to get from localStorage or use a fallback
+                let finalUserId = userId;
+                if (!finalUserId || finalUserId === '') {
+                    // Try to get user from localStorage as fallback
+                    try {
+                        const savedUser = localStorage.getItem('user');
+                        if (savedUser) {
+                            const parsedUser = JSON.parse(savedUser);
+                            finalUserId = parsedUser.id;
+                        }
+                    } catch {
+                        // Error parsing user from localStorage
+                    }
                 }
+
+                // No explicit error check here - let the API handle missing user IDs
 
                 const createData = {
                     ...formData,
                     phoneNo: formData.phone1,
                     alt_Phone: formData.phone2,
-                    decode_user: userId,
+                    decode_user: finalUserId,
                 };
                 await userAPI.createAddress(createData);
             }
@@ -236,39 +271,26 @@ export default function AddressForm({ address, onSubmit, onCancel }: AddressForm
         } catch (error: unknown) {
             console.error('Error saving address:', error);
 
-            // Handle specific error cases for phone number conflicts
+            // Show a more specific error message based on the error type
+            let errorMessage = 'Failed to save address. Please try again.';
+
             if (error instanceof Error) {
-                // Check if it's a duplicate phone number error
-                if (error.message.includes('phone number already exists') ||
-                    error.message.includes('already exist') ||
-                    error.message.includes('duplicate') ||
-                    error.message.includes('unique constraint')) {
-                    // Set error specifically for phone1 field
-                    setErrors(prev => ({
-                        ...prev,
-                        phone1: 'Number already exist',
-                        form: '' // Clear general form error
-                    }));
-                } else {
-                    // For all other errors, show a generic message
-                    setErrors(prev => ({ ...prev, form: 'Failed to save address. Please try again.' }));
+                // Check if it's the specific user ID error we're fixing
+                if (error.message.includes('Unable to retrieve user ID')) {
+                    errorMessage = error.message;
+                } else if (error.message.includes('Authentication')) {
+                    errorMessage = 'Authentication error. Please log out and log back in.';
                 }
-            } else {
-                // For non-Error objects, show a generic message
-                setErrors(prev => ({ ...prev, form: 'Failed to save address. Please try again.' }));
             }
+
+            setErrors(prev => ({ ...prev, form: errorMessage }));
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    if (loading) {
-        return (
-            <div className="p-6 flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
-            </div>
-        );
-    }
+    // Remove unused loading state since it's not being used
+    // const [loading, setLoading] = useState(false);
 
     return (
         <div className="p-6">
@@ -279,22 +301,20 @@ export default function AddressForm({ address, onSubmit, onCancel }: AddressForm
                 <button
                     onClick={onCancel}
                     className="text-gray-500 hover:text-gray-700 transition-colors p-2 rounded-lg hover:bg-gray-100"
+                    type="button"
                 >
                     <X size={24} />
                 </button>
             </div>
 
-            {/* Show warning when trying to create a new address and limit is reached */}
-
             {errors.form && (
-                <div className="mb-6 bg-red-50 border border-red-100 rounded-lg p-4">
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
                     <p className="text-red-700 text-sm">{errors.form}</p>
                 </div>
             )}
 
-            {/* Changed from form to div to avoid nested forms */}
+            {/* Changed from <form> to <div> to prevent nested form issue */}
             <div className="space-y-6">
-                {/* Disable form fields when trying to create new address and limit is reached */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -321,9 +341,10 @@ export default function AddressForm({ address, onSubmit, onCancel }: AddressForm
                             value={formData.phone1}
                             onChange={handleChange}
                             className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-600 focus:border-amber-600 outline-none transition-colors ${errors.phone1 ? 'border-red-300' : 'border-gray-300'}`}
-                            placeholder="Enter 10-digit phone number"
+                            placeholder="Enter phone number"
                         />
                         {errors.phone1 && <p className="mt-1 text-sm text-red-600">{errors.phone1}</p>}
+                        <p className="mt-1 text-xs text-gray-500">Enter with country code. We'll auto-detect your country.</p>
                     </div>
 
                     <div>
@@ -336,9 +357,10 @@ export default function AddressForm({ address, onSubmit, onCancel }: AddressForm
                             value={formData.phone2 || ''}
                             onChange={handleChange}
                             className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-600 focus:border-amber-600 outline-none transition-colors ${errors.phone2 ? 'border-red-300' : 'border-gray-300'}`}
-                            placeholder="Enter 10-digit phone number (optional)"
+                            placeholder="Enter alternative phone number (optional)"
                         />
                         {errors.phone2 && <p className="mt-1 text-sm text-red-600">{errors.phone2}</p>}
+                        <p className="mt-1 text-xs text-gray-500">Optional, with country code</p>
                     </div>
 
                     <div className="space-y-4">
@@ -355,7 +377,6 @@ export default function AddressForm({ address, onSubmit, onCancel }: AddressForm
                         />
                         {errors.address && <p className="mt-1 text-sm text-red-600">{errors.address}</p>}
                     </div>
-
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -393,43 +414,46 @@ export default function AddressForm({ address, onSubmit, onCancel }: AddressForm
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            PIN Code *
+                            Country *
                         </label>
                         <input
                             type="text"
-                            name="pinCode"
-                            value={formData.pinCode}
-                            onChange={handleChange}
-                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-600 focus:border-amber-600 outline-none transition-colors ${errors.pinCode ? 'border-red-300' : 'border-gray-300'}`}
-                            placeholder="Enter 6-digit PIN code"
-                        />
-                        {errors.pinCode && <p className="mt-1 text-sm text-red-600">{errors.pinCode}</p>}
-                    </div>
-
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Country *
-                        </label>
-                        <select
                             name="country"
                             value={formData.country}
                             onChange={handleChange}
                             className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-600 focus:border-amber-600 outline-none transition-colors ${errors.country ? 'border-red-300' : 'border-gray-300'}`}
-                        >
-                            <option value="">Select Country</option>
-                            {countriesList.map((country) => (
-                                <option key={country} value={country}>{country}</option>
-                            ))}
-                        </select>
+                            placeholder="Enter country"
+                        />
                         {errors.country && <p className="mt-1 text-sm text-red-600">{errors.country}</p>}
                     </div>
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
+                            PIN Code *
+                        </label>
+                        <div className="relative">
+                            <input
+                                type="text"
+                                name="pinCode"
+                                value={formData.pinCode}
+                                onChange={handleChange}
+                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-600 focus:border-amber-600 outline-none transition-colors ${errors.pinCode ? 'border-red-300' : 'border-gray-300'}`}
+                                placeholder="Enter PIN code"
+                            />
+                            {isFetchingLocation && (
+                                <div className="absolute right-3 top-2.5">
+                                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-amber-600"></div>
+                                </div>
+                            )}
+                        </div>
+                        {errors.pinCode && <p className="mt-1 text-sm text-red-600">{errors.pinCode}</p>}
+                    </div>
+
+                    <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
                             Address Type *
                         </label>
-                        <div className="flex space-x-4">
+                        <div className="flex space-x-6">
                             <label className="inline-flex items-center">
                                 <input
                                     type="radio"
@@ -470,21 +494,16 @@ export default function AddressForm({ address, onSubmit, onCancel }: AddressForm
                     <button
                         type="button"
                         onClick={handleSubmit}
-                        className={`px-6 py-2 rounded-lg font-medium transition-colors ${isSubmitting
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            : 'bg-amber-600 hover:bg-amber-700 text-white'
-                            }`}
                         disabled={isSubmitting}
+                        className="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                     >
                         {isSubmitting ? (
-                            <span className="flex items-center gap-2">
+                            <>
                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                                 Saving...
-                            </span>
-                        ) : address?.id ? (
-                            'Update Address'
+                            </>
                         ) : (
-                            'Add Address'
+                            'Save Address'
                         )}
                     </button>
                 </div>

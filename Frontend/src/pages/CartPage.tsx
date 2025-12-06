@@ -3,12 +3,16 @@ import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { productAPI } from '../services/api';
 import { useNavigation } from "../utils/navigation";
+import { useAuth } from '../context/AuthContext';
 
 interface CartPageProps {
     onBack?: () => void;
 }
 
 export default function CartPage({ onBack }: CartPageProps) {
+    const { go } = useNavigation();
+    const { isAuthenticated } = useAuth();
+
     const {
         cartItems,
         removeFromCart,
@@ -17,11 +21,13 @@ export default function CartPage({ onBack }: CartPageProps) {
         getTotalItems,
         buyNow,
     } = useCart();
-    const { go } = useNavigation();
     const [productStocks, setProductStocks] = useState<Record<number, number>>({});
 
     // Fetch stock information for cart items
     useEffect(() => {
+        // Only fetch if user is authenticated
+        if (!isAuthenticated) return;
+
         const fetchStocks = async () => {
             const stocks: Record<number, number> = {};
 
@@ -59,7 +65,7 @@ export default function CartPage({ onBack }: CartPageProps) {
         if (cartItems.length > 0) {
             fetchStocks();
         }
-    }, [cartItems, removeFromCart, updateQuantity]);
+    }, [cartItems, removeFromCart, updateQuantity, isAuthenticated]);
 
     const handleBack = () => {
         if (onBack) {
@@ -68,6 +74,32 @@ export default function CartPage({ onBack }: CartPageProps) {
             go('/');
         }
     };
+
+    // Handle login button click - save current path before redirecting
+    const handleLoginClick = () => {
+        // Save the current path to redirect back after login
+        const currentPath = window.location.pathname + window.location.search;
+        localStorage.setItem('redirectAfterLogin', currentPath);
+        go('/log');
+    };
+
+    // Show login message if user is not authenticated
+    if (!isAuthenticated) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full mx-4">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-4">Please log in</h2>
+                    <p className="text-gray-600 mb-6">You need to be logged in to view your cart.</p>
+                    <button
+                        onClick={handleLoginClick}
+                        className="w-full bg-amber-700 hover:bg-amber-800 text-white py-3 rounded-lg font-semibold transition-colors"
+                    >
+                        Go to Login
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     if (cartItems.length === 0) {
         return (

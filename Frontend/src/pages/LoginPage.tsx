@@ -19,7 +19,7 @@ export default function LoginPage({ onBack }: LoginPageProps) {
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  
+
   // Resend timer states
   const [resendTimer, setResendTimer] = useState(0);
   const [isResendDisabled, setIsResendDisabled] = useState(false);
@@ -27,7 +27,8 @@ export default function LoginPage({ onBack }: LoginPageProps) {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      go('/');
+      // Redirect logic is now handled in AuthContext.verifyOtp
+      // This useEffect is kept for backward compatibility
       if (onBack) onBack();
     }
   }, [isAuthenticated, user, onBack]);
@@ -95,8 +96,9 @@ export default function LoginPage({ onBack }: LoginPageProps) {
       setSuccess('OTP sent to your email. Enter it below.');
       setResendTimer(60);
       setIsResendDisabled(true);
-    } catch (err: any) {
-      setError(err.message || 'Failed to send OTP. Please try again.');
+    } catch (err: unknown) {
+      const error = err as Error;
+      setError(error.message || 'Failed to send OTP. Please try again.');
       setStep('email');
     } finally {
       setIsSendingOtp(false);
@@ -123,11 +125,16 @@ export default function LoginPage({ onBack }: LoginPageProps) {
       await verifyOtp(email, code.trim());
       setSuccess('Verification successful! Redirecting...');
       setTimeout(() => {
-        go('/');
+        // Get the redirect path from localStorage, default to home if not set
+        const redirectPath = localStorage.getItem('redirectAfterLogin') || '/';
+        // Clear the redirect path from localStorage
+        localStorage.removeItem('redirectAfterLogin');
+        go(redirectPath);
         if (onBack) onBack();
       }, 600);
-    } catch (err: any) {
-      setError(err.message || 'Invalid OTP. Please try again.');
+    } catch (err: unknown) {
+      const error = err as Error;
+      setError(error.message || 'Invalid OTP. Please try again.');
     } finally {
       setIsVerifying(false);
     }
@@ -144,8 +151,9 @@ export default function LoginPage({ onBack }: LoginPageProps) {
       setSuccess('OTP resent. Check your email.');
       setResendTimer(60);
       setIsResendDisabled(true);
-    } catch (err: any) {
-      setError(err.message || 'Failed to resend OTP. Please try again.');
+    } catch (err: unknown) {
+      const error = err as Error;
+      setError(error.message || 'Failed to resend OTP. Please try again.');
     } finally {
       setIsSendingOtp(false);
     }

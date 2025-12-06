@@ -62,7 +62,7 @@ export default function AddressSelector({ selectedAddressId, onAddressSelect }: 
 
             if (response.data.status && Array.isArray(response.data.data)) {
                 setAddresses(response.data.data);
-                // If no address is selected and we have addresses, select the first one
+                // Only auto-select the first address if no address was previously selected
                 if (selectedAddressId === null && response.data.data.length > 0 && response.data.data[0].id !== undefined) {
                     onAddressSelect(response.data.data[0].id);
                 }
@@ -126,6 +126,7 @@ export default function AddressSelector({ selectedAddressId, onAddressSelect }: 
             <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold text-gray-900">Select Shipping Address</h3>
                 <button
+                    type="button" // Added type="button" to prevent form submission
                     onClick={() => {
                         setEditingAddress(null);
                         setShowAddressForm(true);
@@ -143,6 +144,7 @@ export default function AddressSelector({ selectedAddressId, onAddressSelect }: 
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No addresses yet</h3>
                     <p className="text-gray-500 mb-6">Add your first address to get started</p>
                     <button
+                        type="button" // Added type="button" to prevent form submission
                         onClick={() => {
                             setEditingAddress(null);
                             setShowAddressForm(true);
@@ -200,6 +202,7 @@ export default function AddressSelector({ selectedAddressId, onAddressSelect }: 
                                 </div>
 
                                 <button
+                                    type="button" // Added type="button" to prevent form submission
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         setEditingAddress(address);

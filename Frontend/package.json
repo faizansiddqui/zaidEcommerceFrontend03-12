@@ -14,7 +14,10 @@
     "@supabase/supabase-js": "^2.57.4",
     "@types/react-router-dom": "^5.3.3",
     "axios": "^1.13.2",
+    "country-data": "^0.0.31",
+    "libphonenumber-js": "^1.12.31",
     "lucide-react": "^0.344.0",
+    "postcode-validator": "^3.10.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.9.6",
@@ -22,6 +25,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
+    "@types/country-data": "^0.0.5",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",

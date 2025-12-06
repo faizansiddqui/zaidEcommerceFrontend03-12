@@ -32,18 +32,13 @@ export default function ShippingInfoPage({ onBack }: ShippingInfoPageProps) {
                         <div className="space-y-4">
                             <div className="border-l-4 border-amber-500 pl-4">
                                 <h3 className="font-medium text-gray-900">Standard Delivery</h3>
-                                <p className="text-gray-600">5-7 business days - $50</p>
-                                <p className="text-sm text-gray-500">Available for all pin codes across India</p>
+                                <p className="text-gray-600">5-7 business days</p>
+                                <p className="text-sm text-gray-500">Available for all pin codes across world</p>
                             </div>
                             <div className="border-l-4 border-blue-500 pl-4">
                                 <h3 className="font-medium text-gray-900">Express Delivery</h3>
-                                <p className="text-gray-600">2-3 business days - $150</p>
+                                <p className="text-gray-600">2-3 business days</p>
                                 <p className="text-sm text-gray-500">Available in major cities</p>
-                            </div>
-                            <div className="border-l-4 border-green-500 pl-4">
-                                <h3 className="font-medium text-gray-900">Free Delivery</h3>
-                                <p className="text-gray-600">5-7 business days - Free</p>
-                                <p className="text-sm text-gray-500">On orders above $999</p>
                             </div>
                         </div>
                     </div>
@@ -55,7 +50,7 @@ export default function ShippingInfoPage({ onBack }: ShippingInfoPageProps) {
                             <h2 className="text-xl font-semibold">Delivery Areas</h2>
                         </div>
                         <p className="text-gray-600 mb-4">
-                            We currently deliver to all major cities and towns across India. Enter your pin code at checkout to verify delivery availability in your area.
+                            We currently deliver to all over world. Enter your pin code at checkout to verify delivery availability in your area.
                         </p>
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                             <p className="text-sm text-blue-800">
@@ -100,7 +95,7 @@ export default function ShippingInfoPage({ onBack }: ShippingInfoPageProps) {
                     <div className="bg-white p-6 rounded-lg shadow-sm">
                         <h2 className="text-xl font-semibold mb-4">International Shipping</h2>
                         <p className="text-gray-600">
-                            Currently, we only ship within India. International shipping will be available soon. Subscribe to our newsletter to get notified when we start shipping internationally.
+                            Yes, we ship globally. International shipping is available.
                         </p>
                     </div>
 
@@ -111,8 +106,8 @@ export default function ShippingInfoPage({ onBack }: ShippingInfoPageProps) {
                             If you have any questions about shipping, please contact our customer service team.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-2 text-sm">
-                            <span className="text-gray-600">📧 info@abdullaislamicstore.com</span>
-                            <span className="text-gray-600">📞 +91 (740) 809-7278</span>
+                            <span className="text-gray-600">📧 abdullahislamicstore88@gmail.com</span>
+                            <span className="text-gray-600">📞 +917652087193</span>
                         </div>
                     </div>
                 </div>

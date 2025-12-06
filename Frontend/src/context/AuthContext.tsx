@@ -15,6 +15,16 @@ interface AuthContextType {
   logout: () => void;
 }
 
+// Define error interface for API responses
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  message?: string;
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -42,9 +52,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await authAPI.sendOtp(email);
       // backend should send OTP to email; no further action here
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('AuthProvider.sendOtp failed:', err);
-      throw new Error(err.response?.data?.message || 'Failed to send OTP. Please try again.');
+      const error = err as ApiError;
+      throw new Error(error.response?.data?.message || 'Failed to send OTP. Please try again.');
     }
   };
 
@@ -71,9 +82,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('authToken', res.data.token);
       }
       localStorage.setItem('isAuthenticated', 'true');
-    } catch (err: any) {
+
+      // Handle redirect after successful login
+      const redirectPath = localStorage.getItem('redirectAfterLogin');
+      if (redirectPath) {
+        // Clear the redirect path from localStorage
+        localStorage.removeItem('redirectAfterLogin');
+        // Use window.location to force a full page navigation
+        window.location.href = redirectPath;
+      }
+    } catch (err: unknown) {
       console.error('AuthProvider.verifyOtp failed:', err);
-      throw new Error(err.response?.data?.message || 'Invalid OTP. Please try again.');
+      const error = err as ApiError;
+      throw new Error(error.response?.data?.message || 'Invalid OTP. Please try again.');
     }
   };
 
@@ -82,6 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('user');
     localStorage.removeItem('authToken');
     localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('redirectAfterLogin');
 
     // Best-effort server logout (if endpoint exists)
     const apiUrl = import.meta.env.VITE_API_URL || 'https://islamicdecotweb.onrender.com';

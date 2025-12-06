@@ -5,13 +5,40 @@ import { useCart } from '../context/CartContext';
 import { useNavigation } from "../utils/navigation";
 import { Product } from '../utils/productUtils';
 import { useAuthProtection } from '../utils/authProtection';
+import { useAuth } from '../context/AuthContext';
 
 export default function WishlistPage() {
     const { go } = useNavigation();
+    const { isAuthenticated } = useAuth();
 
     useAuthProtection(); // Protect this route
     const { wishlistItems, removeFromWishlist } = useWishlist();
     const { addToCart } = useCart();
+
+    // Handle login button click - save current path before redirecting
+    const handleLoginClick = () => {
+        // Save the current path to redirect back after login
+        localStorage.setItem('redirectAfterLogin', window.location.pathname + window.location.search);
+        go('/log');
+    };
+
+    // Show login message if user is not authenticated
+    if (!isAuthenticated) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full mx-4">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-4">Please log in</h2>
+                    <p className="text-gray-600 mb-6">You need to be logged in to view your wishlist.</p>
+                    <button
+                        onClick={handleLoginClick}
+                        className="w-full bg-amber-700 hover:bg-amber-800 text-white py-3 rounded-lg font-semibold transition-colors"
+                    >
+                        Go to Login
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     const handleRemoveFromWishlist = async (productId: number) => {
         await removeFromWishlist(productId);

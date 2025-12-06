@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-// const API_BASE_URL = "https://islamicdecotweb.onrender.com";
+const API_BASE_URL = "https://islamicdecotweb.onrender.com";
 // const API_BASE_URL = "https://backend.kiswahmakkahstore.com";
-const API_BASE_URL = "http://localhost:8080";
+// const API_BASE_URL = "http://localhost:8080";
 // 
 
 export const api = axios.create({
@@ -31,7 +31,8 @@ api.interceptors.response.use(
 // Auth API - OTP only
 export const authAPI = {
   // Send OTP to email (also used for "resend")
-  sendOtp: (email: string) => api.post('/api/auth/log', { email }).catch((error: any) => {
+  sendOtp: (email: string) => api.post('/api/auth/log', { email }).then((result)=>{console.log(result.data);
+  }).catch((error: any) => {
     console.error('sendOtp failed:', error);
     const message = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to send OTP';
     throw new Error(message);
@@ -321,8 +322,8 @@ export const adminAPI = {
     throw new Error(message);
   }),
 
-  updateOrderStatus: (orderId: string, status: string) =>
-    api.patch('/admin/update-order-status', { order_id: orderId, status }).catch((error: any) => {
+  updateOrderStatus: (orderId: string, status: string, productId?: string) =>
+    api.patch('/admin/update-order-status', { order_id: orderId, status, product_id: productId }).catch((error: any) => {
       console.error('updateOrderStatus failed:', error);
       const message = error.response?.data?.message || error.response?.data?.error || error.message || `Failed to update order status for ${orderId}`;
       throw new Error(message);

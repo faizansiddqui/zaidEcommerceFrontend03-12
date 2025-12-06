@@ -5,14 +5,17 @@ import { ArrowLeft, Lock } from 'lucide-react';
 import OrderSuccess from './checkout/OrderSuccess';
 import AddressSelector from '../components/AddressSelector';
 import { userAPI } from '../services/api';
-
 import { useAuthProtection } from '../utils/authProtection';
+import { useAuth } from '../context/AuthContext';
+import { useNavigation } from "../utils/navigation";
 
 interface CheckoutPageProps {
   onBack?: () => void;
 }
 
 export default function CheckoutPage({ onBack }: CheckoutPageProps) {
+  const { go } = useNavigation();
+  const { isAuthenticated } = useAuth();
   const { cartItems, buyNowItemId, setBuyNowItem } = useCart(); // Removed clearCart
   const location = useLocation();
   const { isLoading: authLoading } = useAuthProtection();
@@ -35,12 +38,37 @@ export default function CheckoutPage({ onBack }: CheckoutPageProps) {
 
   // Clean up buyNowItemId when component unmounts
   useEffect(() => {
+    // Only run cleanup if user is authenticated
+    if (!isAuthenticated) return;
+
     return () => {
       if (effectiveBuyNowItemId) {
         setBuyNowItem(null);
       }
     };
-  }, [effectiveBuyNowItemId, setBuyNowItem]);
+  }, [effectiveBuyNowItemId, setBuyNowItem, isAuthenticated]);
+
+  // Handle pending buy now item after login
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Check if there's a pending "Buy Now" operation
+      const pendingBuyNow = localStorage.getItem('pendingBuyNow');
+      if (pendingBuyNow && !buyNowItemId) {
+        try {
+          const productId = parseInt(pendingBuyNow);
+          if (!isNaN(productId)) {
+            // Set the buy now item ID
+            setBuyNowItem(productId);
+          }
+        } catch (e) {
+          console.error('Error parsing pendingBuyNow:', e);
+        }
+
+        // Clear the pending operation
+        localStorage.removeItem('pendingBuyNow');
+      }
+    }
+  }, [isAuthenticated, buyNowItemId, setBuyNowItem]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,6 +128,31 @@ export default function CheckoutPage({ onBack }: CheckoutPageProps) {
     }
   };
 
+  // Handle login button click - save current path before redirecting
+  const handleLoginClick = () => {
+    // Save the current path to redirect back after login
+    localStorage.setItem('redirectAfterLogin', window.location.pathname + window.location.search);
+    go('/log');
+  };
+
+  // Show login message if user is not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full mx-4">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Please log in</h2>
+          <p className="text-gray-600 mb-6">You need to be logged in to proceed with checkout.</p>
+          <button
+            onClick={handleLoginClick}
+            className="w-full bg-amber-700 hover:bg-amber-800 text-white py-3 rounded-lg font-semibold transition-colors"
+          >
+            Go to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (orderPlaced) {
     return <OrderSuccess onContinueShopping={handleContinueShopping} clearCartOnSuccess={false} />;
   }
@@ -108,19 +161,16 @@ export default function CheckoutPage({ onBack }: CheckoutPageProps) {
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-zpin rounded-full h-12 w-12 border-b-2 border-amber-700"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-700"></div>
       </div>
     );
   }
-
-  // The useAuthProtection hook handles authentication redirect automatically
-  // No need for manual authentication check here
 
   // Show loading state while waiting for cart items to filter
   if (effectiveBuyNowItemId && cartItems.length > 0 && itemsToProcess.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-zpin rounded-full h-12 w-12 border-b-2 border-amber-700"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-700"></div>
       </div>
     );
   }
@@ -158,9 +208,12 @@ export default function CheckoutPage({ onBack }: CheckoutPageProps) {
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Checkout</h1>
 
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Checkout Form */}
+          {/* Checkout Form - Added preventDefault to form submission */}
           <div className="lg:col-span-2">
-            <form onSubmit={handleSubmit} className="space-y-8">
+            <form onSubmit={(e) => {
+              e.preventDefault(); // Prevent any accidental form submission
+              handleSubmit(e);
+            }} className="space-y-8">
               {/* Address Selection */}
               <div className="bg-white rounded-xl shadow-md p-6">
                 <AddressSelector

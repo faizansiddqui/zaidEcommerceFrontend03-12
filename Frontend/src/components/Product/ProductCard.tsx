@@ -20,7 +20,7 @@ interface ProductCardProps {
 export default function ProductCard({ id, name, price, image, category, inStock, badge, oldPrice, disableHover = false }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
-  const { addToCart, isInCart } = useCart(); // Add isInCart to the destructuring
+  const { addToCart, isInCart, buyNow } = useCart(); // Add buyNow to the destructuring
   const { go } = useNavigation();
 
   useEffect(() => {
@@ -54,14 +54,8 @@ export default function ProductCard({ id, name, price, image, category, inStock,
   const handleBuyNow = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (inStock) {
-      // Add to cart and redirect to checkout
-      addToCart(id, {
-        name: name,
-        price: price,
-        image: image
-      });
-      // Redirect to checkout page
-      go('/checkout');
+      // Use the buyNow function which will handle authentication
+      buyNow(id);
     }
   };
 

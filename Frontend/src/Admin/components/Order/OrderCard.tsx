@@ -70,7 +70,7 @@ export default function OrderCard({ order, updatingOrderId, onStatusUpdate }: Or
                         </div>
                         <div>
                             <p><span className="font-medium">Address:</span> {order.address}</p>
-                            <p>{order.city}, {order.state} {order.pinCode}</p>
+                            <p>{order.city}, {order.state}, {order.country} {order.pinCode}</p>
                             <p className="text-gray-500 mt-1">
                                 <span className="font-medium">Date:</span> {new Date(order.createdAt).toLocaleDateString('en-US', {
                                     year: 'numeric',

@@ -171,7 +171,7 @@ export default function Navbar({ onSearchChange }: NavbarProps) {
     <>
       <nav className="bg-white shadow-md sticky top-0 z-50">
         <div className="bg-gray-900 text-white py-1 xs:py-1.5 sm:py-2 text-center text-[8px] xs:text-[9px] sm:text-xs lg:text-sm">
-          Free Shipping Over $50 • 30-Day Returns
+          Fast Delivery • 30-Days Returns
         </div>
 
         <div className="max-w-7xl mx-auto px-2 xs:px-3 sm:px-4 lg:px-8">

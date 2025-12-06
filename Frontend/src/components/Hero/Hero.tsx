@@ -47,11 +47,7 @@ export default function Hero() {
               </div>
               <div className="flex items-center gap-2">
                 <Sparkles className="text-amber-700" size={20} />
-                <span>Free Shipping</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Sparkles className="text-amber-700" size={20} />
-                <span>30-Day Returns</span>
+                <span>30-Days Returns</span>
               </div>
             </div>
 
@@ -79,11 +75,11 @@ export default function Hero() {
             <div className="pt-4 sm:pt-6 text-xs sm:text-sm text-gray-600 flex flex-wrap items-center justify-center lg:justify-start gap-4">
               <span className="flex items-center gap-1">
                 <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                Free Shipping over $500
+                Fast & Secure Delivery
               </span>
-              <span className="flex items-center gap-1">
+                            <span className="flex items-center gap-1">
                 <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                30-Day Returns
+                30-Days Returns
               </span>
               <span className="flex items-center gap-1">
                 <span className="w-2 h-2 bg-green-500 rounded-full"></span>

@@ -114,6 +114,13 @@ export default function ProfilePage({ onBack }: { onBack?: () => void }) {
         }
     };
 
+    // Handle login button click - save current path before redirecting
+    const handleLoginClick = () => {
+        // Save the current path to redirect back after login
+        localStorage.setItem('redirectAfterLogin', window.location.pathname + window.location.search);
+        go('/log');
+    };
+
     if (!isAuthenticated) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -121,7 +128,7 @@ export default function ProfilePage({ onBack }: { onBack?: () => void }) {
                     <h2 className="text-2xl font-bold text-gray-900 mb-4">Please log in</h2>
                     <p className="text-gray-600 mb-6">You need to be logged in to view your profile.</p>
                     <button
-                        onClick={() => go('/log')}
+                        onClick={handleLoginClick}
                         className="w-full bg-amber-700 hover:bg-amber-800 text-white py-3 rounded-lg font-semibold transition-colors"
                     >
                         Go to Login

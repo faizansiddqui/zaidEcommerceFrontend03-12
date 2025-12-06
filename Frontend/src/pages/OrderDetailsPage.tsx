@@ -30,6 +30,7 @@ interface Order {
     address: string;
     city: string;
     state: string;
+    country: string;
     pinCode: string;
     phone1: string;
     phone2?: string;
@@ -39,6 +40,7 @@ interface Order {
     payment_method?: string;
     payu_transaction_id?: string;
     payment_status?: string; // Add payment_status property
+    addressType?: string; // Add addressType property
     Product?: Product;
     items?: OrderItem[]; // Add items array
 }
@@ -292,7 +294,7 @@ export default function OrderDetailsPage({ orderId, onBack }: OrderDetailsPagePr
         // Explicit status mapping for better reliability
         switch (normalizedStatus) {
             case 'pending':
-                return 1; // Show progress to pending status
+                return 0; // Show only pending status
             case 'confirm':
             case 'confirmed':
                 return 1;
@@ -567,7 +569,7 @@ export default function OrderDetailsPage({ orderId, onBack }: OrderDetailsPagePr
 
                                 <div>
                                     <p className="text-sm text-gray-500 mb-1">Payment Method</p>
-                                    <p className="font-medium">Paid via PayU</p>
+                                    <p className="font-medium">Paid via Payoneer</p>
                                     {order.payu_transaction_id && (
                                         <p className="text-xs text-gray-500 mt-1">
                                             Transaction ID: {order.payu_transaction_id}
@@ -643,8 +645,9 @@ export default function OrderDetailsPage({ orderId, onBack }: OrderDetailsPagePr
                             <div className="space-y-2">
                                 <p className="font-medium">{order.FullName}</p>
                                 <p className="text-gray-600">
-                                    {order.address}, {order.city}, {order.state} {order.pinCode}
+                                    {order.address}, {order.city}, {order.state}, {order.country} {order.pinCode}
                                 </p>
+                                <p className="text-gray-600"> <b>Address Type:</b> {order.addressType}</p>
                                 <p className="text-gray-600">Phone: {order.phone1}</p>
                             </div>
                         </div>

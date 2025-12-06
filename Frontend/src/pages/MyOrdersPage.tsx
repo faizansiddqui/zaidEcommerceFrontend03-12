@@ -3,6 +3,7 @@ import { Package, ArrowLeft, Calendar } from 'lucide-react';
 import { userAPI } from '../services/api';
 import { useNavigation } from "../utils/navigation";
 import { useAuthProtection } from '../utils/authProtection';
+import { useAuth } from '../context/AuthContext';
 
 interface Product {
   product_id: number;
@@ -29,6 +30,7 @@ interface Order {
   address: string;
   city: string;
   state: string;
+  country: string;
   pinCode: string;
   phone1: string;
   phone2?: string;
@@ -47,6 +49,7 @@ interface MyOrdersPageProps {
 
 export default function MyOrdersPage({ onBack }: MyOrdersPageProps) {
   const { go } = useNavigation();
+  const { isAuthenticated } = useAuth();
 
   const { isLoading: authLoading } = useAuthProtection();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -55,8 +58,11 @@ export default function MyOrdersPage({ onBack }: MyOrdersPageProps) {
   const [sortOption, setSortOption] = useState<'newest' | 'oldest' | 'priceHigh' | 'priceLow'>('newest');
 
   useEffect(() => {
+    // Only fetch orders if user is authenticated
+    if (!isAuthenticated) return;
+
     fetchOrders();
-  }, []);
+  }, [isAuthenticated]);
 
   const fetchOrders = async () => {
     try {
@@ -115,6 +121,9 @@ export default function MyOrdersPage({ onBack }: MyOrdersPageProps) {
   };
 
   const sortedOrders = useMemo(() => {
+    // Return empty array if not authenticated
+    if (!isAuthenticated) return [];
+
     const sorted = [...orders];
 
     switch (sortOption) {
@@ -125,7 +134,7 @@ export default function MyOrdersPage({ onBack }: MyOrdersPageProps) {
       default:
         return sorted;
     }
-  }, [orders, sortOption]);
+  }, [orders, sortOption, isAuthenticated]);
 
   const handleBack = () => {
     if (onBack) {
@@ -165,6 +174,31 @@ export default function MyOrdersPage({ onBack }: MyOrdersPageProps) {
 
     return 0;
   };
+
+  // Handle login button click - save current path before redirecting
+  const handleLoginClick = () => {
+    // Save the current path to redirect back after login
+    localStorage.setItem('redirectAfterLogin', window.location.pathname + window.location.search);
+    go('/log');
+  };
+
+  // Show login message if user is not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full mx-4">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Please log in</h2>
+          <p className="text-gray-600 mb-6">You need to be logged in to view your orders.</p>
+          <button
+            onClick={handleLoginClick}
+            className="w-full bg-amber-700 hover:bg-amber-800 text-white py-3 rounded-lg font-semibold transition-colors"
+          >
+            Go to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (authLoading || isLoading) {
     return (

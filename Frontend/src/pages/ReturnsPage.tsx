@@ -105,7 +105,7 @@ export default function ReturnsPage({ onBack }: ReturnsPageProps) {
                                 <div>
                                     <h3 className="font-medium text-gray-900">Contact Us</h3>
                                     <p className="text-gray-600 text-sm">
-                                        Email us at info@abdullaislamicstore.com or call +91 (740) 809-7278 with your order number and reason for return.
+                                        Email us at <b>abdullahislamicstore88@gmail.com</b> or call <b>+917652087193</b> with your order number and reason for return.
                                     </p>
                                 </div>
                             </div>
@@ -181,9 +181,9 @@ export default function ReturnsPage({ onBack }: ReturnsPageProps) {
                         </p>
                         <div className="flex flex-col sm:flex-row gap-3 text-sm">
                             <a href="mailto:info@abdullaislamicstore.com" className="text-blue-600 hover:text-blue-700">
-                                📧 info@abdullaislamicstore.com
+                                📧 abdullahislamicstore88@gmail.com
                             </a>
-                            <span className="text-gray-600">📞 +91 (740) 809-7278</span>
+                            <span className="text-gray-600">📞 +917652087193</span>
                         </div>
                     </div>
                 </div>

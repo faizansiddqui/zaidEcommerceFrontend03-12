@@ -33,7 +33,7 @@ export default function FAQPage({ onBack }: FAQPageProps) {
         {
             category: 'Shipping',
             question: 'How long does delivery take?',
-            answer: 'Standard delivery takes 5-7 business days. Express delivery is available in major cities and takes 2-3 business days. Free delivery is available on orders above $999.'
+            answer: 'Standard delivery takes 5-7 business days. Express delivery is available in major cities and takes 2-3 business days.'
         },
         {
             category: 'Shipping',
@@ -43,7 +43,7 @@ export default function FAQPage({ onBack }: FAQPageProps) {
         {
             category: 'Shipping',
             question: 'What are the shipping charges?',
-            answer: 'Standard delivery costs $50, Express delivery costs $150. Free delivery is available on orders above $999.'
+            answer: 'Delivery cost depends on delivery distance'
         },
         {
             category: 'Returns & Exchanges',
@@ -53,7 +53,7 @@ export default function FAQPage({ onBack }: FAQPageProps) {
         {
             category: 'Returns & Exchanges',
             question: 'How do I return an item?',
-            answer: 'Contact our customer service at a mailto:abdullahislamicstore88@gmail.com or call +917652087193. We will provide you with return authorization and instructions.'
+            answer: 'Contact our customer service at abdullahislamicstore88@gmail.com or call +917652087193. We will provide you with return authorization and instructions.'
         },
         {
             category: 'Returns & Exchanges',

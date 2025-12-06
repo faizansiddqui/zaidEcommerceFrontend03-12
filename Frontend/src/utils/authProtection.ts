@@ -14,6 +14,10 @@ export const useAuthProtection = (redirectTo: string = '/log') => {
 
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {
+            // Save the current path to redirect back after login
+            if (window.location.pathname !== redirectTo) {
+                localStorage.setItem('redirectAfterLogin', window.location.pathname + window.location.search);
+            }
             go(redirectTo);
         }
     }, [isAuthenticated, isLoading, redirectTo]);

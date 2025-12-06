@@ -55,6 +55,64 @@ export function CartProvider({ children }: { children: ReactNode }) {
         loadCart();
     }, [isAuthenticated]);
 
+    // Handle pending cart operations after login
+    useEffect(() => {
+        if (isAuthenticated) {
+            // Check if there's a pending "Add to Cart" operation
+            const pendingAddToCart = localStorage.getItem('pendingAddToCart');
+            if (pendingAddToCart) {
+                try {
+                    const productInfo = JSON.parse(pendingAddToCart);
+                    // Add the product to cart
+                    setCartItems((prevItems) => {
+                        const existingItem = prevItems.find((item) => item.id === productInfo.id);
+
+                        if (!existingItem) {
+                            // If item doesn't exist, add new item with quantity 1
+                            const newItem: CartItem = {
+                                id: productInfo.id,
+                                name: productInfo.name,
+                                price: productInfo.price,
+                                image: productInfo.image,
+                                quantity: 1,
+                                stock: productInfo.stock
+                            };
+                            return [...prevItems, newItem];
+                        }
+                        return prevItems;
+                    });
+
+                    // Save to backend
+                    userAPI.addToCart(productInfo.id, 1).catch((error) => {
+                        console.warn("Failed to add item to cart on backend:", error);
+                    });
+                } catch (e) {
+                    console.error('Error parsing pendingAddToCart:', e);
+                }
+
+                // Clear the pending operation
+                localStorage.removeItem('pendingAddToCart');
+            }
+
+            // Check if there's a pending "Buy Now" operation
+            const pendingBuyNow = localStorage.getItem('pendingBuyNow');
+            if (pendingBuyNow) {
+                try {
+                    const productId = parseInt(pendingBuyNow);
+                    if (!isNaN(productId)) {
+                        // Set the buy now item ID
+                        // We'll handle this in the component that needs it
+                    }
+                } catch (e) {
+                    console.error('Error parsing pendingBuyNow:', e);
+                }
+
+                // Clear the pending operation
+                localStorage.removeItem('pendingBuyNow');
+            }
+        }
+    }, [isAuthenticated]);
+
     const loadCart = async () => {
         // If user is not authenticated, don't attempt to load from backend
         if (!isAuthenticated) {
@@ -187,6 +245,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
             stock?: number;
         }
     ) => {
+        // If user is not authenticated, save product info and redirect to login
+        if (!isAuthenticated) {
+            // Save product info to localStorage for use after login
+            if (productData) {
+                const productInfo = {
+                    id: productId,
+                    ...productData
+                };
+                localStorage.setItem('pendingAddToCart', JSON.stringify(productInfo));
+                // Save current path to redirect back after login
+                localStorage.setItem('redirectAfterLogin', '/cart');
+            }
+            // Redirect to login page
+            window.location.href = '/log';
+            return;
+        }
+
         // Enforce maximum quantity of 1 per product
         const enforcedQuantity = 1;
 
@@ -287,6 +362,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const [buyNowItemId, setBuyNowItem] = useState<number | null>(null);
 
     const buyNow = (productId: number) => {
+        // If user is not authenticated, save product info and redirect to login
+        if (!isAuthenticated) {
+            // Save the product ID for use after login
+            localStorage.setItem('pendingBuyNow', productId.toString());
+            // Save current path to redirect back after login
+            localStorage.setItem('redirectAfterLogin', '/checkout');
+            // Redirect to login page
+            window.location.href = '/log';
+            return;
+        }
+
         // Set the buy now item ID
         setBuyNowItem(productId);
         // Navigation is now handled by the component that calls this function

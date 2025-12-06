@@ -75,7 +75,7 @@ export default function OrderDetailsModal({
                                     </span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-gray-600">Status:</span>
+                                    <span className="text-gray-600">Order Status:</span>
                                     <span className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1.5 ${getStatusColor(order.status)}`}>
                                         {getStatusIcon(order.status)}
                                         {getDisplayStatus(order.status)}
@@ -85,18 +85,6 @@ export default function OrderDetailsModal({
                                     <div className="flex justify-between">
                                         <span className="text-gray-600">Payment Method:</span>
                                         <span className="font-medium">{order.payment_method}</span>
-                                    </div>
-                                )}
-                                {order.payu_transaction_id && (
-                                    <div className="flex justify-between">
-                                        <span className="text-gray-600">Transaction ID:</span>
-                                        <span className="font-medium">{order.payu_transaction_id}</span>
-                                    </div>
-                                )}
-                                {order.payment_status && (
-                                    <div className="flex justify-between">
-                                        <span className="text-gray-600">Payment Status:</span>
-                                        <span className="font-medium capitalize">{order.payment_status}</span>
                                     </div>
                                 )}
                             </div>
@@ -121,9 +109,19 @@ export default function OrderDetailsModal({
                                 )}
                                 <div className="flex justify-between">
                                     <span className="text-gray-600">Address:</span>
-                                    <span className="font-medium text-right">
-                                        {order.address}, {order.city}, {order.state} - {order.pinCode}
-                                    </span>
+                                    <div className="text-right">
+                                        <p className="font-medium">
+                                            {order.address}, {order.city}, {order.state}, {order.country}  - {order.pinCode}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">Address Type:</span>
+                                    <div className="text-right">
+                                        <p className="font-medium">
+                                            {order.addressType}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -181,10 +179,6 @@ export default function OrderDetailsModal({
                             <div className="flex justify-between">
                                 <span className="text-gray-600">Subtotal:</span>
                                 <span className="font-medium">${parseFloat(order.totalAmount).toFixed(2)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">Shipping:</span>
-                                <span className="font-medium">$0.00</span>
                             </div>
                             <div className="border-t border-gray-200 pt-2 flex justify-between font-semibold">
                                 <span>Total:</span>

@@ -83,7 +83,21 @@ export default function OrdersList() {
         setOrdersSuccess('');
 
         try {
-            await adminAPI.updateOrderStatus(orderId, newStatus);
+            // Find the order to get the product ID
+            const order = orders.find(o => o.order_id === orderId);
+            let productId: string | undefined;
+
+            // For 'confirm' status, we need to send the product ID
+            if (newStatus === 'confirm' && order) {
+                // Get product ID from items or Product
+                if (order.items && order.items.length > 0) {
+                    productId = order.items[0].product_id.toString();
+                } else if (order.Product) {
+                    productId = order.Product.product_id.toString();
+                }
+            }
+
+            await adminAPI.updateOrderStatus(orderId, newStatus, productId);
 
             // Update the order status in local state without refreshing
             setOrders(prevOrders =>
@@ -290,7 +304,7 @@ export default function OrdersList() {
                                             <td className="py-3 px-4 text-sm text-gray-700">{order.FullName}</td>
                                             <td className="py-3 px-4 text-sm text-gray-700">{order.phone1}</td>
                                             <td className="py-3 px-4 text-sm text-gray-700 max-w-xs truncate">
-                                                {order.address}, {order.city}
+                                                {order.address}, {order.city}, {order.country}
                                             </td>
                                             <td className="py-3 px-4 text-sm text-gray-600">
                                                 {new Date(order.createdAt).toLocaleDateString('en-US', {

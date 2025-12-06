@@ -12,7 +12,6 @@ export default function OrderSuccess({ onContinueShopping, clearCartOnSuccess = 
     const { clearCart } = useCart();
     const { go } = useNavigation();
 
-
     // Clear the cart when the component mounts only if explicitly requested
     useEffect(() => {
         if (clearCartOnSuccess) {
@@ -20,20 +19,12 @@ export default function OrderSuccess({ onContinueShopping, clearCartOnSuccess = 
         }
     }, [clearCartOnSuccess, clearCart]);
 
-    // Get order ID from URL query parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    const orderId = urlParams.get('orderId');
-
     const handleViewOrder = () => {
-        if (orderId) {
-            go("/orders");
-        } else {
-            onContinueShopping();
-        }
+        go("/orders");
     };
 
     const handleContinueShopping = () => {
-        go('/');
+        onContinueShopping();
     };
 
     return (
