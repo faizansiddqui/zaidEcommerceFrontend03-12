@@ -15,6 +15,7 @@ export interface Product {
     category: string;
     skuId: string;
     sellingPriceLink: string;
+    product_video?: string; // Add product_video field
 }
 
 export type ProductFormData = Omit<Product, 'id'>;

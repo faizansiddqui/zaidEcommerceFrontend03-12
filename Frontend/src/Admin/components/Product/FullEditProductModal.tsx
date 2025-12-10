@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { X, AlertCircle, Save } from 'lucide-react';
 import { ProductFormData } from '../../types';
 import { categories } from '../../types';
-import ImageUpload from './ImageUpload';
+import MediaUpload from './MediaUpload';
+import { getFriendlyErrorMessage } from '../../../utils/errorHandler';
 
 interface Specification {
     key: string;
@@ -192,18 +193,35 @@ export default function FullEditProductModal({ product, isOpen, onClose, onSave 
         }
     };
 
-    const getImageUrl = (image: File | string): string => {
-        if (typeof image === 'string') {
-            return image;
+    const getMediaUrl = (media: File | string): string => {
+        if (typeof media === 'string') {
+            return media;
         }
-        return URL.createObjectURL(image);
+        return URL.createObjectURL(media);
     };
 
-    const onImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const onMediaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
-        if (files.length > 5) {
-            setErrors(prev => ({ ...prev, images: 'Maximum 5 images allowed' }));
+        // Allow adding media files, with maximum of 5 files total
+        const currentMediaCount = formData.images.length;
+        const newMediaCount = files.length;
+        if (currentMediaCount + newMediaCount > 5) {
+            setErrors(prev => ({ ...prev, images: 'Maximum 5 media files allowed (images and videos combined)' }));
             return;
+        }
+        
+        // Check file sizes - videos must be <= 5MB
+        const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+        for (const file of files) {
+            if (file.type.startsWith('video/') && file.size > maxSize) {
+                setErrors(prev => ({ ...prev, images: 'Video files must be 5MB or smaller' }));
+                return;
+            }
+            // Also check image files for reasonable size (optional)
+            if (file.type.startsWith('image/') && file.size > maxSize) {
+                setErrors(prev => ({ ...prev, images: 'Image files must be 5MB or smaller' }));
+                return;
+            }
         }
 
         updateField('images', [...formData.images, ...files] as (File | string)[]);
@@ -216,10 +234,10 @@ export default function FullEditProductModal({ product, isOpen, onClose, onSave 
         }
     };
 
-    const onRemoveImage = (index: number) => {
-        const newImages = [...formData.images];
-        newImages.splice(index, 1);
-        updateField('images', newImages as (File | string)[]);
+    const onRemoveMedia = (index: number) => {
+        const newMedia = [...formData.images];
+        newMedia.splice(index, 1);
+        updateField('images', newMedia as (File | string)[]);
     };
 
     const validateForm = (): boolean => {
@@ -272,7 +290,7 @@ export default function FullEditProductModal({ product, isOpen, onClose, onSave 
         }
 
         if (formData.images.length === 0) {
-            newErrors.images = 'At least one image is required';
+            newErrors.images = 'At least one media file (image or video) is required';
         }
 
         setErrors(newErrors);
@@ -303,10 +321,10 @@ export default function FullEditProductModal({ product, isOpen, onClose, onSave 
             form.append('description', formData.description);
             form.append('catagory', formData.category);
 
-            // Append images (only new ones that are File objects)
-            const newImages = formData.images.filter(img => img instanceof File);
-            newImages.forEach((image) => {
-                form.append('images', image);
+            // Append media files (only new ones that are File objects)
+            const newMedia = formData.images.filter(media => media instanceof File);
+            newMedia.forEach((media) => {
+                form.append('images', media);
             });
 
             // Parse specification
@@ -335,7 +353,8 @@ export default function FullEditProductModal({ product, isOpen, onClose, onSave 
             }, 1500);
         } catch (err: unknown) {
             console.error('Error updating product:', err);
-            setErrors({ submit: err instanceof Error ? err.message : 'Failed to update product. Please try again.' });
+            const errorMessage = getFriendlyErrorMessage(err);
+            setErrors({ submit: errorMessage });
         } finally {
             setLoading(false);
         }
@@ -371,17 +390,18 @@ export default function FullEditProductModal({ product, isOpen, onClose, onSave 
                 )}
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                    {/* Images Upload */}
+                    {/* Media Upload */}
                     <div>
-                        <ImageUpload
-                            images={formData.images}
+                        <MediaUpload
+                            mediaFiles={formData.images}
                             errors={errors.images}
-                            onImageChange={onImageChange}
-                            onRemoveImage={onRemoveImage}
-                            getImageUrl={getImageUrl}
+                            onMediaChange={onMediaChange}
+                            onRemoveMedia={onRemoveMedia}
+                            getMediaUrl={getMediaUrl}
+                            getMaxMediaCount={() => 5}
                         />
                         <p className="mt-1 text-xs text-gray-500">
-                            Note: Uploading new images will replace all existing ones
+                            Note: You can upload a combination of up to 5 images and videos. Uploading new media will replace all existing ones.
                         </p>
                     </div>
 

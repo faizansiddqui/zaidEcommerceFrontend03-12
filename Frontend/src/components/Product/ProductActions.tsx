@@ -2,9 +2,6 @@ import { ShoppingCart, ArrowRight, CreditCard } from 'lucide-react';
 
 interface ProductActionsProps {
     quantity: number;
-    selectedQuantity: number;
-    onQuantityDecrease: () => void;
-    onQuantityIncrease: () => void;
     onAddToCart: () => void;
     onBuyNow: () => void;
     addedToCart: boolean;
@@ -13,9 +10,6 @@ interface ProductActionsProps {
 
 export default function ProductActions({
     quantity,
-    selectedQuantity,
-    onQuantityDecrease,
-    onQuantityIncrease,
     onAddToCart,
     onBuyNow,
     addedToCart,
@@ -23,24 +17,6 @@ export default function ProductActions({
 }: ProductActionsProps) {
     return (
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 pt-4">
-            <div className="flex items-center border border-gray-300 rounded-lg self-start sm:self-auto">
-                <button
-                    onClick={onQuantityDecrease}
-                    disabled={selectedQuantity <= 1}
-                    className="px-3 sm:px-4 py-2 sm:py-3 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    -
-                </button>
-                <span className="px-4 sm:px-6 py-2 sm:py-3 font-semibold text-sm sm:text-base min-w-[3rem] text-center">{selectedQuantity}</span>
-                <button
-                    onClick={onQuantityIncrease}
-                    disabled={selectedQuantity >= quantity}
-                    className="px-3 sm:px-4 py-2 sm:py-3 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    +
-                </button>
-            </div>
-
             {addedToCart ? (
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full">
                     <button

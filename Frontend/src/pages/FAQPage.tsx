@@ -33,7 +33,7 @@ export default function FAQPage({ onBack }: FAQPageProps) {
         {
             category: 'Shipping',
             question: 'How long does delivery take?',
-            answer: 'Standard delivery takes 5-7 business days. Express delivery is available in major cities and takes 2-3 business days.'
+            answer: 'Standard delivery takes 7-8 business days.'
         },
         {
             category: 'Shipping',
@@ -43,7 +43,7 @@ export default function FAQPage({ onBack }: FAQPageProps) {
         {
             category: 'Shipping',
             question: 'What are the shipping charges?',
-            answer: 'Delivery cost depends on delivery distance'
+            answer: 'Free Shipping'
         },
         {
             category: 'Returns & Exchanges',

@@ -1,9 +1,10 @@
 import { useState } from 'react';
+import { X } from 'lucide-react';
 import { adminAPI } from '../../../services/api';
 import AlertMessage from '../Admin/AlertMessage';
 import ProductFormFields from './ProductFormFields';
-import ProductImageUpload from './ProductImageUpload';
 import { getCategories, Category } from '../../../data/categories';
+import { getFriendlyErrorMessage } from '../../../utils/errorHandler';
 
 interface ProductFormData {
     name: string;
@@ -31,7 +32,7 @@ export default function ProductUploadForm() {
         catagory: '',
         specification: '',
     });
-    const [productImages, setProductImages] = useState<File[]>([]);
+    const [productMedia, setProductMedia] = useState<File[]>([]);
     const [productError, setProductError] = useState('');
     const [productSuccess, setProductSuccess] = useState('');
     const [isUploadingProduct, setIsUploadingProduct] = useState(false);
@@ -39,14 +40,35 @@ export default function ProductUploadForm() {
     // Load categories from centralized data file
     const hardcodedCategories: Category[] = getCategories();
 
-    const handleProductImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleProductMediaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
-        if (files.length > 5) {
-            setProductError('Maximum 5 images allowed');
+        // Allow adding media files, with maximum of 5 files total
+        if (productMedia.length + files.length > 5) {
+            setProductError('Maximum 5 media files allowed (images and videos combined)');
             return;
         }
-        setProductImages(files);
+        
+        // Check file sizes - videos must be <= 5MB
+        const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+        for (const file of files) {
+            if (file.type.startsWith('video/') && file.size > maxSize) {
+                setProductError('Video files must be 5MB or smaller');
+                return;
+            }
+            // Also check image files for reasonable size (optional)
+            if (file.type.startsWith('image/') && file.size > maxSize) {
+                setProductError('Image files must be 5MB or smaller');
+                return;
+            }
+        }
+        
+        // Add new media files to existing ones
+        setProductMedia(prevMedia => [...prevMedia, ...files]);
         setProductError('');
+    };
+
+    const handleRemoveMedia = (index: number) => {
+        setProductMedia(prevMedia => prevMedia.filter((_, i) => i !== index));
     };
 
     const handleFormChange = (field: keyof ProductFormData, value: string) => {
@@ -57,8 +79,8 @@ export default function ProductUploadForm() {
         e.preventDefault();
 
         // Validation
-        if (productImages.length === 0) {
-            setProductError('At least one image is required');
+        if (productMedia.length === 0) {
+            setProductError('At least one media file (image or video) is required');
             return;
         }
 
@@ -69,38 +91,22 @@ export default function ProductUploadForm() {
         }
 
         if (!productForm.title.trim()) {
-            setProductError('Title is required');
+            setProductError('Product title is required');
             return;
         }
 
-        if (!productForm.price || parseFloat(productForm.price.trim()) <= 0) {
-            setProductError('Valid price is required');
-            return;
-        }
-
-        if (!productForm.selling_price || parseFloat(productForm.selling_price.trim()) <= 0) {
-            setProductError('Valid selling price is required');
-            return;
-        }
-
-        // NEW: Validate selling price link is required
-        if (!productForm.selling_price_link.trim()) {
-            setProductError('Selling price link is required');
-            return;
-        }
-
-        if (!productForm.quantity || parseInt(productForm.quantity.trim()) < 0) {
-            setProductError('Valid quantity is required');
-            return;
-        }
-
-        if (!productForm.catagory.trim()) {
+        if (!productForm.catagory) {
             setProductError('Category is required');
             return;
         }
 
         if (!productForm.description.trim()) {
             setProductError('Description is required');
+            return;
+        }
+
+        if (!productForm.selling_price_link.trim()) {
+            setProductError('Selling price link is required');
             return;
         }
 
@@ -126,9 +132,9 @@ export default function ProductUploadForm() {
         try {
             const formData = new FormData();
 
-            // Add images
-            productImages.forEach((image) => {
-                formData.append('images', image);
+            // Add media files (images and videos)
+            productMedia.forEach((media) => {
+                formData.append('images', media);
             });
 
             // Add product data according to backend
@@ -147,7 +153,7 @@ export default function ProductUploadForm() {
             } else {
                 formData.append('sku', ''); // Send empty string if not provided
             }
-            formData.append('description', productForm.description || '');
+            formData.append('description', productForm.description.trim());
             formData.append('catagory', productForm.catagory);
 
             // Add specification as JSON string if provided and valid
@@ -181,58 +187,11 @@ export default function ProductUploadForm() {
                 catagory: '',
                 specification: '',
             });
-            setProductImages([]);
+            setProductMedia([]);
         } catch (error: unknown) {
             console.error('❌ Product upload failed - Full error:', error);
-
-            if (error && typeof error === 'object' && 'response' in error) {
-                const axiosError = error as {
-                    response?: {
-                        status?: number;
-                        data?: { message?: string; error?: string; err?: string;[key: string]: unknown };
-                        statusText?: string;
-                    };
-                    message?: string;
-                    code?: string;
-                };
-
-                console.error('❌ Axios Error Details:');
-                console.error('  - Status:', axiosError.response?.status);
-                console.error('  - Status Text:', axiosError.response?.statusText);
-                console.error('  - Response Data:', axiosError.response?.data);
-                console.error('  - Error Code:', axiosError.code);
-                console.error('  - Error Message:', axiosError.message);
-
-                // Get detailed error message from backend
-                let errorMsg = '';
-                if (axiosError.response?.data) {
-                    const errorData = axiosError.response.data;
-                    // Show the actual error message from backend
-                    const backendError = errorData.error || errorData.err || errorData.message || errorData.Message;
-                    errorMsg = (backendError || JSON.stringify(errorData)) as string;
-
-                    // Provide helpful context for common errors
-                    if (typeof backendError === 'string' && backendError.includes('invalid input syntax for type integer')) {
-                        errorMsg = `Database Error: ${backendError}. The backend is trying to use a UUID where an integer is expected. This is a backend issue - check backend code for product_id usage.`;
-                    } else if (typeof backendError === 'string' && backendError.includes('not null')) {
-                        errorMsg = `Database Error: ${backendError}. A required field is missing. Check if 'quantity' field needs to be set in backend.`;
-                    }
-                } else {
-                    errorMsg = axiosError.message || `Failed to upload product (Status: ${axiosError.response?.status || 'Unknown'})`;
-                }
-
-                // Add status code to error message for 500 errors
-                if (axiosError.response?.status === 500) {
-                    errorMsg = `Server Error (500): ${errorMsg}`;
-                }
-
-                console.error('❌ Final error message to display:', errorMsg);
-                setProductError(errorMsg);
-            } else {
-                const errorMessage = error instanceof Error ? error.message : 'Failed to upload product. Please try again.';
-                console.error('❌ Unknown error type:', error);
-                setProductError(errorMessage);
-            }
+            const errorMessage = getFriendlyErrorMessage(error);
+            setProductError(`Upload failed: ${errorMessage}`);
         } finally {
             setIsUploadingProduct(false);
         }
@@ -265,11 +224,58 @@ export default function ProductUploadForm() {
                     onFormChange={handleFormChange}
                 />
 
-                <ProductImageUpload
-                    productImages={productImages}
-                    onImageChange={handleProductImageChange}
-                    error={productError}
-                />
+                {/* Updated Media Upload Component */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Media Files <span className="text-red-500">*</span> (Max 5 - Images & Videos, 5MB max each)
+                    </label>
+                    <input
+                        type="file"
+                        accept="image/*,video/*"
+                        onChange={handleProductMediaChange}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-700 focus:border-amber-700 outline-none"
+                        multiple
+                    />
+                    {productMedia.length > 0 && (
+                        <p className="mt-2 text-sm text-gray-600">{productMedia.length} media file(s) selected</p>
+                    )}
+                    {productError && productError.includes('media') && (
+                        <p className="mt-1 text-sm text-red-600">{productError}</p>
+                    )}
+
+                    {/* Preview of selected media */}
+                    {productMedia.length > 0 && (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mt-4">
+                            {productMedia.map((media, index) => (
+                                <div key={index} className="relative group">
+                                    {media.type.startsWith('video/') ? (
+                                        // Video preview
+                                        <div className="w-full h-32 rounded-lg border border-gray-200 bg-gray-100 flex items-center justify-center">
+                                            <video className="w-full h-full object-cover rounded-lg" />
+                                            <span className="absolute bottom-1 left-1 bg-black bg-opacity-50 text-white text-xs px-1 rounded">
+                                                Video
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        // Image preview
+                                        <img
+                                            src={URL.createObjectURL(media)}
+                                            alt={`Preview ${index + 1}`}
+                                            className="w-full h-32 object-cover rounded-lg border border-gray-200"
+                                        />
+                                    )}
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRemoveMedia(index)}
+                                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
 
                 <button
                     type="submit"

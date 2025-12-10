@@ -48,8 +48,8 @@ export default function ProductTable({ products, onEdit, onDelete, getImageUrl }
                     )}
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-gray-900">{product.title.length > 30 ? `${product.title.substring(0, 30)}...` : product.title}</div>
-                    <div className="text-sm text-gray-500 truncate max-w-xs">{product.description.length > 100 ? `${product.description.substring(0, 100)}...` : product.description}</div>
+                    <div className="text-sm font-medium text-gray-900">{product.title}</div>
+                    <div className="text-sm text-gray-500">{product.description}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{product.skuId}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{product.category}</td>

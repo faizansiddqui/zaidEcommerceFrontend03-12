@@ -215,9 +215,6 @@ export default function ProductDetails({ productId, onClose }: ProductDetailsPro
 
               <ProductActions
                 quantity={product.quantity}
-                selectedQuantity={1} // Always set to 1
-                onQuantityDecrease={() => { }} // Disable decrease
-                onQuantityIncrease={() => { }} // Disable increase
                 onAddToCart={handleAddToCart}
                 onBuyNow={handleBuyNow}
                 addedToCart={addedToCart}

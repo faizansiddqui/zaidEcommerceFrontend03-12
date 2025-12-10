@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getFriendlyErrorMessage } from '../utils/errorHandler';
 
 const API_BASE_URL = "https://islamicdecotweb.onrender.com";
 // const API_BASE_URL = "https://backend.kiswahmakkahstore.com";
@@ -31,17 +32,18 @@ api.interceptors.response.use(
 // Auth API - OTP only
 export const authAPI = {
   // Send OTP to email (also used for "resend")
-  sendOtp: (email: string) => api.post('/api/auth/log', { email }).then((result)=>{console.log(result.data);
-  }).catch((error: any) => {
+  sendOtp: (email: string) => api.post('/api/auth/log', { email }).then((result) => {
+    console.log(result.data);
+  }).catch((error: unknown) => {
     console.error('sendOtp failed:', error);
-    const message = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to send OTP';
+    const message = getFriendlyErrorMessage(error);
     throw new Error(message);
   }),
 
   // Verify OTP code
-  verifyOtp: (email: string, otp: string) => api.post('/api/auth/varify-email', { email, otp }).catch((error: any) => {
+  verifyOtp: (email: string, otp: string) => api.post('/api/auth/varify-email', { email, otp }).catch((error: unknown) => {
     console.error('verifyOtp failed:', error);
-    const message = error.response?.data?.message || error.response?.data?.error || error.message || 'OTP verification failed';
+    const message = getFriendlyErrorMessage(error);
     throw new Error(message);
   }),
 };
@@ -49,23 +51,23 @@ export const authAPI = {
 // User API
 export const userAPI = {
   getProfile: () =>
-    api.post('/user/get-user-profile', {}, { withCredentials: true }).catch((error: any) => {
+    api.post('/user/get-user-profile', {}, { withCredentials: true }).catch((error: unknown) => {
       console.error('getProfile failed:', error);
-      const message = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to load profile';
+      const message = getFriendlyErrorMessage(error);
       throw new Error(message);
     }),
 
   getOrders: () =>
-    api.post('/user/get-orders', {}, { withCredentials: true }).catch((error: any) => {
+    api.post('/user/get-orders', {}, { withCredentials: true }).catch((error: unknown) => {
       console.error('getOrders failed:', error);
-      const message = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to load orders';
+      const message = getFriendlyErrorMessage(error);
       throw new Error(message);
     }),
 
   getAddresses: () =>
-    api.post('/user/get-user-addresess', {}, { withCredentials: true }).catch((error: any) => {
+    api.post('/user/get-user-addresess', {}, { withCredentials: true }).catch((error: unknown) => {
       console.error('getAddresses failed:', error);
-      const message = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to load addresses. Please try again later.';
+      const message = getFriendlyErrorMessage(error);
       throw new Error(message);
     }),
 
@@ -83,67 +85,77 @@ export const userAPI = {
     }),
 
   saveCart: (cartItems: Array<Record<string, unknown>>) =>
-    api.post('/user/save-cart', { cartItems }, { withCredentials: true }).catch((error: any) => {
+    api.post('/user/save-cart', { cartItems }, { withCredentials: true }).catch((error: unknown) => {
       console.error('saveCart failed:', error);
+      // @ts-expect-error - We're checking for the existence of response property
       if (error.response?.status === 404) {
         throw new Error('Save cart endpoint not available. Cart saved to localStorage only.');
       }
+      // @ts-expect-error - We're checking for the existence of response property
       if (error.response?.status === 403) {
         throw new Error('Authentication required to save cart. Cart saved to localStorage only.');
       }
-      const message = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to save cart';
+      const message = getFriendlyErrorMessage(error);
       throw new Error(message);
     }),
 
   addToCart: (productId: number, quantity: number) =>
-    api.post('/user/add-to-cart', { product_id: productId, quantity }, { withCredentials: true }).catch((error: any) => {
+    api.post('/user/add-to-cart', { product_id: productId, quantity }, { withCredentials: true }).catch((error: unknown) => {
       console.error('addToCart failed:', error);
+      // @ts-expect-error - We're checking for the existence of response property
       if (error.response?.status === 404) {
         throw new Error('Add to cart endpoint not available.');
       }
+      // @ts-expect-error - We're checking for the existence of response property
       if (error.response?.status === 403) {
         throw new Error('Authentication required to add to cart.');
       }
-      const message = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to add to cart';
+      const message = getFriendlyErrorMessage(error);
       throw new Error(message);
     }),
 
   removeFromCart: (productId: number) =>
-    api.get(`/user/remove-cart-by-product/${productId}`, { withCredentials: true }).catch((error: any) => {
+    api.get(`/user/remove-cart-by-product/${productId}`, { withCredentials: true }).catch((error: unknown) => {
       console.error('removeFromCart failed:', error);
+      // @ts-expect-error - We're checking for the existence of response property
       if (error.response?.status === 404) {
         throw new Error('Remove from cart endpoint not available.');
       }
+      // @ts-expect-error - We're checking for the existence of response property
       if (error.response?.status === 403) {
         throw new Error('Authentication required to remove from cart.');
       }
-      const message = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to remove from cart';
+      const message = getFriendlyErrorMessage(error);
       throw new Error(message);
     }),
 
   updateCartItem: (productId: number, quantity: number) =>
-    api.post('/user/update-cart-item', { product_id: productId, quantity }, { withCredentials: true }).catch((error: any) => {
+    api.post('/user/update-cart-item', { product_id: productId, quantity }, { withCredentials: true }).catch((error: unknown) => {
       console.error('updateCartItem failed:', error);
+      // @ts-expect-error - We're checking for the existence of response property
       if (error.response?.status === 404) {
         throw new Error('Update cart item endpoint not available.');
       }
+      // @ts-expect-error - We're checking for the existence of response property
       if (error.response?.status === 403) {
         throw new Error('Authentication required to update cart item.');
       }
-      const message = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to update cart item';
+      const message = getFriendlyErrorMessage(error);
       throw new Error(message);
     }),
 
   clearCart: () =>
-    api.post('/user/clear-cart', {}, { withCredentials: true }).catch((error: any) => {
+    api.post('/user/clear-cart', {}, { withCredentials: true }).catch((error: unknown) => {
       console.error('clearCart failed:', error);
+      // @ts-expect-error - We're checking for the existence of response property
       if (error.response?.status === 404) {
         throw new Error('Clear cart endpoint not available.');
       }
+      // @ts-expect-error - We're checking for the existence of response property
       if (error.response?.status === 403) {
         throw new Error('Authentication required to clear cart.');
       }
-      const message = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to clear cart';
+      const message = getFriendlyErrorMessage(error);
       throw new Error(message);
     }),
 
@@ -151,17 +163,17 @@ export const userAPI = {
     try {
       const response = await api.post('/user/create-newAddress', address);
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating address:', error);
-      const apiError = error as { response?: { data?: { message?: string; error?: string }, status?: number } };
-      const apiErrorMessage = apiError.response?.data?.message || apiError.response?.data?.error || error.message || 'Failed to create address';
-      if (apiErrorMessage.includes('phone') &&
-        (apiErrorMessage.includes('already') ||
-          apiErrorMessage.includes('exist') ||
-          apiErrorMessage.includes('unique'))) {
+      const message = getFriendlyErrorMessage(error);
+      // Special handling for phone number conflicts
+      if (message.includes('phone') &&
+        (message.includes('already') ||
+          message.includes('exist') ||
+          message.includes('unique'))) {
         throw new Error('An address with this phone number already exists.');
       } else {
-        throw new Error(apiErrorMessage);
+        throw new Error(message);
       }
     }
   },
@@ -170,17 +182,17 @@ export const userAPI = {
     try {
       const response = await api.patch('/user/update-user-address', { address_id: addressId, ...address });
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating address:', error);
-      const apiError = error as { response?: { data?: { message?: string; error?: string }, status?: number } };
-      const apiErrorMessage = apiError.response?.data?.message || apiError.response?.data?.error || error.message || 'Failed to update address';
-      if (apiErrorMessage.includes('phone') &&
-        (apiErrorMessage.includes('already') ||
-          apiErrorMessage.includes('exist') ||
-          apiErrorMessage.includes('unique'))) {
+      const message = getFriendlyErrorMessage(error);
+      // Special handling for phone number conflicts
+      if (message.includes('phone') &&
+        (message.includes('already') ||
+          message.includes('exist') ||
+          message.includes('unique'))) {
         throw new Error('An address with this phone number already exists.');
       } else {
-        throw new Error(apiErrorMessage);
+        throw new Error(message);
       }
     }
   },
@@ -206,133 +218,136 @@ export const userAPI = {
       });
 
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating order:', error);
-      const message = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to create order';
+      const message = getFriendlyErrorMessage(error);
       throw new Error(message);
     }
   },
 
-  cancelOrder: (orderId: string) => api.post("/user/cancel-order", { order_id: orderId }).catch((error: any) => {
+  cancelOrder: (orderId: string) => api.post("/user/cancel-order", { order_id: orderId }).catch((error: unknown) => {
     console.error('cancelOrder failed:', error);
-    const message = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to cancel order';
+    const message = getFriendlyErrorMessage(error);
     throw new Error(message);
   }),
 };
 
 // Product API
 export const productAPI = {
-  getProducts: () => api.get('/user/show-product').catch((error: any) => {
+  getProducts: () => api.get('/user/show-product').catch((error: unknown) => {
     console.error('getProducts failed:', error);
-    const message = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to load products';
+    const message = getFriendlyErrorMessage(error);
     throw new Error(message);
   }),
 
-  getProductById: (id: number) => api.get(`/user/get-product-byid/${id}`).catch((error: any) => {
+  getProductById: (id: number) => api.get(`/user/get-product-byid/${id}`).catch((error: unknown) => {
     console.error('getProductById failed:', error);
-    const message = error.response?.data?.message || error.response?.data?.error || error.message || `Failed to load product ${id}`;
+    const message = getFriendlyErrorMessage(error);
     throw new Error(message);
   }),
 
-  getProductByCategory: (category: string) => api.get(`/user/get-product-byCategory/${category}`).catch((error: any) => {
+  getProductByCategory: (category: string) => api.get(`/user/get-product-byCategory/${category}`).catch((error: unknown) => {
     console.error('getProductByCategory failed:', error);
-    const message = error.response?.data?.message || error.response?.data?.error || error.message || `Failed to load products for category ${category}`;
+    const message = getFriendlyErrorMessage(error);
     throw new Error(message);
   }),
 
-  searchProduct: (search: string, price?: number) => api.post('/user/search', { search, price }).catch((error: any) => {
+  searchProduct: (search: string, price?: number) => api.post('/user/search', { search, price }).catch((error: unknown) => {
     console.error('searchProduct failed:', error);
-    const message = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to search products';
+    const message = getFriendlyErrorMessage(error);
     throw new Error(message);
   }),
 
-  getCategories: () => api.get('/user/get-categories').catch((error: any) => {
+  getCategories: () => api.get('/user/get-categories').catch((error: unknown) => {
     console.error('getCategories failed:', error);
-    const message = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to load categories';
+    const message = getFriendlyErrorMessage(error);
     throw new Error(message);
   }),
 
   // Review APIs
   addProductReview: (reviewData: FormData) => api.post('/user/product-reviews', reviewData, {
     headers: { 'Content-Type': 'multipart/form-data' },
-  }).catch((error: any) => {
+  }).catch((error: unknown) => {
     console.error('addProductReview failed:', error);
-    const message = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to add review';
+    const message = getFriendlyErrorMessage(error);
     throw new Error(message);
   }),
 
-  getProductReviews: (productId: number) => api.get(`/user/get-product-reviews/${productId}`).catch((error: any) => {
+  getProductReviews: (productId: number) => api.get(`/user/get-product-reviews/${productId}`).catch((error: unknown) => {
     console.error('getProductReviews failed:', error);
-    const message = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to load reviews';
+    const message = getFriendlyErrorMessage(error);
     throw new Error(message);
   }),
 };
 
 // Admin API
 export const adminAPI = {
-  login: (userName: string, password: string) => api.post('/admin/login', { userName, password }).catch((error: any) => {
+  login: (userName: string, password: string) => api.post('/admin/login', { userName, password }).catch((error: unknown) => {
     console.error('adminLogin failed:', error);
-    const message = error.response?.data?.message || error.response?.data?.error || error.message || 'Admin login failed';
+    const message = getFriendlyErrorMessage(error);
     throw new Error(message);
   }),
 
-  addCategory: (name: string) => api.post('/admin/add-catagory', { name }).catch((error: any) => {
+  addCategory: (name: string) => api.post('/admin/add-catagory', { name }).catch((error: unknown) => {
     console.error('addCategory failed:', error);
-    const message = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to add category';
+    const message = getFriendlyErrorMessage(error);
     throw new Error(message);
   }),
 
   uploadProduct: (formData: FormData) => api.post('/admin/upload-product', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
-  }).catch((error: any) => {
+  }).catch((error: unknown) => {
     console.error('uploadProduct failed:', error);
-    const message = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to upload product';
+    const message = getFriendlyErrorMessage(error);
     throw new Error(message);
   }),
 
-  getProducts: () => api.get('/admin/get-products').catch((error: any) => {
+  getProducts: () => api.get('/admin/get-products').catch((error: unknown) => {
     console.error('adminGetProducts failed:', error);
-    const message = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to load admin products';
+    const message = getFriendlyErrorMessage(error);
     throw new Error(message);
   }),
 
   updateProduct: (productId: number, data: { price?: number; selling_price?: number; quantity?: number }) =>
-    api.patch(`/admin/update-product/${productId}`, data).catch((error: any) => {
+    api.patch(`/admin/update-product/${productId}`, data).catch((error: unknown) => {
       console.error('updateProduct failed:', error);
-      const message = error.response?.data?.message || error.response?.data?.error || error.message || `Failed to update product ${productId}`;
+      const message = getFriendlyErrorMessage(error);
       throw new Error(message);
     }),
 
   updateFullProduct: (productId: number, formData: FormData) =>
     api.patch(`/admin/update-product/${productId}`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    }).catch((error: any) => {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    }).catch((error: unknown) => {
       console.error('updateFullProduct failed:', error);
-      const message = error.response?.data?.message || error.response?.data?.error || error.message || `Failed to update product ${productId}`;
+      const message = getFriendlyErrorMessage(error);
       throw new Error(message);
     }),
 
-  getOrders: () => api.get('/admin/get-orders').catch((error: any) => {
+  getOrders: () => api.get('/admin/get-orders').catch((error: unknown) => {
     console.error('adminGetOrders failed:', error);
     // If it's a 404 (no orders found), return a successful response with empty orders
+    // @ts-expect-error - We're checking for the existence of response property
     if (error.response?.status === 404) {
       return { data: { status: true, orders: [] } };
     }
-    const message = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to load admin orders';
+    const message = getFriendlyErrorMessage(error);
     throw new Error(message);
   }),
 
   updateOrderStatus: (orderId: string, status: string, productId?: string) =>
-    api.patch('/admin/update-order-status', { order_id: orderId, status, product_id: productId }).catch((error: any) => {
+    api.patch('/admin/update-order-status', { order_id: orderId, status, product_id: productId }).catch((error: unknown) => {
       console.error('updateOrderStatus failed:', error);
-      const message = error.response?.data?.message || error.response?.data?.error || error.message || `Failed to update order status for ${orderId}`;
+      const message = getFriendlyErrorMessage(error);
       throw new Error(message);
     }),
 
   deleteProduct: (productId: number) =>
-    api.delete('/admin/delete-product', { data: { productId } }).catch((error: any) => {
+    api.delete('/admin/delete-product', { data: { productId } }).catch((error: unknown) => {
       console.error('deleteProduct failed:', error);
-      const message = error.response?.data?.message || error.response?.data?.error || error.message || `Failed to delete product ${productId}`;
+      const message = getFriendlyErrorMessage(error);
       throw new Error(message);
     }),
 };

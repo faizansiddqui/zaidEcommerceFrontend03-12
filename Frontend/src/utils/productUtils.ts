@@ -30,6 +30,14 @@ export const getImageUrl = (productImage: string | string[] | { [key: string]: s
     return '';
 };
 
+// Utility function to truncate text to a maximum number of words
+export const truncateText = (text: string, maxWords: number = 5): string => {
+    if (!text) return '';
+    const words = text.split(' ');
+    if (words.length <= maxWords) return text;
+    return words.slice(0, maxWords).join(' ') + '...';
+};
+
 // Check if product was created/listed in last 3 days (gets "new" tag)
 export const isProductNew = (product: Product): boolean => {
     if (!product.createdAt) return false;

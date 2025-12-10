@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { ArrowLeft, Check, Clock, Package, Truck, XCircle } from 'lucide-react';
 import { getDisplayStatus } from '../Admin/components/Order/OrderStatusUtils';
 import { userAPI } from '../services/api';
-import { useNavigation } from "../utils/navigation";
+import { useNavigation } from '../utils/navigation';
+import { getSortedMediaArray } from '../utils/mediaSortUtils';
 import { useAuthProtection } from '../utils/authProtection';
 
 interface Product {
@@ -125,8 +126,9 @@ export default function OrderDetailsPage({ orderId, onBack }: OrderDetailsPagePr
         } else if (Array.isArray(product.product_image)) {
             return product.product_image[0] || '';
         } else if (typeof product.product_image === 'object' && product.product_image !== null) {
-            const imageValues = Object.values(product.product_image);
-            return imageValues[0] || '';
+            // Use our sorting utility to prioritize images
+            const sortedMedia = getSortedMediaArray(product.product_image);
+            return sortedMedia[0] || '';
         }
 
         return '';
@@ -449,11 +451,11 @@ export default function OrderDetailsPage({ orderId, onBack }: OrderDetailsPagePr
                                         )}
                                         <div className="flex-1">
                                             <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                                                {(item.Product?.name || 'Product').length > 30 ? `${(item.Product?.name || 'Product').substring(0, 30)}...` : (item.Product?.name || 'Product')}
+                                                {item.Product?.name || 'Product'}
                                             </h3>
 
                                             {item.Product?.description && (
-                                                <p className="text-gray-600 mb-4">{item.Product.description.length > 100 ? `${item.Product.description.substring(0, 100)}...` : item.Product.description}</p>
+                                                <p className="text-gray-600 mb-4">{item.Product.description}</p>
                                             )}
 
                                             <div className="space-y-2">
@@ -489,11 +491,11 @@ export default function OrderDetailsPage({ orderId, onBack }: OrderDetailsPagePr
                                     )}
                                     <div className="flex-1">
                                         <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                                            {(order.Product?.name || 'Product').length > 30 ? `${(order.Product?.name || 'Product').substring(0, 30)}...` : (order.Product?.name || 'Product')}
+                                            {order.Product?.name || 'Product'}
                                         </h3>
 
                                         {order.Product?.description && (
-                                            <p className="text-gray-600 mb-4">{order.Product.description.length > 100 ? `${order.Product.description.substring(0, 100)}...` : order.Product.description}</p>
+                                            <p className="text-gray-600 mb-4">{order.Product.description}</p>
                                         )}
 
                                         <div className="space-y-2">

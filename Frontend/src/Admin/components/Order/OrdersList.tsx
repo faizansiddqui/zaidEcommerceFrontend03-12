@@ -6,6 +6,7 @@ import OrderFilters from './OrderFilters';
 import OrderPagination from './OrderPagination';
 import OrderDetailsModal from './OrderDetailsModal';
 import { Order, getStatusColor, getStatusIcon, getDisplayStatus } from './OrderStatusUtils';
+import { truncateText } from '../../../utils/productUtils';
 
 export default function OrdersList() {
     const [orders, setOrders] = useState<Order[]>([]);
@@ -351,10 +352,14 @@ export default function OrdersList() {
 
 // Get product name from items or Product
 const getProductName = (order: Order) => {
+    let productName = '';
     if (order.items && order.items.length > 0) {
-        return order.items[0].Product.name || order.items[0].Product.title || 'N/A';
+        productName = order.items[0].Product.name || order.items[0].Product.title || 'N/A';
+    } else {
+        productName = order.Product?.name || order.Product?.title || 'N/A';
     }
-    return order.Product?.name || order.Product?.title || 'N/A';
+    // Truncate product name to maximum 10 words
+    return truncateText(productName, 10);
 };
 
 // Get product price from items or Product

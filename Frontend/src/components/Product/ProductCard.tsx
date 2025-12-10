@@ -15,9 +15,24 @@ interface ProductCardProps {
   badge?: 'new' | 'bestseller' | null;
   oldPrice?: number;
   disableHover?: boolean;
+  // Add rating props
+  averageRating?: number;
+  reviewCount?: number;
 }
 
-export default function ProductCard({ id, name, price, image, category, inStock, badge, oldPrice, disableHover = false }: ProductCardProps) {
+export default function ProductCard({
+  id,
+  name,
+  price,
+  image,
+  category,
+  inStock,
+  badge,
+  oldPrice,
+  disableHover = false,
+  averageRating = 0,
+  reviewCount = 0
+}: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
   const { addToCart, isInCart, buyNow } = useCart(); // Add buyNow to the destructuring
@@ -66,6 +81,13 @@ export default function ProductCard({ id, name, price, image, category, inStock,
 
   const handleProductClick = () => {
     go(`/product/${id}`);
+  };
+
+  // Function to get rating background color
+  const getRatingBgColor = (rate: number) => {
+    if (rate <= 1) return 'bg-red-600';
+    if (rate <= 3) return 'bg-yellow-500';
+    return 'bg-green-600';
   };
 
   // Only apply hover effects if not disabled
@@ -151,8 +173,21 @@ export default function ProductCard({ id, name, price, image, category, inStock,
 
       <div className="p-2 xs:p-2.5 sm:p-3 lg:p-4">
         <h3 className={`font-semibold text-[10px] xs:text-xs sm:text-sm text-gray-900 mb-1 xs:mb-1.5 sm:mb-2 line-clamp-2 min-h-[2rem] xs:min-h-[2.25rem] sm:min-h-[2.5rem] ${shouldApplyHover ? 'sm:group-hover:text-amber-700 sm:transition-colors' : ''}`}>
-          {name.length > 30 ? `${name.substring(0, 30)}...` : name}
+          {name}
         </h3>
+
+        {/* Rating Display */}
+        {averageRating > 0 && (
+          <div className="flex items-center gap-1 mb-1">
+            <div className={`inline-flex items-center px-2 py-0.5 rounded-md ${getRatingBgColor(averageRating)}`}>
+              <span className="text-white font-bold text-[10px]">{averageRating.toFixed(1)}</span>
+            </div>
+            <span className="text-[9px] xs:text-[10px] text-gray-500">
+              ({reviewCount})
+            </span>
+          </div>
+        )}
+
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs xs:text-sm sm:text-base lg:text-lg font-bold text-amber-700">${price}</span>

@@ -15,6 +15,7 @@ interface Product {
     sku: string | null;
     description: string | null;
     product_image: string | string[] | { [key: string]: string };
+    product_video?: string;
     catagory_id: number;
     Catagory?: {
         id: number;
@@ -235,13 +236,21 @@ export default function ProductsList() {
                                             )}
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="text-sm font-medium text-gray-900">{product.name.length > 30 ? `${product.name.substring(0, 30)}...` : product.name}</div>
+                                            {product.name && (
+                                                <div className="text-sm font-medium text-gray-900">
+                                                    {product.name.length > 20 ? `${product.name.substring(0, 20)}...` : product.name}
+                                                </div>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="text-sm text-gray-900">{(product.title || '-').length > 30 ? `${(product.title || '-').substring(0, 30)}...` : (product.title || '-')}</div>
+                                            {product.title && (
+                                                <div className="text-sm text-gray-900">
+                                                    {product.title.length > 10 ? `${product.title.substring(0, 10)}...` : product.title}
+                                                </div>
+                                            )}
                                             {product.description && (
                                                 <div className="text-xs text-gray-500 truncate max-w-xs mt-1">
-                                                    {product.description.length > 100 ? `${product.description.substring(0, 100)}...` : product.description}
+                                                    {product.description.length > 20 ? `${product.description.substring(0, 20)}...` : product.description}
                                                 </div>
                                             )}
                                         </td>

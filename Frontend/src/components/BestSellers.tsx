@@ -1,14 +1,32 @@
-import { useState, useEffect } from 'react';
-import { Star, Sparkles } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Sparkles } from 'lucide-react';
 import { productAPI } from '../services/api';
 import { Product, getImageUrl, isProductBestSeller } from '../utils/productUtils';
 import { useNavigation } from "../utils/navigation";
 
+// Define Review interface for rating calculations
+interface Review {
+  id: number;
+  user_name: string;
+  review_title: string;
+  review_text: string;
+  review_rate: number;
+  review_image?: string;
+  createdAt: string;
+  user_review_count?: number;
+}
+
+interface ProductWithRating extends Product {
+  averageRating?: number;
+  reviewCount?: number;
+}
+
 export default function BestSellers() {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductWithRating[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { go } = useNavigation();
-
+  // Add cache for ratings to avoid repeated API calls
+  const [ratingsCache, setRatingsCache] = useState<Record<number, { averageRating: number; reviewCount: number }>>({});
 
   useEffect(() => {
     loadProducts();
@@ -21,9 +39,12 @@ export default function BestSellers() {
 
       if (response.data.status && Array.isArray(response.data.products)) {
         // Filter products created in last 3 days (bestsellers)
-        const bestSellers = response.data.products.filter((product: Product) =>
-          isProductBestSeller(product)
-        );
+        const bestSellers = response.data.products
+          .filter((product: Product) => isProductBestSeller(product))
+          .map((product: Product) => ({
+            ...product,
+            ...(ratingsCache[product.product_id] || {})
+          }));
         setProducts(bestSellers);
       } else {
         setProducts([]);
@@ -35,6 +56,100 @@ export default function BestSellers() {
       setIsLoading(false);
     }
   };
+
+  // Function to get rating background color
+  const getRatingBgColor = (rate: number) => {
+    if (rate <= 1) return 'bg-red-600';
+    if (rate <= 3) return 'bg-yellow-500';
+    return 'bg-green-600';
+  };
+
+  // Function to fetch ratings for a product
+  const fetchProductRating = useCallback(async (productId: number) => {
+    // If we already have the rating in cache, return it
+    if (ratingsCache[productId]) {
+      return ratingsCache[productId];
+    }
+
+    try {
+      const response = await productAPI.getProductReviews(productId);
+      const list = response?.data?.reviews || response?.data?.data || [];
+
+      if (Array.isArray(list)) {
+        const reviewCount = list.length;
+        let averageRating = 0;
+
+        if (reviewCount > 0) {
+          const totalRating = list.reduce((sum, review: Review) => sum + review.review_rate, 0);
+          averageRating = totalRating / reviewCount;
+        }
+
+        const ratingData = { averageRating, reviewCount };
+
+        // Update cache
+        setRatingsCache(prev => ({
+          ...prev,
+          [productId]: ratingData
+        }));
+
+        return ratingData;
+      }
+    } catch (err) {
+      console.error(`Failed to load reviews for product ${productId}:`, err);
+    }
+
+    // Return default values if failed to fetch
+    return { averageRating: 0, reviewCount: 0 };
+  }, [ratingsCache]);
+
+  // Function to load ratings for visible products
+  const loadRatingsForVisibleProducts = useCallback(async () => {
+    // Only load ratings for products that don't already have them
+    const productsWithoutRatings = products.filter(product =>
+      product.product_id && (product.averageRating === undefined || product.reviewCount === undefined)
+    );
+
+    if (productsWithoutRatings.length === 0) return;
+
+    // Process products in batches to avoid overwhelming the API
+    const batchSize = 5;
+    for (let i = 0; i < productsWithoutRatings.length; i += batchSize) {
+      const batch = productsWithoutRatings.slice(i, i + batchSize);
+
+      // Fetch ratings for all products in the batch
+      const ratingPromises = batch.map(product =>
+        fetchProductRating(product.product_id)
+      );
+
+      try {
+        const ratings = await Promise.all(ratingPromises);
+
+        // Update products with fetched ratings
+        setProducts(prevProducts =>
+          prevProducts.map(product => {
+            const index = batch.findIndex(p => p.product_id === product.product_id);
+            if (index !== -1) {
+              return {
+                ...product,
+                averageRating: ratings[index].averageRating,
+                reviewCount: ratings[index].reviewCount
+              };
+            }
+            return product;
+          })
+        );
+      } catch (error) {
+        console.error('Error fetching ratings for batch:', error);
+      }
+    }
+  }, [products, fetchProductRating]);
+
+  // Load ratings when products change
+  useEffect(() => {
+    if (products.length > 0) {
+      loadRatingsForVisibleProducts();
+    }
+  }, [products, loadRatingsForVisibleProducts]);
 
   const handleProductClick = (productId: number) => {
     go(`/product/${productId}`);
@@ -113,14 +228,23 @@ export default function BestSellers() {
                     </div>
 
                     <div className="p-2 xs:p-3 sm:p-4 lg:p-5">
-                      <div className="flex items-center gap-0.5 xs:gap-1 mb-1 xs:mb-2">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} size={10} className="xs:w-3 xs:h-3 sm:w-3.5 sm:h-3.5 text-yellow-400 fill-current" />
-                        ))}
-                        <span className="text-[9px] xs:text-[10px] sm:text-xs lg:text-sm text-gray-600 ml-0.5 xs:ml-1">
-                          (Reviews)
-                        </span>
-                      </div>
+                      {/* Rating Display */}
+                      {product.averageRating && product.averageRating > 0 ? (
+                        <div className="flex items-center gap-1 mb-1 xs:mb-2">
+                          <div className={`inline-flex items-center px-2 py-0.5 rounded-md ${getRatingBgColor(product.averageRating)}`}>
+                            <span className="text-white font-bold text-[10px]">{product.averageRating.toFixed(1)}</span>
+                          </div>
+                          <span className="text-[9px] xs:text-[10px] text-gray-500">
+                            ({product.reviewCount})
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-0.5 xs:gap-1 mb-1 xs:mb-2">
+                          <span className="text-[9px] xs:text-[10px] sm:text-xs lg:text-sm text-gray-600 ml-0.5 xs:ml-1">
+                            No reviews yet
+                          </span>
+                        </div>
+                      )}
 
                       <h3 className="text-[10px] xs:text-xs sm:text-sm lg:text-base text-gray-900 font-medium mb-1.5 xs:mb-2 sm:mb-3 line-clamp-2 min-h-[2rem] xs:min-h-[2.5rem] sm:min-h-[3rem] sm:group-hover:text-amber-700 sm:transition-colors">
                         {product.name || product.title || 'Product'}
@@ -157,7 +281,7 @@ export default function BestSellers() {
             </div>
 
             <div className="text-center mt-4 xs:mt-6 sm:mt-8 text-[9px] xs:text-xs sm:text-sm lg:text-base text-gray-600">
-              Free Shipping over $5 • 30-Day Returns
+              Free Shipping • 30-Day Returns
             </div>
           </>
         )}

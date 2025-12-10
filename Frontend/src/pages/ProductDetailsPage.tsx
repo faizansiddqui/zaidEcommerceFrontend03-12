@@ -10,6 +10,7 @@ import { useNavigation } from "../utils/navigation";
 import { Product } from '../utils/productUtils';
 import ProductCard from '../components/Product/ProductCard';
 import { getCategoryById } from '../data/categories';
+import { getSortedMediaArray } from '../utils/mediaSortUtils';
 // Added imports for navbar and footer
 import Navbar from '../components/Navbar/Navbar';
 import Footer from '../components/Footer/Footer';
@@ -27,6 +28,7 @@ interface ProductData {
     price: number;
     selling_price: number;
     product_image: string | string[] | { [key: string]: string };
+    product_video?: string; // Add video support
     quantity: number;
     description?: string;
     ProductSpecification?: ProductSpecification[];
@@ -54,6 +56,18 @@ interface ProductDetailsPageProps {
     onBack?: () => void;
 }
 
+// Define Review interface locally since we need it for calculating average rating
+interface Review {
+    id: number;
+    user_name: string;
+    review_title: string;
+    review_text: string;
+    review_rate: number;
+    review_image?: string;
+    createdAt: string;
+    user_review_count?: number;
+}
+
 export default function ProductDetailsPage({ productId, onBack }: ProductDetailsPageProps) {
     const [product, setProduct] = useState<ProductData | null>(null);
     const [relatedProducts, setRelatedProducts] = useState<CategoryProductData[]>([]);
@@ -62,6 +76,8 @@ export default function ProductDetailsPage({ productId, onBack }: ProductDetails
     const [error, setError] = useState('');
     const [selectedImage, setSelectedImage] = useState(0);
     const [addedToCart, setAddedToCart] = useState(false);
+    const [averageRating, setAverageRating] = useState(0); // Add state for average rating
+    const [reviewCount, setReviewCount] = useState(0); // Add state for review count
     const { cartItems, addToCart, isInCart } = useCart(); // Add cartItems to the destructuring
     const { go } = useNavigation();
 
@@ -91,6 +107,9 @@ export default function ProductDetailsPage({ productId, onBack }: ProductDetails
                 if (productData.catagory_id) {
                     loadRelatedProducts(productData.catagory_id, productData.product_id);
                 }
+
+                // Load reviews for the product
+                loadProductReviews(productData.product_id);
             } else {
                 setError('Product not found');
             }
@@ -106,6 +125,39 @@ export default function ProductDetailsPage({ productId, onBack }: ProductDetails
             setError(err.response?.data?.message || err.message || 'Failed to load product');
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const loadProductReviews = async (productId: number) => {
+        try {
+            const response = await productAPI.getProductReviews(productId);
+            const list =
+                response?.data?.reviews ||
+                response?.data?.data ||
+                [];
+
+            if (Array.isArray(list)) {
+                const sorted = list.sort(
+                    (a: Review, b: Review) =>
+                        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                );
+                setReviewCount(sorted.length);
+
+                // Calculate average rating
+                if (sorted.length > 0) {
+                    const totalRating = sorted.reduce((sum, review) => sum + review.review_rate, 0);
+                    setAverageRating(totalRating / sorted.length);
+                } else {
+                    setAverageRating(0);
+                }
+            } else {
+                setReviewCount(0);
+                setAverageRating(0);
+            }
+        } catch (err) {
+            console.error('Failed to load product reviews:', err);
+            setReviewCount(0);
+            setAverageRating(0);
         }
     };
 
@@ -158,20 +210,6 @@ export default function ProductDetailsPage({ productId, onBack }: ProductDetails
             });
             setAddedToCart(true);
         }
-    };
-
-    const getImageArray = (productImage: string | string[] | { [key: string]: string } | undefined): string[] => {
-        if (!productImage) return [];
-        if (typeof productImage === 'string') {
-            return [productImage];
-        }
-        if (Array.isArray(productImage)) {
-            return productImage;
-        }
-        if (typeof productImage === 'object') {
-            return Object.values(productImage);
-        }
-        return [];
     };
 
     const handleGoToCart = () => {
@@ -239,8 +277,6 @@ export default function ProductDetailsPage({ productId, onBack }: ProductDetails
         );
     }
 
-    const images = getImageArray(product.product_image);
-
     return (
         // Added navbar and footer to main render
         <div className="min-h-screen bg-gray-50">
@@ -259,7 +295,7 @@ export default function ProductDetailsPage({ productId, onBack }: ProductDetails
                 <div className="bg-white rounded-xl shadow-md overflow-hidden">
                     <div className="grid lg:grid-cols-2 gap-8 p-6 lg:p-8">
                         <ProductImageGallery
-                            images={images}
+                            images={product ? getSortedMediaArray(product.product_image) : []}
                             selectedImage={selectedImage}
                             onImageSelect={setSelectedImage}
                             productName={product.name || product.title || 'Product'}
@@ -274,6 +310,9 @@ export default function ProductDetailsPage({ productId, onBack }: ProductDetails
                                 sellingPrice={product.selling_price}
                                 specifications={product.ProductSpecification || product.ProductSpecifications || []}
                                 quantity={product.quantity}
+                                // Pass dynamic review data
+                                averageRating={averageRating}
+                                reviewCount={reviewCount}
                             />
 
                             {/* Wishlist Button */}
@@ -287,14 +326,12 @@ export default function ProductDetailsPage({ productId, onBack }: ProductDetails
 
                             <ProductActions
                                 quantity={product.quantity}
-                                selectedQuantity={1} // Always set to 1
-                                onQuantityDecrease={() => { }} // Disable decrease
-                                onQuantityIncrease={() => { }} // Disable increase
                                 onAddToCart={handleAddToCart}
                                 onBuyNow={handleBuyNow}
                                 addedToCart={addedToCart}
                                 onGoToCart={handleGoToCart}
                             />
+
                         </div>
                     </div>
                 </div>

@@ -1,21 +1,36 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import ProductCard from './ProductCard';
 import { Filter, SlidersHorizontal, X } from 'lucide-react';
 import { productAPI } from '../../services/api';
 import { Product, getImageUrl, isProductNew, isProductBestSeller } from '../../utils/productUtils';
 import { getCategories } from '../../data/categories';
 
-interface ProductGridProps {
-  searchQuery?: string;
+// Define Review interface for rating calculations
+interface Review {
+  id: number;
+  user_name: string;
+  review_title: string;
+  review_text: string;
+  review_rate: number;
+  review_image?: string;
+  createdAt: string;
+  user_review_count?: number;
 }
 
-export default function ProductGrid({ searchQuery }: ProductGridProps) {
-  const [products, setProducts] = useState<Product[]>([]);
+interface ProductWithRating extends Product {
+  averageRating?: number;
+  reviewCount?: number;
+}
+
+export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
+  const [products, setProducts] = useState<ProductWithRating[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('All Products');
   const [sortBy, setSortBy] = useState('featured');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  // Add cache for ratings to avoid repeated API calls
+  const [ratingsCache, setRatingsCache] = useState<Record<number, { averageRating: number; reviewCount: number }>>({});
 
   useEffect(() => {
     loadProducts();
@@ -37,7 +52,11 @@ export default function ProductGrid({ searchQuery }: ProductGridProps) {
       const response = await productAPI.getProducts();
 
       if (response.data.status && Array.isArray(response.data.products)) {
-        setProducts(response.data.products);
+        const productsWithCache = response.data.products.map((product: Product) => ({
+          ...product,
+          ...(ratingsCache[product.product_id] || {})
+        }));
+        setProducts(productsWithCache);
       } else {
         setProducts([]);
       }
@@ -57,7 +76,11 @@ export default function ProductGrid({ searchQuery }: ProductGridProps) {
       if (response.data.status === 'ok' && response.data.data) {
         const categoryData = response.data.data;
         if (categoryData && categoryData.Products && Array.isArray(categoryData.Products)) {
-          setProducts(categoryData.Products);
+          const productsWithCache = categoryData.Products.map((product: Product) => ({
+            ...product,
+            ...(ratingsCache[product.product_id] || {})
+          }));
+          setProducts(productsWithCache);
         } else {
           console.warn('⚠️ No products found for category:', categoryName);
           setProducts([]);
@@ -73,6 +96,93 @@ export default function ProductGrid({ searchQuery }: ProductGridProps) {
       setIsLoading(false);
     }
   };
+
+  // Function to fetch ratings for a product
+  const fetchProductRating = useCallback(async (productId: number) => {
+    // If we already have the rating in cache, return it
+    if (ratingsCache[productId]) {
+      return ratingsCache[productId];
+    }
+
+    try {
+      const response = await productAPI.getProductReviews(productId);
+      const list = response?.data?.reviews || response?.data?.data || [];
+
+      if (Array.isArray(list)) {
+        const reviewCount = list.length;
+        let averageRating = 0;
+
+        if (reviewCount > 0) {
+          const totalRating = list.reduce((sum, review: Review) => sum + review.review_rate, 0);
+          averageRating = totalRating / reviewCount;
+        }
+
+        const ratingData = { averageRating, reviewCount };
+
+        // Update cache
+        setRatingsCache(prev => ({
+          ...prev,
+          [productId]: ratingData
+        }));
+
+        return ratingData;
+      }
+    } catch (err) {
+      console.error(`Failed to load reviews for product ${productId}:`, err);
+    }
+
+    // Return default values if failed to fetch
+    return { averageRating: 0, reviewCount: 0 };
+  }, [ratingsCache]);
+
+  // Function to load ratings for visible products
+  const loadRatingsForVisibleProducts = useCallback(async () => {
+    // Only load ratings for products that don't already have them
+    const productsWithoutRatings = products.filter(product =>
+      product.product_id && (product.averageRating === undefined || product.reviewCount === undefined)
+    );
+
+    if (productsWithoutRatings.length === 0) return;
+
+    // Process products in batches to avoid overwhelming the API
+    const batchSize = 5;
+    for (let i = 0; i < productsWithoutRatings.length; i += batchSize) {
+      const batch = productsWithoutRatings.slice(i, i + batchSize);
+
+      // Fetch ratings for all products in the batch
+      const ratingPromises = batch.map(product =>
+        fetchProductRating(product.product_id)
+      );
+
+      try {
+        const ratings = await Promise.all(ratingPromises);
+
+        // Update products with fetched ratings
+        setProducts(prevProducts =>
+          prevProducts.map(product => {
+            const index = batch.findIndex(p => p.product_id === product.product_id);
+            if (index !== -1) {
+              return {
+                ...product,
+                averageRating: ratings[index].averageRating,
+                reviewCount: ratings[index].reviewCount
+              };
+            }
+            return product;
+          })
+        );
+      } catch (error) {
+        console.error('Error fetching ratings for batch:', error);
+      }
+    }
+  }, [products, fetchProductRating]);
+
+  // Load ratings when products change
+  useEffect(() => {
+    if (products.length > 0) {
+      loadRatingsForVisibleProducts();
+    }
+  }, [products, loadRatingsForVisibleProducts]);
 
   const loadCategories = () => {
     // Load categories from centralized data file
@@ -280,6 +390,9 @@ export default function ProductGrid({ searchQuery }: ProductGridProps) {
                     inStock={product.quantity > 0}
                     badge={badge}
                     oldPrice={oldPrice}
+                    // Pass rating data
+                    averageRating={product.averageRating}
+                    reviewCount={product.reviewCount}
                   />
                 );
               })}

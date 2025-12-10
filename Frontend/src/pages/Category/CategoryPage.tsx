@@ -294,7 +294,7 @@ export default function CategoryPage({ onBack, onSearchChange }: CategoryPagePro
                                             <div className="flex-1 flex flex-col justify-between min-w-0">
                                                 <div>
                                                     <h3 className="font-semibold text-sm text-gray-900 mb-1 line-clamp-2 hover:text-amber-700 transition-colors">
-                                                        {(product.name || product.title || 'Product').length > 30 ? `${(product.name || product.title || 'Product').substring(0, 30)}...` : (product.name || product.title || 'Product')}
+                                                        {product.name || product.title || 'Product'}
                                                     </h3>
                                                     <p className="text-xs text-gray-600 mb-1">
                                                         {product.Catagory?.name || selectedCategory}

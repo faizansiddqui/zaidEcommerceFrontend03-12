@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import { getFriendlyErrorMessage } from '../../../utils/errorHandler';
 
 interface Product {
     product_id: number;
@@ -74,7 +75,7 @@ export default function EditProductModal({ product, isOpen, onClose, onSave }: E
 
             onClose();
         } catch (err: unknown) {
-            const errorMessage = err instanceof Error ? err.message : 'Failed to update product. Please try again.';
+            const errorMessage = getFriendlyErrorMessage(err);
             setError(errorMessage);
         } finally {
             setLoading(false);

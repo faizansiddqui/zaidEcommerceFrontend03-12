@@ -10,6 +10,7 @@ import Features from './components/Features';
 import ProductGrid from './components/Product/ProductGrid';
 import Footer from './components/Footer/Footer';
 import WhatsAppButton from './components/WhatsAppButton';
+import ScrollToTop from './components/ScrollToTop';
 
 import AdminPage from './Admin/AdminPage';
 import CartPage from './pages/CartPage';
@@ -76,6 +77,7 @@ export default function App() {
 
   return (
     <>
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<Home searchQuery={searchQuery} setSearchQuery={setSearchQuery} />} />
 

@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Package, ArrowLeft, Calendar } from 'lucide-react';
 import { userAPI } from '../services/api';
-import { useNavigation } from "../utils/navigation";
+import { useNavigation } from '../utils/navigation';
+import { getSortedMediaArray } from '../utils/mediaSortUtils';
 import { useAuthProtection } from '../utils/authProtection';
 import { useAuth } from '../context/AuthContext';
 
@@ -156,8 +157,9 @@ export default function MyOrdersPage({ onBack }: MyOrdersPageProps) {
     } else if (Array.isArray(product.product_image)) {
       return product.product_image[0] || '';
     } else if (typeof product.product_image === 'object' && product.product_image !== null) {
-      const imageValues = Object.values(product.product_image);
-      return imageValues[0] || '';
+      // Use our sorting utility to prioritize images
+      const sortedMedia = getSortedMediaArray(product.product_image);
+      return sortedMedia[0] || '';
     }
 
     return '';

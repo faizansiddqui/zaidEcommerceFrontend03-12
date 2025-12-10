@@ -77,7 +77,7 @@ export default function TermsOfServicePage({ onBack }: TermsOfServicePageProps) 
                         </p>
                         <p className="text-gray-600 mb-4">
                             You agree to provide current, complete, and accurate purchase and account information. You agree to
-                            pay all charges incurred by your account, including applicable taxes and shipping fees.
+                            pay all charges incurred by your account, including applicable taxes.
                         </p>
                         <p className="text-gray-600">
                             We may suspend or terminate your account if we suspect fraudulent, illegal, or unauthorized activity.
@@ -101,8 +101,7 @@ export default function TermsOfServicePage({ onBack }: TermsOfServicePageProps) 
                     <section className="mb-8">
                         <h2 className="text-xl font-semibold text-gray-900 mb-4">Shipping and Delivery</h2>
                         <p className="text-gray-600 mb-4">
-                            Shipping costs are calculated at checkout based on your location and the items in your order.
-                            Delivery times are estimates and not guaranteed.
+                            Shipping is free of costs.
                         </p>
                         <p className="text-gray-600">
                             Risk of loss and title for items purchased pass to you upon delivery of the items to the carrier.
@@ -117,8 +116,7 @@ export default function TermsOfServicePage({ onBack }: TermsOfServicePageProps) 
                             with all original packaging.
                         </p>
                         <p className="text-gray-600">
-                            Refunds will be processed within 5-7 business days after we receive the returned item. Shipping costs
-                            are non-refundable unless the return is due to our error.
+                            Refunds will be processed within 5-7 business days after we receive the returned item.
                         </p>
                     </section>
 
