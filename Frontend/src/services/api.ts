@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { getFriendlyErrorMessage } from '../utils/errorHandler';
 
-const API_BASE_URL = "https://islamicdecotweb.onrender.com";
-// const API_BASE_URL = "https://backend.kiswahmakkahstore.com";
+// const API_BASE_URL = "https://islamicdecotweb.onrender.com";
+const API_BASE_URL = "https://backend.kiswahmakkahstore.com";
 // const API_BASE_URL = "http://localhost:8080";
 // 
 
@@ -32,9 +32,7 @@ api.interceptors.response.use(
 // Auth API - OTP only
 export const authAPI = {
   // Send OTP to email (also used for "resend")
-  sendOtp: (email: string) => api.post('/api/auth/log', { email }).then((result) => {
-    console.log(result.data);
-  }).catch((error: unknown) => {
+  sendOtp: (email: string) => api.post('/api/auth/log', { email }).catch((error: unknown) => {
     console.error('sendOtp failed:', error);
     const message = getFriendlyErrorMessage(error);
     throw new Error(message);

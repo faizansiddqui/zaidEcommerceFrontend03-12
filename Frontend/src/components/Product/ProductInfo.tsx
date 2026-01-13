@@ -38,7 +38,7 @@ export default function ProductInfo({
     // Get full product name/title
     const fullProductName = name || title || 'Product';
 
-    // Truncate description to 100 words
+    // Truncate description to 100 words (adjusted for better readability)
     const truncateDescription = (desc: string, wordLimit: number = 50) => {
         if (!desc) return '';
         const words = desc.split(' ');
@@ -48,6 +48,46 @@ export default function ProductInfo({
 
     const truncatedDescription = description ? truncateDescription(description) : '';
     const shouldTruncate = description && description.split(' ').length > 50;
+
+    // Function to format description into readable paragraphs/sentences
+    const formatDescription = (desc: string) => {
+        if (!desc) return null;
+        
+        // First, check if it has natural paragraph breaks (\n)
+        const paragraphs = desc.split('\n').filter(p => p.trim());
+        if (paragraphs.length > 1) {
+            return (
+                <div className="space-y-4">
+                    {paragraphs.map((para, index) => (
+                        <p key={index} className="text-gray-600 leading-loose">
+                            {para.trim()}
+                        </p>
+                    ))}
+                </div>
+            );
+        }
+
+        // Otherwise, split into sentences for better readability
+        const sentences = desc.split(/(?<=[.?!])\s+/).filter(s => s.trim());
+        if (sentences.length > 1) {
+            return (
+                <div className="space-y-3">
+                    {sentences.map((sentence, index) => (
+                        <p key={index} className="text-gray-600 leading-loose mb-2 last:mb-0">
+                            {sentence.trim()}
+                        </p>
+                    ))}
+                </div>
+            );
+        }
+
+        // Fallback to single paragraph
+        return (
+            <p className="text-gray-600 leading-loose">
+                {desc}
+            </p>
+        );
+    };
 
     // Function to get rating background color
     const getRatingBgColor = (rate: number) => {
@@ -59,7 +99,7 @@ export default function ProductInfo({
     return (
         <div className="space-y-4 sm:space-y-5 lg:space-y-6">
             <div>
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2 sm:mb-3 lg:mb-4">
+                <h1 className="text-[18px] sm:text-[20px] lg:text-[24px] font-bold text-gray-900 mb-3 sm:mb-4 lg:mb-5 leading-tight">
                     {fullProductName}
                 </h1>
                 <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 mb-3 sm:mb-4">
@@ -73,21 +113,19 @@ export default function ProductInfo({
                     </span>
                 </div>
                 {description && (
-                    <div className="text-sm sm:text-base lg:text-lg text-gray-600 leading-relaxed">
+                    <div className="text-sm sm:text-base lg:text-lg leading-loose">
                         {shouldTruncate ? (
                             <>
-                                <p>
-                                    {showFullDescription ? description : truncatedDescription}
-                                </p>
+                                {formatDescription(showFullDescription ? description : truncatedDescription)}
                                 <button
                                     onClick={() => setShowFullDescription(!showFullDescription)}
-                                    className="text-amber-700 hover:text-amber-800 font-[1rem] mt-2"
+                                    className="text-amber-700 hover:text-amber-800 font-medium mt-3 inline-block"
                                 >
                                     {showFullDescription ? 'Show Less' : 'Show More'}
                                 </button>
                             </>
                         ) : (
-                            <p>{description}</p>
+                            formatDescription(description)
                         )}
                     </div>
                 )}
@@ -116,17 +154,22 @@ export default function ProductInfo({
 
             {(() => {
                 const specs = specifications || [];
-
                 if (specs.length > 0) {
                     return (
                         <div className="space-y-3 sm:space-y-4">
                             <div>
-                                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-3">Specifications</h3>
+                                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-3">
+                                    Specifications
+                                </h3>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                                     {specs.map((spec, index) => (
                                         <div key={index} className="bg-gray-50 p-2 sm:p-3 rounded-lg">
-                                            <span className="text-xs sm:text-sm text-gray-600 block mb-1">{spec.key || 'Specification'}</span>
-                                            <p className="text-sm sm:text-base font-semibold">{spec.value || 'N/A'}</p>
+                                            <span className="text-xs sm:text-sm text-gray-600 block mb-1">
+                                                {spec.key || 'Specification'}
+                                            </span>
+                                            <p className="text-sm sm:text-base font-semibold">
+                                                {spec.value || 'N/A'}
+                                            </p>
                                         </div>
                                     ))}
                                 </div>
@@ -142,7 +185,7 @@ export default function ProductInfo({
                     <Check size={18} className="sm:w-5 sm:h-5 flex-shrink-0" />
                     <span className="text-sm sm:text-base font-semibold">
                         {quantity > 0
-                            ? `In Stock - Ships within 2-3 business days`
+                            ? 'In Stock'
                             : 'Out of Stock'
                         }
                     </span>

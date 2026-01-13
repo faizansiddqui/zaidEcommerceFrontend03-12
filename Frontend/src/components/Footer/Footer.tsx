@@ -15,32 +15,32 @@ export default function Footer() {
             <p className="text-gray-400 mb-3 xs:mb-4 text-[10px] xs:text-xs sm:text-sm leading-relaxed">
               Bringing spiritual beauty to your home with premium Abdulla Islamic Store and decor.
             </p>
-              <div className="flex gap-2 xs:gap-3">
-                <a
-                  href="https://pin.it/5BJuVrWiZ"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-1.5 xs:p-2 bg-gray-800 hover:bg-amber-700 rounded-full transition-colors"
-                >
-                  <Images size={16} className="xs:w-5 xs:h-5"/>
-                </a>
-                <a
-                  href="https://www.instagram.com/kiswah_kabah_islamic_store_33?igsh=MW9sajV0a2xxZmY0cA=="
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-1.5 xs:p-2 bg-gray-800 hover:bg-amber-700 rounded-full transition-colors"
-                >
-                  <Instagram size={16} className="xs:w-5 xs:h-5" />
-                </a>
-                <a
-                  href="https://wa.me/message/IYL55KOEQJ4GK1"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-1.5 xs:p-2 bg-gray-800 hover:bg-amber-700 rounded-full transition-colors"
-                >
-                  <MessagesSquare size={16} className="xs:w-5 xs:h-5" />
-                </a>
-              </div>
+            <div className="flex gap-2 xs:gap-3">
+              <a
+                href="https://pin.it/5BJuVrWiZ"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-1.5 xs:p-2 bg-gray-800 hover:bg-amber-700 rounded-full transition-colors"
+              >
+                <Images size={16} className="xs:w-5 xs:h-5" />
+              </a>
+              <a
+                href="https://www.instagram.com/kiswah_kabah_islamic_store_33?igsh=MW9sajV0a2xxZmY0cA=="
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-1.5 xs:p-2 bg-gray-800 hover:bg-amber-700 rounded-full transition-colors"
+              >
+                <Instagram size={16} className="xs:w-5 xs:h-5" />
+              </a>
+              <a
+                href="https://wa.me/message/IYL55KOEQJ4GK1"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-1.5 xs:p-2 bg-gray-800 hover:bg-amber-700 rounded-full transition-colors"
+              >
+                <MessagesSquare size={16} className="xs:w-5 xs:h-5" />
+              </a>
+            </div>
           </div>
 
           <div>
@@ -100,9 +100,14 @@ export default function Footer() {
               Terms of Service
             </button>
           </div>
-          <p className="text-gray-400 text-[10px] xs:text-xs sm:text-sm">
-            © 2025 Abdulla Islamic Store. All rights reserved.
-          </p>
+          <div className=''>
+            <p className="text-gray-400 text-[10px] xs:text-xs sm:text-sm">
+              © 2025 Abdulla Islamic Store. All rights reserved.
+            </p>
+            <p className="text-gray-400 text-[10px] xs:text-xs sm:text-sm">
+              Developed by <b>Akamify</b>
+            </p>
+          </div>
         </div>
       </div>
     </footer>

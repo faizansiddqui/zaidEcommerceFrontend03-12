@@ -13,9 +13,9 @@ export const CATEGORIES: Category[] = [
     { id: 6, name: "Kiswah Keys Bags" },
     { id: 7, name: "Islamic Decoration Arts" },
     { id: 8, name: "Red Kiswah" },
-    { id: 9, name: "Green Kiswah" },
-    { id: 10, name: "Kiswah Sets" },
-    { id: 11, name: "Kiswah Framing Clothes" },
+    { id: 10, name: "Green Kiswah" },
+    { id: 11, name: "Kiswah Sets" },
+    { id: 12, name: "Kiswah Framing Clothes" },
 ];
 
 // Helper function to get all categories

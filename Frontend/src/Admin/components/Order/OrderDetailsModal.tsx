@@ -81,12 +81,12 @@ export default function OrderDetailsModal({
                                         {getDisplayStatus(order.status)}
                                     </span>
                                 </div>
-                                {order.payment_method && (
+                                {/* {order.payment_method && (
                                     <div className="flex justify-between">
                                         <span className="text-gray-600">Payment Method:</span>
                                         <span className="font-medium">{order.payment_method}</span>
                                     </div>
-                                )}
+                                )} */}
                             </div>
                         </div>
 

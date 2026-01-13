@@ -569,7 +569,7 @@ export default function OrderDetailsPage({ orderId, onBack }: OrderDetailsPagePr
                                     </p>
                                 </div>
 
-                                <div>
+                                {/* <div>
                                     <p className="text-sm text-gray-500 mb-1">Payment Method</p>
                                     <p className="font-medium">Paid via Payoneer</p>
                                     {order.payu_transaction_id && (
@@ -577,7 +577,7 @@ export default function OrderDetailsPage({ orderId, onBack }: OrderDetailsPagePr
                                             Transaction ID: {order.payu_transaction_id}
                                         </p>
                                     )}
-                                </div>
+                                </div> */}
                             </div>
                         </div>
 

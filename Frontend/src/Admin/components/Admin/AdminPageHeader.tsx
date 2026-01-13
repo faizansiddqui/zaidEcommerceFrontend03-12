@@ -16,12 +16,12 @@ export default function AdminPageHeader({ onBack }: AdminPageHeaderProps) {
 
     return (
         <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900">Admin Panel</h1>
                     <p className="text-gray-600 mt-1">Manage products, categories, and orders</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 mt-4 md:mt-0">
                     {onBack && (
                         <button
                             onClick={onBack}

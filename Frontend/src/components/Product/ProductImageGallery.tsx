@@ -41,12 +41,12 @@ export default function ProductImageGallery({
             </div>
 
             {images.length > 1 && (
-                <div className="grid grid-cols-3 gap-2 sm:gap-3 lg:gap-4">
+                <div className="grid grid-cols-5 md:grid-cols-4 sm:grid-cols-3 lg:grid-cols-3 gap-2 sm:gap-3 lg:gap-4">
                     {images.map((media, index) => (
                         <button
                             key={index}
                             onClick={() => onImageSelect(index)}
-                            className={`aspect-square rounded-lg sm:rounded-xl overflow-hidden transition-all ${selectedImage === index
+                            className={`aspect-square rounded-lg border border-gray-900 sm:rounded-xl overflow-hidden transition-all ${selectedImage === index
                                 ? 'ring-2 sm:ring-3 lg:ring-4 ring-amber-600 scale-105'
                                 : 'hover:opacity-75'
                                 }`}
