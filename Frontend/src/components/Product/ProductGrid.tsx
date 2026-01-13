@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import ProductCard from './ProductCard';
 import { Filter, SlidersHorizontal, X } from 'lucide-react';
 import { productAPI } from '../../services/api';
@@ -26,52 +26,127 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
   const [products, setProducts] = useState<ProductWithRating[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('All Products');
   const [sortBy, setSortBy] = useState('featured');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
   // Add cache for ratings to avoid repeated API calls
   const [ratingsCache, setRatingsCache] = useState<Record<number, { averageRating: number; reviewCount: number }>>({});
+
+  // Ref for infinite scroll
+  const observer = useRef<IntersectionObserver>();
+  const lastProductRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadProducts();
     loadCategories();
   }, []);
 
-  // Fetch products dynamically when category changes
+  // Reset pagination when category or search changes
   useEffect(() => {
+    setProducts([]);
+    setCurrentPage(1);
+    setHasMore(true);
     if (selectedCategory === 'All Products') {
-      loadProducts();
+      loadProducts(true);
     } else if (selectedCategory !== 'Uncategorized') {
-      loadProductsByCategory(selectedCategory);
+      loadProductsByCategory(selectedCategory, true);
     }
-  }, [selectedCategory]);
+  }, [selectedCategory, searchQuery]);
 
-  const loadProducts = async () => {
-    setIsLoading(true);
+  // Infinite scroll observer
+  useEffect(() => {
+    const options = {
+      root: null,
+      rootMargin: '100px',
+      threshold: 0.1
+    };
+
+    observer.current = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && hasMore && !isLoading && !isLoadingMore) {
+        loadMoreProducts();
+      }
+    }, options);
+
+    if (lastProductRef.current) {
+      observer.current.observe(lastProductRef.current);
+    }
+
+    return () => {
+      if (observer.current) {
+        observer.current.disconnect();
+      }
+    };
+  }, [hasMore, isLoading, isLoadingMore, currentPage, selectedCategory, searchQuery]);
+
+  const loadProducts = async (reset: boolean = false) => {
+    const page = reset ? 1 : currentPage;
+    if (reset) {
+      setIsLoading(true);
+    } else {
+      setIsLoadingMore(true);
+    }
+
     try {
-      const response = await productAPI.getProducts();
+      const response = await productAPI.getProducts(page, 12);
 
       if (response.data.status && Array.isArray(response.data.products)) {
         const productsWithCache = response.data.products.map((product: Product) => ({
           ...product,
           ...(ratingsCache[product.product_id] || {})
         }));
-        setProducts(productsWithCache);
+
+        if (reset) {
+          setProducts(productsWithCache);
+        } else {
+          setProducts(prev => [...prev, ...productsWithCache]);
+        }
+
+        // Check if there are more products to load
+        setHasMore(response.data.products.length === 12);
+        if (!reset) {
+          setCurrentPage(prev => prev + 1);
+        } else {
+          setCurrentPage(2);
+        }
       } else {
-        setProducts([]);
+        if (reset) {
+          setProducts([]);
+        }
+        setHasMore(false);
       }
     } catch (error: unknown) {
       console.error('❌ Error loading products:', error);
-      setProducts([]);
+      if (reset) {
+        setProducts([]);
+      }
+      setHasMore(false);
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
     }
   };
 
-  const loadProductsByCategory = async (categoryName: string) => {
-    setIsLoading(true);
+  const loadMoreProducts = async () => {
+    if (selectedCategory === 'All Products') {
+      loadProducts(false);
+    } else if (selectedCategory !== 'Uncategorized') {
+      loadProductsByCategory(selectedCategory, false);
+    }
+  };
+
+  const loadProductsByCategory = async (categoryName: string, reset: boolean = true) => {
+    const page = reset ? 1 : currentPage;
+    if (reset) {
+      setIsLoading(true);
+    } else {
+      setIsLoadingMore(true);
+    }
+
     try {
-      const response = await productAPI.getProductByCategory(categoryName);
+      const response = await productAPI.getProductByCategory(categoryName, page, 12);
 
       if (response.data.status === 'ok' && response.data.data) {
         const categoryData = response.data.data;
@@ -80,20 +155,43 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
             ...product,
             ...(ratingsCache[product.product_id] || {})
           }));
-          setProducts(productsWithCache);
+
+          if (reset) {
+            setProducts(productsWithCache);
+          } else {
+            setProducts(prev => [...prev, ...productsWithCache]);
+          }
+
+          // Check if there are more products to load
+          setHasMore(categoryData.Products.length === 12);
+          if (!reset) {
+            setCurrentPage(prev => prev + 1);
+          } else {
+            setCurrentPage(2);
+          }
         } else {
           console.warn('⚠️ No products found for category:', categoryName);
-          setProducts([]);
+          if (reset) {
+            setProducts([]);
+          }
+          setHasMore(false);
         }
       } else {
         console.warn('⚠️ Invalid response format for category:', categoryName);
-        setProducts([]);
+        if (reset) {
+          setProducts([]);
+        }
+        setHasMore(false);
       }
     } catch (error: unknown) {
       console.error(`❌ Error loading products for category ${categoryName}:`, error);
-      setProducts([]);
+      if (reset) {
+        setProducts([]);
+      }
+      setHasMore(false);
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
     }
   };
 
@@ -267,7 +365,7 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
             Our Featured Collection
           </h2>
-          <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto">
+          <p className="text-sm text-gray-600 max-w-2xl mx-auto">
             Explore our carefully curated selection of premium Islamic art and decor
           </p>
         </div>
@@ -285,8 +383,7 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
 
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
           {/* Vertical Category Tabs - Left Side on Desktop, Collapsible on Mobile */}
-          <div className={`lg:w-56 flex-shrink-0 ${showMobileFilters ? 'block' : 'hidden lg:block'
-            }`}>
+          <div className={`lg:w-56 flex-shrink-0 ${showMobileFilters ? 'block' : 'hidden lg:block'}`}>
             {/* Mobile: Styled Card */}
             <div className="lg:hidden bg-white rounded-xl shadow-lg p-4 mb-4 border border-amber-100">
               <div className="flex items-center justify-between mb-4">
@@ -371,7 +468,7 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
             </div>
 
             <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
-              {sortedProducts.map((product) => {
+              {sortedProducts.map((product, index) => {
                 const imageUrl = getImageUrl(product.product_image);
                 const isNew = isProductNew(product);
                 const isBestSeller = isProductBestSeller(product);
@@ -380,25 +477,43 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
                 const oldPrice = product.price > product.selling_price ? product.price : undefined;
 
                 return (
-                  <ProductCard
+                  <div
                     key={product.product_id}
-                    id={product.product_id}
-                    name={product.name || product.title || 'Product'}
-                    price={displayPrice}
-                    image={imageUrl}
-                    category={product.Catagory?.name || ''}
-                    inStock={product.quantity > 0}
-                    badge={badge}
-                    oldPrice={oldPrice}
-                    // Pass rating data
-                    averageRating={product.averageRating}
-                    reviewCount={product.reviewCount}
-                  />
+                    ref={index === sortedProducts.length - 1 ? lastProductRef : null}
+                  >
+                    <ProductCard
+                      id={product.product_id}
+                      name={product.name || product.title || 'Product'}
+                      price={displayPrice}
+                      image={imageUrl}
+                      category={product.Catagory?.name || ''}
+                      inStock={product.quantity > 0}
+                      badge={badge}
+                      oldPrice={oldPrice}
+                      // Pass rating data
+                      averageRating={product.averageRating}
+                      reviewCount={product.reviewCount}
+                    />
+                  </div>
                 );
               })}
             </div>
 
-            {sortedProducts.length === 0 && (
+            {/* Loading More Indicator */}
+            {isLoadingMore && (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-700"></div>
+              </div>
+            )}
+
+            {/* No More Products Indicator */}
+            {!hasMore && sortedProducts.length > 0 && (
+              <div className="text-center py-8 text-gray-500">
+                <p className="text-sm">You've reached the end of the collection</p>
+              </div>
+            )}
+
+            {sortedProducts.length === 0 && !isLoading && (
               <div className="text-center py-16 bg-white rounded-xl shadow-md">
                 <div className="text-gray-400 mb-4">
                   <Filter size={48} className="mx-auto" />

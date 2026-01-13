@@ -232,7 +232,7 @@ export const userAPI = {
 
 // Product API
 export const productAPI = {
-  getProducts: () => api.get('/user/show-product').catch((error: unknown) => {
+  getProducts: (page: number = 1, limit: number = 12) => api.get(`/user/show-product?page=${page}&limit=${limit}`).catch((error: unknown) => {
     console.error('getProducts failed:', error);
     const message = getFriendlyErrorMessage(error);
     throw new Error(message);
@@ -244,13 +244,13 @@ export const productAPI = {
     throw new Error(message);
   }),
 
-  getProductByCategory: (category: string) => api.get(`/user/get-product-byCategory/${category}`).catch((error: unknown) => {
+  getProductByCategory: (category: string, page: number = 1, limit: number = 12) => api.get(`/user/get-product-byCategory/${category}?page=${page}&limit=${limit}`).catch((error: unknown) => {
     console.error('getProductByCategory failed:', error);
     const message = getFriendlyErrorMessage(error);
     throw new Error(message);
   }),
 
-  searchProduct: (search: string, price?: number) => api.post('/user/search', { search, price }).catch((error: unknown) => {
+  searchProduct: (search: string, price?: number, page: number = 1, limit: number = 12) => api.post('/user/search', { search, price, page, limit }).catch((error: unknown) => {
     console.error('searchProduct failed:', error);
     const message = getFriendlyErrorMessage(error);
     throw new Error(message);
