@@ -181,11 +181,11 @@ export default function Navbar({ onSearchChange }: NavbarProps) {
               <a href="/" className="flex items-center px-2">
                 <img
                   src="/logo.jpg"
-                  alt="Abdulla Islamic Store Logo"
+                  alt="Abdullah Islamic Store Logo"
                   className="h-8 xs:h-9 sm:h-10 md:h-12 lg:h-14 w-auto"
                 />
                 <span className="ml-2 text-xs xs:text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold text-gray-900 hover:text-amber-700 transition-colors truncate hidden xs:inline">
-                  Abdulla Islamic Store
+                  Abdullah Islamic Store
                 </span>
               </a>
             </div>

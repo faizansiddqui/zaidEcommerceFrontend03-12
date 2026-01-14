@@ -10,10 +10,10 @@ export default function Footer() {
         <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4 xs:gap-6 sm:gap-8 mb-6 xs:mb-8">
           <div className="col-span-1 xs:col-span-2 lg:col-span-1">
             <h3 className="text-white text-sm xs:text-base sm:text-lg lg:text-xl font-bold mb-2 xs:mb-3 sm:mb-4">
-              Abdulla Islamic Store
+              Abdullah Islamic Store
             </h3>
             <p className="text-gray-400 mb-3 xs:mb-4 text-[10px] xs:text-xs sm:text-sm leading-relaxed">
-              Bringing spiritual beauty to your home with premium Abdulla Islamic Store and decor.
+              Bringing spiritual beauty to your home with premium Abdullah Islamic Store and decor.
             </p>
             <div className="flex gap-2 xs:gap-3">
               <a
@@ -102,7 +102,7 @@ export default function Footer() {
           </div>
           <div className=''>
             <p className="text-gray-400 text-[10px] xs:text-xs sm:text-sm">
-              © 2025 Abdulla Islamic Store. All rights reserved.
+              © 2025 Abdullah Islamic Store. All rights reserved.
             </p>
             <p className="text-gray-400 text-[10px] xs:text-xs sm:text-sm">
               Developed by <b>Akamify</b>
