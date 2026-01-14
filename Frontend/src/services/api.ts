@@ -20,11 +20,28 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor (debugging)
+// Response interceptor (handle auth errors)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     console.error('API Response Error:', error.response?.status, error.config?.url, error.message);
+    
+    // Auto-logout on 401 Unauthorized (session expired)
+    if (error.response?.status === 401) {
+      
+      // Clear auth data
+      localStorage.removeItem('user');
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('isAuthenticated');
+      localStorage.removeItem('redirectAfterLogin');
+      
+      // Redirect to login page
+      if (window.location.pathname !== '/log') {
+        localStorage.setItem('redirectAfterLogin', window.location.pathname + window.location.search);
+        window.location.href = '/log';
+      }
+    }
+    
     return Promise.reject(error);
   }
 );

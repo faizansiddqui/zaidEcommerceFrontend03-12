@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { productAPI } from '../services/api';
+import { productCache } from '../services/productCache';
 import ProductImageGallery from '../components/Product/ProductImageGallery';
 import ProductInfo from '../components/Product/ProductInfo';
 import ProductActions from '../components/Product/ProductActions';
@@ -11,6 +12,7 @@ import { Product } from '../utils/productUtils';
 import ProductCard from '../components/Product/ProductCard';
 import { getCategoryById } from '../data/categories';
 import { getSortedMediaArray } from '../utils/mediaSortUtils';
+import SkeletonLoader from '../components/UI/SkeletonLoader';
 // Added imports for navbar and footer
 import Navbar from '../components/Navbar/Navbar';
 import Footer from '../components/Footer/Footer';
@@ -78,6 +80,7 @@ export default function ProductDetailsPage({ productId, onBack }: ProductDetails
     const [addedToCart, setAddedToCart] = useState(false);
     const [averageRating, setAverageRating] = useState(0); // Add state for average rating
     const [reviewCount, setReviewCount] = useState(0); // Add state for review count
+    const [isContentVisible, setIsContentVisible] = useState(false); // For smooth transition
     const { cartItems, addToCart, isInCart } = useCart(); // Add cartItems to the destructuring
     const { go } = useNavigation();
 
@@ -93,7 +96,42 @@ export default function ProductDetailsPage({ productId, onBack }: ProductDetails
         }
     }, [cartItems, product, isInCart]);
 
+    // Add effect for smooth content transition
+    useEffect(() => {
+        if (!isLoading && product) {
+            // Small delay to ensure smooth transition
+            const timer = setTimeout(() => {
+                setIsContentVisible(true);
+            }, 100);
+            return () => clearTimeout(timer);
+        } else {
+            setIsContentVisible(false);
+        }
+    }, [isLoading, product]);
+
     const loadProduct = async () => {
+        // Check cache first for main product content only
+        const cachedData = productCache.getCachedProductDetails(productId);
+
+        if (cachedData) {
+            // Load main product from cache
+            setProduct(cachedData.product);
+            setIsLoading(false);
+
+            // But always load reviews and related products fresh
+            if (cachedData.product.catagory_id) {
+                loadRelatedProducts(cachedData.product.catagory_id, cachedData.product.product_id);
+            }
+            loadProductReviews(cachedData.product.product_id);
+
+            // Small delay for smooth transition
+            setTimeout(() => {
+                setIsContentVisible(true);
+            }, 100);
+            return;
+        }
+
+        // If not in cache, fetch from API
         setIsLoading(true);
         setError('');
         try {
@@ -103,12 +141,13 @@ export default function ProductDetailsPage({ productId, onBack }: ProductDetails
                 const productData = response.data.data[0];
                 setProduct(productData);
 
-                // Load related products based on category
+                // Cache only the main product content
+                productCache.setCachedProductDetails(productId, productData);
+
+                // Always load reviews and related products fresh
                 if (productData.catagory_id) {
                     loadRelatedProducts(productData.catagory_id, productData.product_id);
                 }
-
-                // Load reviews for the product
                 loadProductReviews(productData.product_id);
             } else {
                 setError('Product not found');
@@ -125,6 +164,7 @@ export default function ProductDetailsPage({ productId, onBack }: ProductDetails
             setError(err.response?.data?.message || err.message || 'Failed to load product');
         } finally {
             setIsLoading(false);
+            setIsContentVisible(false); // Reset visibility when loading starts
         }
     };
 
@@ -247,8 +287,28 @@ export default function ProductDetailsPage({ productId, onBack }: ProductDetails
             <div className="min-h-screen bg-gray-50">
                 <Navbar />
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    <div className="flex justify-center items-center h-96">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-700"></div>
+                    {/* Skeleton for product details */}
+                    <div className="bg-white rounded-xl shadow-md overflow-hidden">
+                        <div className="grid lg:grid-cols-2 gap-8 p-6 lg:p-8">
+                            {/* Image gallery skeleton */}
+                            <div className="space-y-4">
+                                <SkeletonLoader type="card" height="400px" className="rounded-lg" />
+                            </div>
+                            {/* Product info skeleton */}
+                            <div className="space-y-4">
+                                <SkeletonLoader type="text" lines={2} />
+                                <SkeletonLoader type="text" width="60%" />
+                                <SkeletonLoader type="text" lines={3} />
+                                <div className="space-y-2">
+                                    <SkeletonLoader type="text" width="40%" />
+                                    <SkeletonLoader type="text" width="30%" />
+                                </div>
+                                <div className="flex gap-4 pt-4">
+                                    <SkeletonLoader type="button" width="120px" />
+                                    <SkeletonLoader type="button" width="100px" />
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <Footer />
@@ -292,7 +352,9 @@ export default function ProductDetailsPage({ productId, onBack }: ProductDetails
                     <span className="font-medium">Back to Products</span>
                 </button>
 
-                <div className="bg-white rounded-xl shadow-md overflow-hidden">
+                <div className={`bg-white rounded-xl shadow-md overflow-hidden transition-all duration-500 ease-in-out ${
+                    isContentVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                }`}>
                     <div className="grid lg:grid-cols-2 gap-8 p-6 lg:p-8">
                         <ProductImageGallery
                             images={product ? getSortedMediaArray(product.product_image) : []}
@@ -349,11 +411,17 @@ export default function ProductDetailsPage({ productId, onBack }: ProductDetails
                     </div>
 
                     {isLoadingRelated ? (
-                        <div className="flex justify-center items-center h-48">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-700"></div>
+                        <div className={`grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 transition-all duration-500 ease-in-out ${
+                            !isLoadingRelated && relatedProducts.length > 0 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                        }`}>
+                            {Array.from({ length: 4 }).map((_, i) => (
+                                <SkeletonLoader key={i} type="card" />
+                            ))}
                         </div>
                     ) : relatedProducts.length > 0 ? (
-                        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                        <div className={`grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 transition-all duration-500 ease-in-out ${
+                            !isLoadingRelated && relatedProducts.length > 0 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                        }`}>
                             {relatedProducts.map((relatedProduct) => {
                                 // Handle different image formats
                                 let imageUrl = '';

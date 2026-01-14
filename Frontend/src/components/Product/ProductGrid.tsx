@@ -2,8 +2,11 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import ProductCard from './ProductCard';
 import { Filter, SlidersHorizontal, X } from 'lucide-react';
 import { productAPI } from '../../services/api';
+import { productCache } from '../../services/productCache';
 import { Product, getImageUrl, isProductNew, isProductBestSeller } from '../../utils/productUtils';
 import { getCategories } from '../../data/categories';
+import { useNavigation } from "../../utils/navigation"; 
+import SkeletonLoader from '../UI/SkeletonLoader';
 
 // Define Review interface for rating calculations
 interface Review {
@@ -23,6 +26,7 @@ interface ProductWithRating extends Product {
 }
 
 export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
+  const { go } = useNavigation();
   const [products, setProducts] = useState<ProductWithRating[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,6 +36,9 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [displayedProducts, setDisplayedProducts] = useState(6); // Show only 6 products initially
+  const [isContentVisible, setIsContentVisible] = useState(false); // For smooth transition
   // Add cache for ratings to avoid repeated API calls
   const [ratingsCache, setRatingsCache] = useState<Record<number, { averageRating: number; reviewCount: number }>>({});
 
@@ -39,9 +46,42 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
   const observer = useRef<IntersectionObserver>();
   const lastProductRef = useRef<HTMLDivElement>(null);
 
+  // Add effect for smooth content transition
   useEffect(() => {
-    loadProducts();
+    if (!isLoading && !isInitialLoad && products.length > 0) {
+      // Small delay to ensure smooth transition
+      const timer = setTimeout(() => {
+        setIsContentVisible(true);
+      }, 100);
+      return () => clearTimeout(timer);
+    } else {
+      setIsContentVisible(false);
+    }
+  }, [isLoading, isInitialLoad, products]);
+
+  useEffect(() => {
+    // Only load products if this is not the initial load
+    if (!isInitialLoad) {
+      loadProducts();
+    }
     loadCategories();
+  }, []);
+
+  // Simulate initial loading for better UX
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitialLoad(false);
+      const cacheKey = `products-page-1-limit-12`;
+      const cachedProducts = productCache.getCachedProducts(cacheKey);
+      if (cachedProducts) {
+        setProducts(cachedProducts);
+        setHasMore(cachedProducts.length === 12);
+        setCurrentPage(2);
+      } else {
+        loadProducts(true);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
   }, []);
 
   // Reset pagination when category or search changes
@@ -49,10 +89,28 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
     setProducts([]);
     setCurrentPage(1);
     setHasMore(true);
+    setDisplayedProducts(6); // Reset to 6 products
+    
     if (selectedCategory === 'All Products') {
-      loadProducts(true);
+      const cacheKey = `products-page-1-limit-12`;
+      const cachedProducts = productCache.getCachedProducts(cacheKey);
+      if (cachedProducts) {
+        setProducts(cachedProducts);
+        setHasMore(cachedProducts.length === 12);
+        setCurrentPage(2);
+      } else {
+        loadProducts(true);
+      }
     } else if (selectedCategory !== 'Uncategorized') {
-      loadProductsByCategory(selectedCategory, true);
+      const cacheKey = `category-${selectedCategory}-page-1-limit-12`;
+      const cachedProducts = productCache.getCachedProducts(cacheKey);
+      if (cachedProducts) {
+        setProducts(cachedProducts);
+        setHasMore(cachedProducts.length === 12);
+        setCurrentPage(2);
+      } else {
+        loadProductsByCategory(selectedCategory, true);
+      }
     }
   }, [selectedCategory, searchQuery]);
 
@@ -83,13 +141,32 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
 
   const loadProducts = async (reset: boolean = false) => {
     const page = reset ? 1 : currentPage;
+    const cacheKey = `products-page-${page}-limit-12`;
+    
     if (reset) {
       setIsLoading(true);
+      setDisplayedProducts(6); // Reset to 6 products
     } else {
       setIsLoadingMore(true);
     }
 
     try {
+      // Check cache first
+      const cachedProducts = productCache.getCachedProducts(cacheKey);
+      if (cachedProducts && !reset) {
+        // Load from cache for pagination
+        const productsWithCache = cachedProducts.map((product: Product) => ({
+          ...product,
+          ...(ratingsCache[product.product_id] || {})
+        }));
+
+        setProducts(prev => [...prev, ...productsWithCache]);
+        setHasMore(cachedProducts.length === 12);
+        setCurrentPage(prev => prev + 1);
+        setIsLoadingMore(false);
+        return;
+      }
+
       const response = await productAPI.getProducts(page, 12);
 
       if (response.data.status && Array.isArray(response.data.products)) {
@@ -97,6 +174,9 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
           ...product,
           ...(ratingsCache[product.product_id] || {})
         }));
+
+        // Cache the products
+        productCache.setCachedProducts(cacheKey, response.data.products);
 
         if (reset) {
           setProducts(productsWithCache);
@@ -126,6 +206,7 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
     } finally {
       setIsLoading(false);
       setIsLoadingMore(false);
+      setIsContentVisible(false); // Reset visibility when loading starts
     }
   };
 
@@ -139,13 +220,32 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
 
   const loadProductsByCategory = async (categoryName: string, reset: boolean = true) => {
     const page = reset ? 1 : currentPage;
+    const cacheKey = `category-${categoryName}-page-${page}-limit-12`;
+    
     if (reset) {
       setIsLoading(true);
+      setDisplayedProducts(6); // Reset to 6 products
     } else {
       setIsLoadingMore(true);
     }
 
     try {
+      // Check cache first
+      const cachedProducts = productCache.getCachedProducts(cacheKey);
+      if (cachedProducts && !reset) {
+        // Load from cache for pagination
+        const productsWithCache = cachedProducts.map((product: Product) => ({
+          ...product,
+          ...(ratingsCache[product.product_id] || {})
+        }));
+
+        setProducts(prev => [...prev, ...productsWithCache]);
+        setHasMore(cachedProducts.length === 12);
+        setCurrentPage(prev => prev + 1);
+        setIsLoadingMore(false);
+        return;
+      }
+
       const response = await productAPI.getProductByCategory(categoryName, page, 12);
 
       if (response.data.status === 'ok' && response.data.data) {
@@ -155,6 +255,9 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
             ...product,
             ...(ratingsCache[product.product_id] || {})
           }));
+
+          // Cache the products
+          productCache.setCachedProducts(cacheKey, categoryData.Products);
 
           if (reset) {
             setProducts(productsWithCache);
@@ -341,12 +444,29 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
     return 0;
   });
 
-  if (isLoading) {
+  if (isLoading || isInitialLoad) {
     return (
-      <div className="bg-gray-50 py-6 xs:py-8 sm:py-12 lg:py-16">
-        <div className="max-w-7xl mx-auto px-2 xs:px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-700"></div>
+      <div className="bg-gradient-to-b from-gray-50 to-white py-8 sm:py-12 lg:py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header Section */}
+          <div className="text-center mb-8 sm:mb-12">
+            <div className="inline-flex items-center justify-center px-4 py-2 bg-amber-100 text-amber-700 rounded-full text-sm font-medium mb-4">
+              <SlidersHorizontal size={16} className="mr-2" />
+              Curated Selection
+            </div>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
+              Our Featured Collection
+            </h2>
+            <p className="text-sm text-gray-600 max-w-2xl mx-auto">
+              Explore our carefully curated selection of premium Islamic art and decor
+            </p>
+          </div>
+
+          {/* Skeleton Loaders */}
+          <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <SkeletonLoader key={index} type="card" />
+            ))}
           </div>
         </div>
       </div>
@@ -467,8 +587,10 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
-              {sortedProducts.map((product, index) => {
+            <div className={`grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6 transition-all duration-500 ease-in-out ${
+              isContentVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+            }`}>
+              {sortedProducts.slice(0, displayedProducts).map((product, index) => {
                 const imageUrl = getImageUrl(product.product_image);
                 const isNew = isProductNew(product);
                 const isBestSeller = isProductBestSeller(product);
@@ -479,7 +601,7 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
                 return (
                   <div
                     key={product.product_id}
-                    ref={index === sortedProducts.length - 1 ? lastProductRef : null}
+                    ref={index === displayedProducts - 1 ? lastProductRef : null}
                   >
                     <ProductCard
                       id={product.product_id}
@@ -499,17 +621,40 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
               })}
             </div>
 
+            {/* Show More Button - Redirect to Categories */}
+            {sortedProducts.length > displayedProducts && (
+              <div className="flex justify-center mt-8">
+                <button
+                  onClick={() => go('/categories')}
+                  className="relative bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:scale-105 hover:-translate-y-1 overflow-hidden group"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out"></div>
+                  {isLoadingMore ? (
+                    <div className="relative z-10 flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span className="font-medium">View All Products...</span>
+                    </div>
+                  ) : (
+                    <span className="relative z-10 font-medium">View All Products...</span>
+                  )}
+                </button>
+              </div>
+            )}
+
             {/* Loading More Indicator */}
-            {isLoadingMore && (
+            {isLoadingMore && sortedProducts.length <= displayedProducts && (
               <div className="flex justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-700"></div>
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-700"></div>
+                  <span className="text-gray-600">Loading more products...</span>
+                </div>
               </div>
             )}
 
             {/* No More Products Indicator */}
-            {!hasMore && sortedProducts.length > 0 && (
+            {!hasMore && sortedProducts.length > 0 && sortedProducts.length <= displayedProducts && (
               <div className="text-center py-8 text-gray-500">
-                <p className="text-sm">You've reached the end of the collection</p>
+                <p className="text-sm">You've reached the end of our collection</p>
               </div>
             )}
 

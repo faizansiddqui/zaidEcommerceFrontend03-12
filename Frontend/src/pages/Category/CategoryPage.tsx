@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { productAPI } from '../../services/api';
+import { productCache } from '../../services/productCache';
 import ProductCard from '../../components/Product/ProductCard';
 import ProductDetails from '../../components/Product/ProductDetails';
 import Navbar from '../../components/Navbar/Navbar';
@@ -8,6 +9,7 @@ import Footer from '../../components/Footer/Footer';
 import CategorySelector from './CategorySelector';
 import ProductSortDropdown from './ProductSortDropdown';
 import { getCategories, Category } from '../../data/categories';
+import SkeletonLoader from '../../components/UI/SkeletonLoader';
 
 interface Product {
     product_id: number;
@@ -77,8 +79,17 @@ export default function CategoryPage({ onBack, onSearchChange }: CategoryPagePro
         setProducts([]);
         setCurrentPage(1);
         setHasMore(true);
+        
         if (selectedCategory && selectedCategory !== 'All') {
-            loadProductsByCategory(selectedCategory, true);
+            const cacheKey = `category-${selectedCategory}-page-1-limit-12`;
+            const cachedProducts = productCache.getCachedProducts(cacheKey);
+            if (cachedProducts) {
+                setProducts(cachedProducts);
+                setHasMore(cachedProducts.length === 12);
+                setCurrentPage(2);
+            } else {
+                loadProductsByCategory(selectedCategory, true);
+            }
         } else {
             loadAllProducts(true);
         }
@@ -111,6 +122,8 @@ export default function CategoryPage({ onBack, onSearchChange }: CategoryPagePro
 
     const loadAllProducts = async (reset: boolean = true) => {
         const page = reset ? 1 : currentPage;
+        const cacheKey = `products-page-${page}-limit-12`;
+        
         if (reset) {
             setIsLoadingProducts(true);
         } else {
@@ -118,9 +131,32 @@ export default function CategoryPage({ onBack, onSearchChange }: CategoryPagePro
         }
 
         try {
+            // Check cache first
+            const cachedProducts = productCache.getCachedProducts(cacheKey);
+            if (cachedProducts && !reset) {
+                // Load from cache for pagination
+                if (reset) {
+                    setProducts(cachedProducts);
+                } else {
+                    setProducts(prev => [...prev, ...cachedProducts]);
+                }
+
+                setHasMore(cachedProducts.length === 12);
+                if (!reset) {
+                    setCurrentPage(prev => prev + 1);
+                } else {
+                    setCurrentPage(2);
+                }
+                setIsLoadingMore(false);
+                return;
+            }
+
             const response = await productAPI.getProducts(page, 12);
 
             if (response.data.status === true && response.data.products && Array.isArray(response.data.products)) {
+                // Cache the products
+                productCache.setCachedProducts(cacheKey, response.data.products);
+
                 if (reset) {
                     setProducts(response.data.products);
                 } else {
@@ -162,6 +198,8 @@ export default function CategoryPage({ onBack, onSearchChange }: CategoryPagePro
 
     const loadProductsByCategory = async (categoryName: string, reset: boolean = true) => {
         const page = reset ? 1 : currentPage;
+        const cacheKey = `category-${categoryName}-page-${page}-limit-12`;
+        
         if (reset) {
             setIsLoadingProducts(true);
         } else {
@@ -169,11 +207,34 @@ export default function CategoryPage({ onBack, onSearchChange }: CategoryPagePro
         }
 
         try {
+            // Check cache first
+            const cachedProducts = productCache.getCachedProducts(cacheKey);
+            if (cachedProducts && (reset || !reset)) {
+                // Load from cache for pagination
+                if (reset) {
+                    setProducts(cachedProducts);
+                } else {
+                    setProducts(prev => [...prev, ...cachedProducts]);
+                }
+
+                setHasMore(cachedProducts.length === 12);
+                if (!reset) {
+                    setCurrentPage(prev => prev + 1);
+                } else {
+                    setCurrentPage(2);
+                }
+                setIsLoadingMore(false);
+                return;
+            }
+
             const response = await productAPI.getProductByCategory(categoryName, page, 12);
 
             if (response.data.status === 'ok' && response.data.data) {
                 const categoryData = response.data.data;
                 if (categoryData && categoryData.Products && Array.isArray(categoryData.Products)) {
+                    // Cache the products
+                    productCache.setCachedProducts(cacheKey, categoryData.Products);
+
                     if (reset) {
                         setProducts(categoryData.Products);
                     } else {
@@ -325,8 +386,10 @@ export default function CategoryPage({ onBack, onSearchChange }: CategoryPagePro
                     </div>
 
                     {isLoadingProducts ? (
-                        <div className="flex items-center justify-center py-12">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-700"></div>
+                        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                            {Array.from({ length: 6 }).map((_, index) => (
+                                <SkeletonLoader key={index} type="card" />
+                            ))}
                         </div>
                     ) : sortedProducts.length === 0 ? (
                         <div className="text-center py-12 bg-white rounded-lg">

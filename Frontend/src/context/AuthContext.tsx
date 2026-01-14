@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authAPI } from '../services/api';
 
 interface User {
@@ -36,12 +36,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const savedUser = localStorage.getItem('user');
       const isAuth = localStorage.getItem('isAuthenticated');
+      const token = localStorage.getItem('authToken');
+      
+      // Check if token exists and is not expired (simple validation)
+      if (token) {
+        try {
+          // Decode JWT token to check expiry (if it's a JWT)
+          const tokenData = JSON.parse(atob(token.split('.')[1]));
+          const currentTime = Date.now() / 1000;
+          
+          if (tokenData.exp < currentTime) {
+            localStorage.removeItem('user');
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('isAuthenticated');
+            localStorage.removeItem('redirectAfterLogin');
+            setUser(null);
+            setIsLoading(false);
+            return;
+          }
+        } catch (e) {
+        }
+      }
+      
       if (savedUser && isAuth === 'true') {
         setUser(JSON.parse(savedUser));
       }
     } catch (e) {
       console.error('AuthProvider: failed to read localStorage', e);
       localStorage.removeItem('user');
+      localStorage.removeItem('authToken');
       localStorage.removeItem('isAuthenticated');
     } finally {
       setIsLoading(false);

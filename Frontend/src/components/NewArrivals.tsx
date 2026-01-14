@@ -3,6 +3,8 @@ import { Sparkles, Clock } from 'lucide-react';
 import { productAPI } from '../services/api';
 import { Product, getImageUrl } from '../utils/productUtils';
 import { useNavigation } from "../utils/navigation";
+import SkeletonLoader from './UI/SkeletonLoader';
+import { productCache } from '../services/productCache';
 
 // Define Review interface for rating calculations
 interface Review {
@@ -24,9 +26,23 @@ interface ProductWithRating extends Product {
 export default function NewArrivals() {
     const [products, setProducts] = useState<ProductWithRating[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isContentVisible, setIsContentVisible] = useState(false); // For smooth transition
     const { go } = useNavigation();
     // Add cache for ratings to avoid repeated API calls
     const [ratingsCache, setRatingsCache] = useState<Record<number, { averageRating: number; reviewCount: number }>>({});
+
+    // Add effect for smooth content transition
+    useEffect(() => {
+        if (!isLoading && products.length > 0) {
+            // Small delay to ensure smooth transition
+            const timer = setTimeout(() => {
+                setIsContentVisible(true);
+            }, 100);
+            return () => clearTimeout(timer);
+        } else {
+            setIsContentVisible(false);
+        }
+    }, [isLoading, products]);
 
     useEffect(() => {
         loadProducts();
@@ -35,6 +51,21 @@ export default function NewArrivals() {
     const loadProducts = async () => {
         setIsLoading(true);
         try {
+            // Check cache first
+            const cachedNewArrivals = productCache.getCachedNewArrivals();
+
+            if (cachedNewArrivals) {
+                // Use cached data
+                const cachedWithRatings = cachedNewArrivals.map(product => ({
+                    ...product,
+                    ...(ratingsCache[product.product_id] || {})
+                }));
+                setProducts(cachedWithRatings);
+                setIsLoading(false);
+                return;
+            }
+
+            // Fetch from API if not cached
             const response = await productAPI.getProducts();
 
             if (response.data.status && Array.isArray(response.data.products)) {
@@ -45,12 +76,16 @@ export default function NewArrivals() {
                         const dateB = new Date(b.createdAt || 0).getTime();
                         return dateB - dateA;
                     })
-                    .slice(0, 6)
-                    .map((product: Product) => ({
-                        ...product,
-                        ...(ratingsCache[product.product_id] || {})
-                    }));
-                setProducts(newArrivals);
+                    .slice(0, 6);
+
+                // Cache the results
+                productCache.setCachedNewArrivals(newArrivals);
+
+                const productsWithRatings = newArrivals.map((product: Product) => ({
+                    ...product,
+                    ...(ratingsCache[product.product_id] || {})
+                }));
+                setProducts(productsWithRatings);
             } else {
                 setProducts([]);
             }
@@ -59,6 +94,7 @@ export default function NewArrivals() {
             setProducts([]);
         } finally {
             setIsLoading(false);
+            setIsContentVisible(false); // Reset visibility when loading starts
         }
     };
 
@@ -168,8 +204,24 @@ export default function NewArrivals() {
         return (
             <div className="bg-white py-12">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-center py-12">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-700"></div>
+                    <div className="text-center mb-12">
+                        <div className="flex items-center justify-center gap-2 mb-3">
+                            <Clock className="text-amber-700" size={24} />
+                            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">
+                                New Arrivals
+                            </h2>
+                            <Clock className="text-amber-700" size={24} />
+                        </div>
+                        <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto">
+                            Fresh additions to our collection - Be the first to own these exclusive pieces
+                        </p>
+                    </div>
+
+                    {/* Skeleton Loaders */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
+                        {Array.from({ length: 8 }).map((_, index) => (
+                            <SkeletonLoader key={index} type="card" />
+                        ))}
                     </div>
                 </div>
             </div>
@@ -196,7 +248,8 @@ export default function NewArrivals() {
                     </p>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
+                <div className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6 transition-all duration-500 ease-in-out ${isContentVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                    }`}>
                     {products.map((product) => {
                         const imageUrl = getImageUrl(product.product_image);
                         const displayPrice = product.selling_price || product.price;
@@ -269,9 +322,11 @@ export default function NewArrivals() {
                 <div className="text-center mt-10">
                     <button
                         onClick={() => go('/categories')}
-                        className="bg-amber-700 hover:bg-amber-800 text-white px-8 py-3 text-sm sm:text-base font-semibold transition-all sm:transform sm:hover:scale-105 uppercase tracking-wide rounded-lg shadow-lg"
-                    >
-                        Explore All New Items
+                        className="relative bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:scale-105 hover:-translate-y-1 overflow-hidden group">
+                        <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out"></div>
+                        <div className="relative z-10 flex items-center gap-2">
+                            <span className="font-medium">View All Products...</span>
+                        </div>
                     </button>
                 </div>
             </div>

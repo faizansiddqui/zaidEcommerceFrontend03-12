@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Search } from 'lucide-react';
 import { productAPI } from '../services/api';
+import { productCache } from '../services/productCache';
 import ProductCard from '../components/Product/ProductCard';
 import ProductDetails from '../components/Product/ProductDetails';
 import Navbar from '../components/Navbar/Navbar';
 import Footer from '../components/Footer/Footer';
 import { Product, getImageUrl, isProductNew, isProductBestSeller } from '../utils/productUtils';
-// import { Navigate } from 'react-router-dom';
 import { useNavigation } from "../utils/navigation";
+import SkeletonLoader from '../components/UI/SkeletonLoader';
 
 interface SearchPageProps {
     onBack: () => void;
@@ -28,12 +29,23 @@ export default function SearchPage({ onBack, onSearchChange }: SearchPageProps) 
     useEffect(() => {
         const loadAllProducts = async () => {
             try {
+                // Check cache first
+                const cachedProducts = productCache.getCachedProducts('all-products-suggestions');
+                if (cachedProducts) {
+                    // Store for suggestions
+                    setSuggestions(cachedProducts);
+                    return;
+                }
+
                 const response = await productAPI.getProducts();
                 if (response.data.status && Array.isArray(response.data.products)) {
+                    // Cache all products for suggestions
+                    productCache.setCachedProducts('all-products-suggestions', response.data.products);
                     // Store for suggestions
                     setSuggestions(response.data.products);
                 } else if (Array.isArray(response.data)) {
                     // Direct array response
+                    productCache.setCachedProducts('all-products-suggestions', response.data);
                     setSuggestions(response.data);
                 }
             } catch (error) {
@@ -63,44 +75,50 @@ export default function SearchPage({ onBack, onSearchChange }: SearchPageProps) 
         setIsLoading(true);
         setHasSearched(true);
 
+        const cacheKey = `search-${query}-page-1-limit-12`;
+
         try {
+            // Check cache first
+            const cachedProducts = productCache.getCachedProducts(cacheKey);
+            if (cachedProducts) {
+                // Load from cache
+                if (Array.isArray(cachedProducts)) {
+                    setProducts(cachedProducts);
+                } else if (typeof cachedProducts === 'object' && 'product_id' in cachedProducts) {
+                    // Single product object
+                    setProducts([cachedProducts]);
+                }
+                setIsLoading(false);
+                return;
+            }
+
             const response = await productAPI.searchProduct(query);
 
             // Handle the correct response structure from search API
+            let searchResults: Product[] = [];
+
             if (response.data && response.data.result) {
                 // Check if result is a single product object or an array
                 if (Array.isArray(response.data.result)) {
-                    setProducts(response.data.result);
+                    searchResults = response.data.result;
                 } else if (response.data.result.product_id) {
                     // Single product object
-                    setProducts([response.data.result]);
+                    searchResults = [response.data.result];
                 } else if (response.data.result.products && Array.isArray(response.data.result.products)) {
                     // Products array within result
-                    setProducts(response.data.result.products);
-                } else {
-                    // Unexpected format, fallback to local filtering
-                    const queryLower = query.toLowerCase();
-                    const filtered = suggestions.filter((product) => {
-                        const name = (product.name || product.title || '').toLowerCase();
-                        const description = (product.description || '').toLowerCase();
-                        const category = product.Catagory?.name?.toLowerCase() || '';
-                        return name.includes(queryLower) ||
-                            description.includes(queryLower) ||
-                            category.includes(queryLower);
-                    });
-                    setProducts(filtered);
+                    searchResults = response.data.result.products;
                 }
             } else if (response.data.status && Array.isArray(response.data.products)) {
-                setProducts(response.data.products);
+                searchResults = response.data.products;
             } else if (response.data.status && response.data.data && Array.isArray(response.data.data)) {
-                setProducts(response.data.data);
+                searchResults = response.data.data;
             } else if (Array.isArray(response.data)) {
                 // Direct array response
-                setProducts(response.data);
+                searchResults = response.data;
             } else {
                 // Fallback: filter from all products
                 const queryLower = query.toLowerCase();
-                const filtered = suggestions.filter((product) => {
+                searchResults = suggestions.filter((product) => {
                     const name = (product.name || product.title || '').toLowerCase();
                     const description = (product.description || '').toLowerCase();
                     const category = product.Catagory?.name?.toLowerCase() || '';
@@ -108,8 +126,14 @@ export default function SearchPage({ onBack, onSearchChange }: SearchPageProps) 
                         description.includes(queryLower) ||
                         category.includes(queryLower);
                 });
-                setProducts(filtered);
             }
+
+            // Cache search results
+            if (searchResults.length > 0) {
+                productCache.setCachedProducts(cacheKey, searchResults);
+            }
+
+            setProducts(searchResults);
         } catch (error: unknown) {
             console.error('❌ Error searching products:', error);
             // Fallback: filter from all products
@@ -156,9 +180,10 @@ export default function SearchPage({ onBack, onSearchChange }: SearchPageProps) 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                 {/* Search Results */}
                 {isLoading ? (
-                    <div className="flex items-center justify-center py-12">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-700"></div>
-                        <span className="ml-3 text-gray-600">Searching...</span>
+                    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                        {Array.from({ length: 8 }).map((_, index) => (
+                            <SkeletonLoader key={index} type="card" />
+                        ))}
                     </div>
                 ) : hasSearched ? (
                     <>

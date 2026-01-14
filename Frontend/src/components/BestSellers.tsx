@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Sparkles } from 'lucide-react';
 import { productAPI } from '../services/api';
-import { Product, getImageUrl, isProductBestSeller } from '../utils/productUtils';
+import { productCache } from '../services/productCache';
+import { Product, getImageUrl } from '../utils/productUtils';
 import { useNavigation } from "../utils/navigation";
+import SkeletonLoader from './UI/SkeletonLoader';
 
 // Define Review interface for rating calculations
 interface Review {
@@ -24,9 +26,23 @@ interface ProductWithRating extends Product {
 export default function BestSellers() {
   const [products, setProducts] = useState<ProductWithRating[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isContentVisible, setIsContentVisible] = useState(false); // For smooth transition
   const { go } = useNavigation();
   // Add cache for ratings to avoid repeated API calls
   const [ratingsCache, setRatingsCache] = useState<Record<number, { averageRating: number; reviewCount: number }>>({});
+
+  // Add effect for smooth content transition
+  useEffect(() => {
+    if (!isLoading && products.length > 0) {
+      // Small delay to ensure smooth transition
+      const timer = setTimeout(() => {
+        setIsContentVisible(true);
+      }, 100);
+      return () => clearTimeout(timer);
+    } else {
+      setIsContentVisible(false);
+    }
+  }, [isLoading, products]);
 
   useEffect(() => {
     loadProducts();
@@ -35,17 +51,43 @@ export default function BestSellers() {
   const loadProducts = async () => {
     setIsLoading(true);
     try {
+      // Check cache first
+      const cachedBestSellers = productCache.getCachedBestSellers();
+      
+      if (cachedBestSellers) {
+        // Use cached data
+        const cachedWithRatings = cachedBestSellers.map(product => ({
+          ...product,
+          ...(ratingsCache[product.product_id] || {})
+        }));
+        setProducts(cachedWithRatings);
+        setIsLoading(false);
+        return;
+      }
+
+      // Fetch from API if not cached
       const response = await productAPI.getProducts();
 
       if (response.data.status && Array.isArray(response.data.products)) {
-        // Filter products created in last 3 days (bestsellers)
-        const bestSellers = response.data.products
-          .filter((product: Product) => isProductBestSeller(product))
-          .map((product: Product) => ({
-            ...product,
-            ...(ratingsCache[product.product_id] || {})
-          }));
-        setProducts(bestSellers);
+        // Get all products and sort by sales (lifetime bestsellers)
+        const allProducts = response.data.products
+          .sort((a: Product, b: Product) => {
+            // Sort by total sales (assuming higher price indicates more sales, or use quantity as proxy)
+            const aScore = (a.quantity || 0) + (a.selling_price || a.price || 0);
+            const bScore = (b.quantity || 0) + (b.selling_price || b.price || 0);
+            return bScore - aScore; // Higher score first
+          })
+          .slice(0, 4); // Show only top 4 products
+        
+        // Cache the results
+        productCache.setCachedBestSellers(allProducts);
+        
+        const productsWithRatings = allProducts.map((product: Product) => ({
+          ...product,
+          ...(ratingsCache[product.product_id] || {})
+        }));
+        
+        setProducts(productsWithRatings);
       } else {
         setProducts([]);
       }
@@ -54,6 +96,7 @@ export default function BestSellers() {
       setProducts([]);
     } finally {
       setIsLoading(false);
+      setIsContentVisible(false); // Reset visibility when loading starts
     }
   };
 
@@ -166,8 +209,24 @@ export default function BestSellers() {
     return (
       <div className="bg-white py-6 xs:py-8 sm:py-12 lg:py-16">
         <div className="max-w-7xl mx-auto px-2 xs:px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-700"></div>
+          <div className="text-center mb-6 xs:mb-8 sm:mb-10 lg:mb-12">
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <Sparkles className="text-amber-700" size={24} />
+              <h2 className="text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900">
+                Best Selling Products
+              </h2>
+              <Sparkles className="text-amber-700" size={24} />
+            </div>
+            <p className="text-xs xs:text-sm sm:text-base text-gray-600 max-w-2xl mx-auto">
+              Discover our most popular Islamic decor items, handpicked for you
+            </p>
+          </div>
+
+          {/* Skeleton Loaders */}
+          <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-3 xs:gap-4 sm:gap-5 lg:gap-6">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <SkeletonLoader key={index} type="card" />
+            ))}
           </div>
         </div>
       </div>
@@ -195,7 +254,9 @@ export default function BestSellers() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-3 xs:gap-4 sm:gap-5 lg:gap-6">
+            <div className={`grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-3 xs:gap-4 sm:gap-5 lg:gap-6 transition-all duration-500 ease-in-out ${
+              isContentVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+            }`}>
               {filteredProducts.map((product) => {
                 const imageUrl = getImageUrl(product.product_image);
                 const displayPrice = product.selling_price || product.price;
@@ -274,14 +335,12 @@ export default function BestSellers() {
             <div className="text-center mt-6 xs:mt-8 sm:mt-10 lg:mt-12">
               <button
                 onClick={() => go('/categories')}
-                className="w-full xs:w-auto bg-amber-700 hover:bg-amber-800 text-white px-4 xs:px-6 sm:px-8 lg:px-12 py-2 xs:py-3 sm:py-3.5 lg:py-4 text-xs xs:text-sm sm:text-base lg:text-lg font-semibold transition-all sm:transform sm:hover:scale-105 uppercase tracking-wide rounded-lg shadow-lg"
-              >
-                View All Products
+                className="relative bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:scale-105 hover:-translate-y-1 overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out"></div>
+                <div className="relative z-10 flex items-center gap-2">
+                  <span className="font-medium">View All Products...</span>
+                </div>
               </button>
-            </div>
-
-            <div className="text-center mt-4 xs:mt-6 sm:mt-8 text-[9px] xs:text-xs sm:text-sm lg:text-base text-gray-600">
-              Free Shipping • 30-Day Returns
             </div>
           </>
         )}

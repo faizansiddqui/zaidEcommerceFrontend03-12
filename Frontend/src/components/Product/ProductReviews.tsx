@@ -3,6 +3,7 @@ import { Star, Plus, BadgeCheck, X } from 'lucide-react';
 import { productAPI } from '../../services/api';
 import ReviewForm from './ReviewForm';
 import { useAuth } from '../../context/AuthContext';
+import SkeletonLoader from '../UI/SkeletonLoader';
 
 // Add interface for ImageModal props
 interface ImageModalProps {
@@ -117,8 +118,30 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
     if (loading) {
         return (
             <div className="border-t border-gray-200 pt-6 mt-6">
-                <div className="flex justify-center py-4">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-700"></div>
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                        Customer Reviews
+                    </h3>
+                    <div className="w-24 h-6 bg-gray-200 rounded-lg animate-pulse"></div>
+                </div>
+                
+                {/* Skeleton Review Items */}
+                <div className="space-y-6">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                        <div key={i} className="border p-4 rounded-lg shadow-sm bg-white">
+                            <div className="flex items-center gap-4 mb-3">
+                                <div className="w-12 h-6 bg-gray-200 rounded-md animate-pulse"></div>
+                                <div className="flex-1">
+                                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2 animate-pulse"></div>
+                                    <div className="h-3 bg-gray-200 rounded w-1/2 animate-pulse"></div>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <div className="w-20 h-3 bg-gray-200 rounded animate-pulse"></div>
+                                <div className="w-16 h-3 bg-gray-200 rounded animate-pulse"></div>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
         );

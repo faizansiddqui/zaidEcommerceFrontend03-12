@@ -1,16 +1,19 @@
 // App.tsx
-import React from 'react';
+import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useParams, useNavigate, useLocation } from 'react-router-dom';
 
 import Navbar from './components/Navbar/Navbar';
 import Hero from './components/Hero/Hero';
-import BestSellers from './components/BestSellers';
-import NewArrivals from './components/NewArrivals';
-import Features from './components/Features';
 import ProductGrid from './components/Product/ProductGrid';
 import Footer from './components/Footer/Footer';
 import WhatsAppButton from './components/WhatsAppButton';
 import ScrollToTop from './components/ScrollToTop';
+import SkeletonLoader from './components/UI/SkeletonLoader';
+
+// Lazy load components for better performance
+const LazyBestSellers = lazy(() => import('./components/BestSellers'));
+const LazyNewArrivals = lazy(() => import('./components/NewArrivals'));
+const LazyFeatures = lazy(() => import('./components/Features'));
 
 import AdminPage from './Admin/AdminPage';
 import CartPage from './pages/CartPage';
@@ -35,14 +38,150 @@ import SettingsPage from './pages/SettingsPage';
 type HomeProps = { searchQuery: string; setSearchQuery: (q: string) => void };
 
 function Home({ searchQuery, setSearchQuery }: HomeProps) {
+  const [showBestSellers, setShowBestSellers] = useState(false);
+  const [showNewArrivals, setShowNewArrivals] = useState(false);
+  const [showFeatures, setShowFeatures] = useState(false);
+  
+  const bestSellersRef = useRef<HTMLDivElement>(null);
+  const newArrivalsRef = useRef<HTMLDivElement>(null);
+  const featuresRef = useRef<HTMLDivElement>(null);
+
+  // Sequential loading - Load BestSellers first, then trigger others
+  useEffect(() => {
+    // Load BestSellers immediately after mount
+    const timer = setTimeout(() => {
+      setShowBestSellers(true);
+    }, 100); // Small delay for smooth UX
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Load NewArrivals after BestSellers is loaded
+  useEffect(() => {
+    if (showBestSellers) {
+      const timer = setTimeout(() => {
+        setShowNewArrivals(true);
+      }, 800); // Load NewArrivals after 800ms
+
+      return () => clearTimeout(timer);
+    }
+  }, [showBestSellers]);
+
+  // Load Features after NewArrivals is loaded
+  useEffect(() => {
+    if (showNewArrivals) {
+      const timer = setTimeout(() => {
+        setShowFeatures(true);
+      }, 800); // Load Features after 800ms
+
+      return () => clearTimeout(timer);
+    }
+  }, [showNewArrivals]);
+
   return (
     <div className="min-h-screen bg-white">
       <Navbar onSearchChange={setSearchQuery} />
       <Hero />
-      <BestSellers />
-      <NewArrivals />
+      
+      {/* Best Sellers - Lazy Loaded */}
+      <div ref={bestSellersRef}>
+        {!showBestSellers ? (
+          <div className="py-12 bg-gray-50">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center mb-8">
+                <SkeletonLoader type="text" width="200px" height="32px" className="mb-4" />
+                <SkeletonLoader type="text" width="400px" className="mx-auto" />
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <SkeletonLoader key={i} type="card" />
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <Suspense fallback={
+            <div className="py-12 bg-gray-50">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex justify-center items-center h-48">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-700"></div>
+                </div>
+              </div>
+            </div>
+          }>
+            <LazyBestSellers />
+          </Suspense>
+        )}
+      </div>
+
+      {/* New Arrivals - Lazy Loaded */}
+      <div ref={newArrivalsRef}>
+        {!showNewArrivals ? (
+          <div className="py-12 bg-white">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center mb-8">
+                <SkeletonLoader type="text" width="200px" height="32px" className="mb-4" />
+                <SkeletonLoader type="text" width="400px" className="mx-auto" />
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <SkeletonLoader key={i} type="card" />
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <Suspense fallback={
+            <div className="py-12 bg-white">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex justify-center items-center h-48">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-700"></div>
+                </div>
+              </div>
+            </div>
+          }>
+            <LazyNewArrivals />
+          </Suspense>
+        )}
+      </div>
+
       <ProductGrid searchQuery={searchQuery} />
-      <Features />
+
+      {/* Features - Lazy Loaded */}
+      <div ref={featuresRef}>
+        {!showFeatures ? (
+          <div className="py-16 bg-gray-50">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center mb-12">
+                <SkeletonLoader type="text" width="300px" height="40px" className="mb-4" />
+                <SkeletonLoader type="text" width="500px" className="mx-auto mb-8" />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="text-center">
+                    <SkeletonLoader type="card" height="120px" className="mb-4" />
+                    <SkeletonLoader type="text" width="150px" className="mb-2" />
+                    <SkeletonLoader type="text" lines={2} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <Suspense fallback={
+            <div className="py-16 bg-gray-50">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex justify-center items-center h-32">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-700"></div>
+                </div>
+              </div>
+            </div>
+          }>
+            <LazyFeatures />
+          </Suspense>
+        )}
+      </div>
+      
       <Footer />
     </div>
   );
