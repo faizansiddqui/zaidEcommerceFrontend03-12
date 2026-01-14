@@ -13,7 +13,7 @@ export default function Footer() {
               Abdullah Islamic Store
             </h3>
             <p className="text-gray-400 mb-3 xs:mb-4 text-[10px] xs:text-xs sm:text-sm leading-relaxed">
-              Bringing spiritual beauty to your home with premium Abdullah Islamic Store and decor.
+              Bringing spiritual beauty to your home with premium Islamic decor and prayer items.
             </p>
             <div className="flex gap-2 xs:gap-3">
               <a

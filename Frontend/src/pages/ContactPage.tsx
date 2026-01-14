@@ -64,7 +64,7 @@ export default function ContactPage({ onBack }: ContactPageProps) {
                                     <div>
                                         <h3 className="font-medium text-gray-900">WhatsApp</h3>
                                         <a
-                                            href="https://wa.me/917652087193?text=Hi%20Abdulla%20Islamic%20Store%2C%20I%20came%20across%20your%20website%20and%20would%20like%20to%20discuss%20about%20products.%20"
+                                            href="https://wa.me/917652087193?text=Hi%20Abdullah%20Islamic%20Store%2C%20I%20came%20across%20your%20website%20and%20would%20like%20to%20discuss%20about%20products.%20"
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="text-gray-600 hover:text-amber-600 transition-colors"

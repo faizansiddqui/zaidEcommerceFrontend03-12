@@ -30,7 +30,7 @@ export default function TermsOfServicePage({ onBack }: TermsOfServicePageProps) 
                     <section className="mb-8">
                         <h2 className="text-xl font-semibold text-gray-900 mb-4">Introduction</h2>
                         <p className="text-gray-600 mb-4">
-                            Welcome to Abdulla Islamic Store. These Terms of Service ("Terms") govern your access to and use of our
+                            Welcome to Abdullah Islamic Store. These Terms of Service ("Terms") govern your access to and use of our
                             website and services. By accessing or using our website, you agree to be bound by these Terms and our
                             Privacy Policy.
                         </p>
@@ -43,7 +43,7 @@ export default function TermsOfServicePage({ onBack }: TermsOfServicePageProps) 
                     <section className="mb-8">
                         <h2 className="text-xl font-semibold text-gray-900 mb-4">Services</h2>
                         <p className="text-gray-600 mb-4">
-                            Abdulla Islamic Store provides an online e-commerce platform for purchasing Islamic home decor, art,
+                            Abdullah Islamic Store provides an online e-commerce platform for purchasing Islamic home decor, art,
                             and related products. Our services include:
                         </p>
                         <ul className="list-disc list-inside text-gray-600 ml-4 mt-2 space-y-1">
@@ -124,11 +124,11 @@ export default function TermsOfServicePage({ onBack }: TermsOfServicePageProps) 
                         <h2 className="text-xl font-semibold text-gray-900 mb-4">Intellectual Property</h2>
                         <p className="text-gray-600 mb-4">
                             All content included on this site, such as text, graphics, logos, button icons, images, audio clips,
-                            digital downloads, data compilations, and software, is the property of Abdulla Islamic Store or its
+                            digital downloads, data compilations, and software, is the property of Abdullah Islamic Store or its
                             content suppliers and protected by international copyright laws.
                         </p>
                         <p className="text-gray-600">
-                            The compilation of all content on this site is the exclusive property of Abdulla Islamic Store and
+                            The compilation of all content on this site is the exclusive property of Abdullah Islamic Store and
                             protected by international copyright laws.
                         </p>
                     </section>
@@ -136,7 +136,7 @@ export default function TermsOfServicePage({ onBack }: TermsOfServicePageProps) 
                     <section className="mb-8">
                         <h2 className="text-xl font-semibold text-gray-900 mb-4">Limitation of Liability</h2>
                         <p className="text-gray-600">
-                            In no event shall Abdulla Islamic Store, nor its directors, employees, partners, agents, suppliers,
+                            In no event shall Abdullah Islamic Store, nor its directors, employees, partners, agents, suppliers,
                             or affiliates, be liable for any indirect, incidental, special, consequential or punitive damages,
                             including without limitation, loss of profits, data, use, goodwill, or other intangible losses,
                             resulting from your access to or use of or inability to access or use the service.
@@ -158,7 +158,7 @@ export default function TermsOfServicePage({ onBack }: TermsOfServicePageProps) 
                             If you have any questions about these Terms, please contact us at:
                         </p>
                         <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                            <p className="text-gray-600">Abdulla Islamic Store</p>
+                            <p className="text-gray-600">Abdullah Islamic Store</p>
                             <p className="text-gray-600">Email: abdullahislamicstore88@gmail.com</p>
                             <p className="text-gray-600">Phone: +91 (765) 208-7193</p>
                             <p className="text-gray-600">Address: Matia Mahal, Chandni Chowk, Old Delhi – 110006</p>

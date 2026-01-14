@@ -255,7 +255,7 @@ export default function App() {
       {shouldShowWhatsApp && (
         <WhatsAppButton
           phoneNumber="917652087193"
-          message="Hi Abdulla Islamic Store, I came across your website and would like to discuss about products."
+          message="Hi Abdullah Islamic Store, I came across your website and would like to discuss about products."
           position="right"
         />
       )}
