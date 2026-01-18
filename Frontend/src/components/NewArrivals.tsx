@@ -51,21 +51,36 @@ export default function NewArrivals() {
     const loadProducts = async () => {
         setIsLoading(true);
         try {
-            // Check cache first
+            // Check cache first (includes local storage)
             const cachedNewArrivals = productCache.getCachedNewArrivals();
 
             if (cachedNewArrivals) {
-                // Use cached data
+                // Use cached data initially for instant loading
                 const cachedWithRatings = cachedNewArrivals.map(product => ({
                     ...product,
                     ...(ratingsCache[product.product_id] || {})
                 }));
                 setProducts(cachedWithRatings);
                 setIsLoading(false);
+                
+                // Fetch fresh data in background
+                fetchFreshProducts();
                 return;
             }
 
-            // Fetch from API if not cached
+            // If no cache, fetch from API
+            await fetchFreshProducts();
+        } catch (error) {
+            console.error('Error loading new arrivals:', error);
+            setProducts([]);
+        } finally {
+            setIsLoading(false);
+            setIsContentVisible(false);
+        }
+    };
+
+    const fetchFreshProducts = async () => {
+        try {
             const response = await productAPI.getProducts();
 
             if (response.data.status && Array.isArray(response.data.products)) {
@@ -78,7 +93,7 @@ export default function NewArrivals() {
                     })
                     .slice(0, 6);
 
-                // Cache the results
+                // Cache the results (saves to local storage)
                 productCache.setCachedNewArrivals(newArrivals);
 
                 const productsWithRatings = newArrivals.map((product: Product) => ({
@@ -90,11 +105,7 @@ export default function NewArrivals() {
                 setProducts([]);
             }
         } catch (error) {
-            console.error('Error loading new arrivals:', error);
-            setProducts([]);
-        } finally {
-            setIsLoading(false);
-            setIsContentVisible(false); // Reset visibility when loading starts
+            console.error('Error fetching fresh new arrivals:', error);
         }
     };
 

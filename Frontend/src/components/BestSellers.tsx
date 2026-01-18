@@ -51,21 +51,36 @@ export default function BestSellers() {
   const loadProducts = async () => {
     setIsLoading(true);
     try {
-      // Check cache first
+      // Check cache first (includes local storage)
       const cachedBestSellers = productCache.getCachedBestSellers();
       
       if (cachedBestSellers) {
-        // Use cached data
+        // Use cached data initially for instant loading
         const cachedWithRatings = cachedBestSellers.map(product => ({
           ...product,
           ...(ratingsCache[product.product_id] || {})
         }));
         setProducts(cachedWithRatings);
         setIsLoading(false);
+        
+        // Fetch fresh data in background
+        fetchFreshProducts();
         return;
       }
 
-      // Fetch from API if not cached
+      // If no cache, fetch from API
+      await fetchFreshProducts();
+    } catch (error: unknown) {
+      console.error('❌ Error loading products:', error);
+      setProducts([]);
+    } finally {
+      setIsLoading(false);
+      setIsContentVisible(false);
+    }
+  };
+
+  const fetchFreshProducts = async () => {
+    try {
       const response = await productAPI.getProducts();
 
       if (response.data.status && Array.isArray(response.data.products)) {
@@ -79,7 +94,7 @@ export default function BestSellers() {
           })
           .slice(0, 4); // Show only top 4 products
         
-        // Cache the results
+        // Cache the results (saves to local storage)
         productCache.setCachedBestSellers(allProducts);
         
         const productsWithRatings = allProducts.map((product: Product) => ({
@@ -92,11 +107,7 @@ export default function BestSellers() {
         setProducts([]);
       }
     } catch (error: unknown) {
-      console.error('❌ Error loading products:', error);
-      setProducts([]);
-    } finally {
-      setIsLoading(false);
-      setIsContentVisible(false); // Reset visibility when loading starts
+      console.error('❌ Error fetching fresh products:', error);
     }
   };
 

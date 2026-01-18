@@ -41,6 +41,7 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
   const [isContentVisible, setIsContentVisible] = useState(false); // For smooth transition
   // Add cache for ratings to avoid repeated API calls
   const [ratingsCache, setRatingsCache] = useState<Record<number, { averageRating: number; reviewCount: number }>>({});
+  const [isBackgroundFetching, setIsBackgroundFetching] = useState(false); // Prevent duplicate background fetches
 
   // Ref for infinite scroll
   const observer = useRef<IntersectionObserver>();
@@ -71,18 +72,95 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsInitialLoad(false);
+      
+      // Check if we have local storage data first
       const cacheKey = `products-page-1-limit-12`;
       const cachedProducts = productCache.getCachedProducts(cacheKey);
+      
       if (cachedProducts) {
         setProducts(cachedProducts);
         setHasMore(cachedProducts.length === 12);
         setCurrentPage(2);
+        setIsLoading(false);
+        
+        // Try to fetch fresh data in background (may fail due to network)
+        fetchFreshProductsWithFallback();
       } else {
-        loadProducts(true);
+        // Try API first, then fallback to any cached data
+        fetchProductsWithFallback();
       }
     }, 500);
     return () => clearTimeout(timer);
   }, []);
+
+  const fetchFreshProductsWithFallback = async () => {
+    try {
+      const response = await productAPI.getProducts(1, 12);
+      
+      if (response.data.status && Array.isArray(response.data.products)) {
+        const cacheKey = `products-page-1-limit-12`;
+        
+        // Cache fresh products (saves to local storage)
+        productCache.setCachedProducts(cacheKey, response.data.products);
+        
+        // Update state with fresh data
+        const productsWithCache = response.data.products.map((product: Product) => ({
+          ...product,
+          ...(ratingsCache[product.product_id] || {})
+        }));
+        
+        setProducts(productsWithCache);
+        setHasMore(response.data.products.length === 12);
+        setCurrentPage(2);
+      }
+    } catch (error) {
+      console.error('❌ Network error, keeping cached data:', error);
+      // Keep showing cached data - no action needed since already loaded
+    }
+  };
+
+  const fetchProductsWithFallback = async () => {
+    try {
+      setIsLoading(true);
+      const response = await productAPI.getProducts(1, 12);
+      
+      if (response.data.status && Array.isArray(response.data.products)) {
+        console.log('✅ API call successful');
+        const cacheKey = `products-page-1-limit-12`;
+        
+        // Cache fresh products
+        productCache.setCachedProducts(cacheKey, response.data.products);
+        
+        const productsWithCache = response.data.products.map((product: Product) => ({
+          ...product,
+          ...(ratingsCache[product.product_id] || {})
+        }));
+        
+        setProducts(productsWithCache);
+        setHasMore(response.data.products.length === 12);
+        setCurrentPage(2);
+      } else {
+        throw new Error('Invalid API response');
+      }
+    } catch (error) {
+      console.error('❌ API failed, trying fallback:', error);
+      
+      // Fallback: Try to get any cached data
+      const allCached = productCache.getAllCachedProducts();
+      if (allCached.length > 0) {
+        console.log('🔄 Fallback: Using cached products due to network failure');
+        setProducts(allCached.slice(0, 12));
+        setHasMore(allCached.length >= 12);
+        setCurrentPage(2);
+      } else {
+        console.log('📭 No cached data available');
+        setProducts([]);
+        setHasMore(false);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Reset pagination when category or search changes
   useEffect(() => {
@@ -94,25 +172,72 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
     if (selectedCategory === 'All Products') {
       const cacheKey = `products-page-1-limit-12`;
       const cachedProducts = productCache.getCachedProducts(cacheKey);
+      
       if (cachedProducts) {
         setProducts(cachedProducts);
         setHasMore(cachedProducts.length === 12);
         setCurrentPage(2);
+        setIsLoading(false);
+        
+        // Fetch fresh data in background
+        if (!isBackgroundFetching) {
+          fetchFreshProductsWithFallback();
+        }
       } else {
         loadProducts(true);
       }
     } else if (selectedCategory !== 'Uncategorized') {
       const cacheKey = `category-${selectedCategory}-page-1-limit-12`;
       const cachedProducts = productCache.getCachedProducts(cacheKey);
+      
       if (cachedProducts) {
         setProducts(cachedProducts);
         setHasMore(cachedProducts.length === 12);
         setCurrentPage(2);
+        setIsLoading(false);
+        
+        // Fetch fresh data in background
+        if (!isBackgroundFetching) {
+          fetchFreshCategoryProducts(selectedCategory);
+        }
       } else {
         loadProductsByCategory(selectedCategory, true);
       }
     }
   }, [selectedCategory, searchQuery]);
+
+  const fetchFreshCategoryProducts = async (categoryName: string) => {
+    if (isBackgroundFetching) return;
+    
+    setIsBackgroundFetching(true);
+    try {
+      const response = await productAPI.getProductByCategory(categoryName, 1, 12);
+      
+      if (response.data.status === 'ok' && response.data.data) {
+        const categoryData = response.data.data;
+        if (categoryData && categoryData.Products && Array.isArray(categoryData.Products)) {
+          const cacheKey = `category-${categoryName}-page-1-limit-12`;
+          
+          // Cache the fresh products (saves to local storage)
+          productCache.setCachedProducts(cacheKey, categoryData.Products);
+          
+          // Update state with fresh data
+          const productsWithCache = categoryData.Products.map((product: Product) => ({
+            ...product,
+            ...(ratingsCache[product.product_id] || {})
+          }));
+          
+          setProducts(productsWithCache);
+          setHasMore(categoryData.Products.length === 12);
+          setCurrentPage(2);
+        }
+      }
+    } catch (error) {
+      console.error('❌ ProductGrid: Error fetching fresh category products:', error);
+    } finally {
+      setIsBackgroundFetching(false);
+    }
+  };
 
   // Infinite scroll observer
   useEffect(() => {

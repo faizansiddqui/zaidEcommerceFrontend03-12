@@ -39,10 +39,66 @@ interface ProductCache {
   [key: string]: CachedData;
 }
 
+interface LocalStorageData {
+  cache: ProductCache;
+  productDetailCache: { [key: number]: ProductDetailCache };
+  timestamp: number;
+}
+
 class ProductCacheService {
   private cache: ProductCache = {};
   private productDetailCache: { [key: number]: ProductDetailCache } = {};
   private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes cache
+  private readonly LOCAL_STORAGE_KEY = 'productCache';
+  private readonly LOCAL_STORAGE_DURATION = 30 * 60 * 1000; // 30 minutes for local storage
+
+  constructor() {
+    this.loadFromLocalStorage();
+  }
+
+  // Load cache from local storage on initialization
+  private loadFromLocalStorage(): void {
+    try {
+      const stored = localStorage.getItem(this.LOCAL_STORAGE_KEY);
+      
+      if (stored) {
+        const data: LocalStorageData = JSON.parse(stored);
+        
+        // Check if local storage data is still valid
+        if (Date.now() - data.timestamp < this.LOCAL_STORAGE_DURATION) {
+          this.cache = data.cache || {};
+          this.productDetailCache = data.productDetailCache || {};
+        } else {
+          this.clearLocalStorage();
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error loading from local storage:', error);
+      this.clearLocalStorage();
+    }
+  }
+
+  // Save cache to local storage
+  private saveToLocalStorage(): void {
+    try {
+      const data: LocalStorageData = {
+        cache: this.cache,
+        productDetailCache: this.productDetailCache,
+        timestamp: Date.now()
+      };
+      localStorage.setItem(this.LOCAL_STORAGE_KEY, JSON.stringify(data));
+    } catch (error) {
+    }
+  }
+
+  // Clear local storage
+  private clearLocalStorage(): void {
+    try {
+      localStorage.removeItem(this.LOCAL_STORAGE_KEY);
+    } catch (error) {
+      console.error('❌ Error clearing local storage:', error);
+    }
+  }
 
   // Generate cache key based on API endpoint and parameters
   private generateCacheKey(endpoint: string, params?: any): string {
@@ -75,6 +131,9 @@ class ProductCacheService {
       bestSellers: [],
       newArrivals: []
     };
+    
+    // Save to local storage
+    this.saveToLocalStorage();
   }
 
   // Get cached bestsellers
@@ -95,6 +154,9 @@ class ProductCacheService {
       newArrivals: [],
       timestamp: Date.now()
     };
+    
+    // Save to local storage
+    this.saveToLocalStorage();
   }
 
   // Get cached new arrivals
@@ -116,11 +178,16 @@ class ProductCacheService {
       newArrivals: products,
       timestamp: Date.now()
     };
+    
+    // Save to local storage
+    this.saveToLocalStorage();
   }
 
   // Clear cache (for manual refresh or logout)
   clearCache(): void {
     this.cache = {};
+    this.productDetailCache = {};
+    this.clearLocalStorage();
   }
 
   // Clear expired cache entries
@@ -130,6 +197,17 @@ class ProductCacheService {
         delete this.cache[key];
       }
     });
+    
+    // Also clear expired product detail cache
+    Object.keys(this.productDetailCache).forEach(key => {
+      const productId = parseInt(key);
+      if (!this.isCacheValid(this.productDetailCache[productId].timestamp)) {
+        delete this.productDetailCache[productId];
+      }
+    });
+    
+    // Save updated cache to local storage
+    this.saveToLocalStorage();
   }
 
   // Get cache stats for debugging
@@ -166,6 +244,9 @@ class ProductCacheService {
       product,
       timestamp: Date.now()
     };
+    
+    // Save to local storage
+    this.saveToLocalStorage();
   }
 
   // Clear product cache
@@ -175,11 +256,52 @@ class ProductCacheService {
     } else {
       this.productDetailCache = {};
     }
+    
+    // Save updated cache to local storage
+    this.saveToLocalStorage();
   }
 
   // Clear product detail cache (alias for clearProductCache)
   clearProductDetailCache(productId?: number): void {
     this.clearProductCache(productId);
+  }
+
+  // Get all cached products from local storage (for debugging)
+  getAllCachedProducts(): Product[] {
+    const allProducts: Product[] = [];
+    
+    Object.values(this.cache).forEach(cachedData => {
+      if (cachedData.products && cachedData.products.length > 0) {
+        allProducts.push(...cachedData.products);
+      }
+      if (cachedData.bestSellers && cachedData.bestSellers.length > 0) {
+        allProducts.push(...cachedData.bestSellers);
+      }
+      if (cachedData.newArrivals && cachedData.newArrivals.length > 0) {
+        allProducts.push(...cachedData.newArrivals);
+      }
+    });
+    
+    // Remove duplicates based on product_id
+    const uniqueProducts = allProducts.filter((product, index, self) => 
+      index === self.findIndex(p => p.product_id === product.product_id)
+    );
+    
+    return uniqueProducts;
+  }
+
+  // Check if local storage has any cached products
+  hasLocalStorageData(): boolean {
+    try {
+      const stored = localStorage.getItem(this.LOCAL_STORAGE_KEY);
+      if (stored) {
+        const data: LocalStorageData = JSON.parse(stored);
+        return Date.now() - data.timestamp < this.LOCAL_STORAGE_DURATION;
+      }
+    } catch (error) {
+      console.error('❌ Error checking local storage:', error);
+    }
+    return false;
   }
 }
 
