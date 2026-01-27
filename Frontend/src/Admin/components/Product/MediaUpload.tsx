@@ -51,7 +51,7 @@ export default function MediaUpload({
                     <Upload size={32} className="text-gray-400 mb-2" />
                     <span className="text-sm text-gray-600">Click to upload images/videos</span>
                     <span className="text-xs text-gray-500 mt-1">
-                        PNG, JPG, GIF, MP4, MOV up to {maxMediaCount} files (5MB max each)
+                        PNG, JPG, GIF, MP4, MOV up to {maxMediaCount} files (50MB max each)
                     </span>
                 </label>
             </div>
