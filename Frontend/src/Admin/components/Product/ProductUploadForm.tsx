@@ -228,7 +228,7 @@ return (
             {/* Updated Media Upload Component */}
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Media Files <span className="text-red-500">*</span> (Max 5 - Images & Videos, 5MB max each)
+                    Media Files <span className="text-red-500">*</span> (Max 5 - Images & Videos, 50MB max each)
                 </label>
                 <input
                     type="file"
