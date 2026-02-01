@@ -20,13 +20,13 @@ const IslamicArtShowcase: React.FC = () => {
         }
     }, []);
 
-    const specifications = [
-        { label: "Material", value: "Premium Canvas with Gold Leaf Foil" },
-        { label: "Calligraphy", value: "Traditional Thuluth & Kufic Scripts" },
-        { label: "Frame", value: "Ornate Hand-Carved Gilded Wood" },
-        { label: "Interior Style", value: "Neo-Classical Wall Molding Integration" },
-        { label: "Dimensions", value: "Custom Fit (Vertical 9:16 Orientation)" }
-    ];
+   const specifications = [
+    { label: "Material", value: "Authentic Black Silk with Silver & Gold Thread" },
+    { label: "Artisanship", value: "Hand-Embroidered by Skilled Makkah Craftsmen" },
+    { label: "Calligraphy", value: "Traditional Thuluth Script Quranic Verses" },
+    { label: "Frame", value: "Premium Gilded Wood with Museum-Grade Acrylic" },
+    { label: "Heritage", value: "Inspired by the Sacred Kiswah of the Holy Kaaba" }
+];
 
     return (
         <section className="relative w-full min-h-screen bg-[#F8F7F2] flex items-center justify-center py-12 px-4 sm:px-8 lg:px-16 overflow-hidden">

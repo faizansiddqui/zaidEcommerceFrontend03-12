@@ -93,7 +93,7 @@ export default function Hero() {
             {/* The Main Image Container */}
             <div className="relative md:aspect-square rounded-[2rem] overflow-hidden shadow-2xl transform lg:rotate-2 transition-transform duration-700 group-hover:rotate-0">
               <img
-                src="/hero.jpg"
+                src="/hero.jpeg"
                 alt="Modern Islamic Living Room"
                 className="w-full h-[45vh] sm:h-[90vh] md:h-[100vh] lg:h-[100vh] object-cover scale-105 group-hover:scale-100 transition-transform duration-1000"
               />
