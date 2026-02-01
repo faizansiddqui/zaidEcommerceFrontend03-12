@@ -35,6 +35,10 @@ const Products = connection.define("Products", {
   description: {
     type: DataTypes.TEXT,
   },
+  selling_price_link:{
+    type:DataTypes.STRING,
+    allowNull:false
+  },
   product_image: {
     type: DataTypes.JSON,
     allowNull: false,
@@ -72,7 +76,7 @@ const ProductSpecification = connection.define("ProductSpecification", {
 
 // 2. Define the Association (This is the key step)
 Catagories.hasMany(Products, {
-  foreignKey: "catagory_id", // This creates the `subcategory_id` foreign key in the `Product` table
+  foreignKey: "catagory_id", // This creates the subcategory_id foreign key in the Product table
   onDelete:"CASCADE"
 });
 Products.belongsTo(Catagories, {
