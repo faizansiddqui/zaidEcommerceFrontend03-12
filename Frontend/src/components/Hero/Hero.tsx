@@ -101,7 +101,7 @@ export default function Hero() {
             </div>
 
             {/* Floating "Inspiration" Card (Glassmorphism) */}
-            <div className="absolute -bottom-6 -left-6 md:left-12 bg-white/80 backdrop-blur-xl p-6 rounded-2xl shadow-2xl border border-white/50 max-w-[240px] hidden sm:block animate-bounce-slow">
+            <div className="absolute -bottom-6 -left-6 md:left-12 z-10 bg-white/80 backdrop-blur-xl p-6 rounded-2xl shadow-2xl border border-white/50 max-w-[240px] hidden sm:block animate-bounce-slow">
               <div className="flex items-center gap-3 mb-2">
                 <div className="p-2 bg-amber-800 rounded-lg text-white">
                   <Sparkles size={20} />

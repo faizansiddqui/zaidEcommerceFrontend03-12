@@ -92,7 +92,7 @@ const IslamicArtShowcase: React.FC = () => {
                         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent z-20" />
 
                         {/* Design Elements */}
-                        <div className="absolute top-6 left-6 z-30 bg-white/20 backdrop-blur-md px-4 py-1 rounded-full border border-white/30">
+                        <div className="absolute top-6 left-6 z-30 bg-white/20 backdrop-blur-md px-4 pb-1 rounded-full border border-white/30">
                             <span className="text-white text-[10px] font-bold uppercase tracking-widest">Live Preview</span>
                         </div>
                     </div>
