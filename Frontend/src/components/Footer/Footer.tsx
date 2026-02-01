@@ -47,10 +47,10 @@ export default function Footer() {
             <h4 className="text-white font-semibold mb-2 xs:mb-3 sm:mb-4 text-xs xs:text-sm sm:text-base">Shop</h4>
             <ul className="space-y-1 xs:space-y-1.5 sm:space-y-2">
               <li><a href="/category-list" className="hover:text-amber-400 transition-colors text-[10px] xs:text-xs sm:text-sm">All Categories</a></li>
-              <li><a href="/category-list" className="hover:text-amber-400 transition-colors text-[10px] xs:text-xs sm:text-sm">Kiswah Collection</a></li>
-              <li><a href="/category-list" className="hover:text-amber-400 transition-colors text-[10px] xs:text-xs sm:text-sm">Islamic Arts</a></li>
-              <li><a href="/category-list" className="hover:text-amber-400 transition-colors text-[10px] xs:text-xs sm:text-sm">Bestsellers</a></li>
-              <li><a href="/category-list" className="hover:text-amber-400 transition-colors text-[10px] xs:text-xs sm:text-sm">New Arrivals</a></li>
+              <li><a href="/cart" className="hover:text-amber-400 transition-colors text-[10px] xs:text-xs sm:text-sm">Cart</a></li>
+              <li><a href="/wishlist" className="hover:text-amber-400 transition-colors text-[10px] xs:text-xs sm:text-sm">Wishlist</a></li>
+              <li><a href="/categories?type=best-sellers" className="hover:text-amber-400 transition-colors text-[10px] xs:text-xs sm:text-sm">Bestsellers</a></li>
+              <li><a href="/categories?type=new-arrivals" className="hover:text-amber-400 transition-colors text-[10px] xs:text-xs sm:text-sm">New Arrivals</a></li>
             </ul>
           </div>
 
@@ -70,7 +70,7 @@ export default function Footer() {
             <ul className="space-y-2 xs:space-y-2.5 sm:space-y-3">
               <li className="flex items-start gap-1.5 xs:gap-2">
                 <MapPin size={14} className="xs:w-4 xs:h-4 sm:w-5 sm:h-5 flex-shrink-0 mt-0.5" />
-                <span className="text-[10px] xs:text-xs sm:text-sm">Matia Mahal, Chandni Chowk, Old Delhi – 110006</span>
+                <span className="text-[10px] xs:text-xs sm:text-sm">Castle St, Cambridge, United Kingdom - CB30AQ</span>
               </li>
               <li className="flex items-center gap-1.5 xs:gap-2">
                 <Phone size={14} className="xs:w-4 xs:h-4 sm:w-5 sm:h-5 flex-shrink-0" />

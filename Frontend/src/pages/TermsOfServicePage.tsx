@@ -161,7 +161,7 @@ export default function TermsOfServicePage({ onBack }: TermsOfServicePageProps) 
                             <p className="text-gray-600">Abdullah Islamic Store</p>
                             <p className="text-gray-600">Email: abdullahislamicstore88@gmail.com</p>
                             <p className="text-gray-600">Phone: +91 (765) 208-7193</p>
-                            <p className="text-gray-600">Address: Matia Mahal, Chandni Chowk, Old Delhi – 110006</p>
+                            <p className="text-gray-600">Address: Castle St, Cambridge, United Kingdom - CB30AQ</p>
                         </div>
                     </section>
                 </div>

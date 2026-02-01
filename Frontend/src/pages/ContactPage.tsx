@@ -36,8 +36,7 @@ export default function ContactPage({ onBack }: ContactPageProps) {
                                     <MapPin className="w-6 h-6 text-amber-600 flex-shrink-0 mt-1" />
                                     <div>
                                         <h3 className="font-medium text-gray-900">Address</h3>
-                                        <p className="text-gray-600">  Matia Mahal, Chandni Chowk,
-                                            Old Delhi – 110006 </p>
+                                        <p className="text-gray-600">Castle St, Cambridge, United Kingdom - CB30AQ</p>
                                     </div>
                                 </div>
 

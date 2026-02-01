@@ -32,7 +32,7 @@ export default function PrivacyPolicyPage({ onBack }: PrivacyPolicyPageProps) {
                         <p className="text-gray-600 mb-4">
                             Welcome to Abdullah Islamic Store. We are committed to protecting your personal information and your right to privacy.
                             If you have any questions or concerns about this privacy notice or our practices with regards to your personal information,
-                            please contact us at info@abdullahislamicstore.com.
+                            please contact us at <b>abdullahislamicstore88@gmail.com</b>.
                         </p>
                         <p className="text-gray-600">
                             This privacy notice describes how we might use your information if you:
@@ -140,7 +140,7 @@ export default function PrivacyPolicyPage({ onBack }: PrivacyPolicyPageProps) {
                         </p>
                             <p className="text-gray-600">Email: abdullahislamicstore88@gmail.com</p>
                             <p className="text-gray-600">Phone: +91 (765) 208-7193</p>
-                            <p className="text-gray-600">Address: Matia Mahal, Chandni Chowk, Old Delhi – 110006</p>
+                            <p className="text-gray-600">Address: Castle St, Cambridge, United Kingdom - CB30AQ</p>
                         </div>
                     </section>
                 </div>
