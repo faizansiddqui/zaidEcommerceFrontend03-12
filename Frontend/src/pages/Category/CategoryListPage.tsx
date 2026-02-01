@@ -168,7 +168,7 @@ export default function CategoryListPage({ onBack, onSearchChange }: CategoryLis
             <Navbar onSearchChange={onSearchChange} />
 
             {/* Top Navigation Bar - Unified Back Button */}
-            <div className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-gray-100">
+            <div className="sticky top-0 bg-white/80 backdrop-blur-md z-10 border-b border-gray-100">
                 <div className="max-w-[1440px] mx-auto px-4 h-14 flex items-center justify-between">
                     <button
                         onClick={() => {
@@ -228,12 +228,17 @@ export default function CategoryListPage({ onBack, onSearchChange }: CategoryLis
 
                     {/* --- SIDEBAR: Fixed on Desktop, Horizontal Scroll on Mobile --- */}
                     <aside className="w-full lg:w-72 flex-shrink-0">
-                        <div className="bg-white lg:sticky lg:top-24 rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div className="bg-white lg:sticky lg:top-24 rounded-xl border border-gray-100 overflow-hidden">
                             <div className="p-5 border-b border-gray-50 hidden lg:block">
                                 <h2 className="text-xs font-black uppercase tracking-[0.2em] text-gray-400">Categories</h2>
                             </div>
 
-                            <div className="flex lg:flex-col overflow-x-auto lg:overflow-x-hidden no-scrollbar bg-white">
+                            <div className="flex lg:flex-col overflow-x-auto lg:overflow-x-hidden lg:overflow-y-auto overflow-y-scroll bg-white lg:max-h-[calc(100vh-140px)]"
+                                 style={{
+                                     scrollbarWidth: 'none',
+                                     msOverflowStyle: 'none',
+                                    //  WebkitScrollbar: 'none'
+                                 }}>
                                 {fullCategories.map((cat) => (
                                     <button
                                         key={cat.id}
@@ -257,7 +262,7 @@ export default function CategoryListPage({ onBack, onSearchChange }: CategoryLis
 
                     {/* --- MAIN CONTENT AREA --- */}
                     <main className="flex-grow">
-                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 min-h-[80vh] p-5 lg:p-8">
+                        <div className="bg-white rounded-2xl border border-gray-100 min-h-[80vh] p-5 lg:p-8">
 
                             {/* Header Section */}
                             <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
@@ -270,7 +275,7 @@ export default function CategoryListPage({ onBack, onSearchChange }: CategoryLis
                             </div>
 
                             {/* Product Grid */}
-                            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-8">
+                            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-4">
                                 {isLoading ? (
                                     Array.from({ length: 9 }).map((_, index) => (
                                         <SkeletonLoader key={index} type="card" />
