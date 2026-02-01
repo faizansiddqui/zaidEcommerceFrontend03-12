@@ -299,7 +299,7 @@ export default function ProductDetailsPage({ productId, onBack }: ProductDetails
                 <Navbar />
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     {/* Skeleton for product details */}
-                    <div className="rounded-xl shadow-md overflow-hidden">
+                    <div className="rounded-xl overflow-hidden">
                         <div className="grid lg:grid-cols-2 gap-8 p-6 lg:p-8">
                             {/* Image gallery skeleton */}
                             <div className="space-y-4">
@@ -401,11 +401,6 @@ export default function ProductDetailsPage({ productId, onBack }: ProductDetails
                     </div>
                 </div>
 
-                {/* Product Reviews Section */}
-                <div className="mt-8">
-                    <ProductReviews productId={product.product_id} />
-                </div>
-
                 {/* Related Products Section */}
                 <div className="mt-12">
                     <div className="flex items-center justify-between mb-6">
@@ -452,11 +447,17 @@ export default function ProductDetailsPage({ productId, onBack }: ProductDetails
                             })}
                         </div>
                     ) : (
-                        <div className="text-center py-12 rounded-xl shadow-sm">
+                        <div className="text-center py-12 rounded-xl">
                             <p className="text-gray-500">No related products found in this category.</p>
                         </div>
                     )}
                 </div>
+                
+                {/* Product Reviews Section */}
+                <div className="mt-8">
+                    <ProductReviews productId={product.product_id} />
+                </div>
+
             </div>
             <Footer />
 

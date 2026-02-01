@@ -123,7 +123,7 @@ export default function NewArrivals() {
                 {/* Product Grid / Loader Area */}
                 <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-10 transition-all duration-700 ${isContentVisible || isLoading ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
                     {showSkeletons
-                        ? Array.from({ length: 4 }).map((_, i) => (
+                        ? Array.from({ length: 8 }).map((_, i) => (
                             <SkeletonLoader key={`skeleton-${i}`} type="card" />
                         ))
                         : (

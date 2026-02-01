@@ -671,7 +671,7 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
           {/* 4. Horizontal Product Container */}
           <div className="relative">
             {!showSkeletons && sortedProducts.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-24 bg-white border border-dashed border-gray-200 rounded-xl">
+              <div className="flex flex-col items-center justify-center no-scrollbar py-24 bg-white border border-dashed border-gray-200 rounded-xl">
                 <ShoppingBag size={48} className="text-gray-200 mb-4" />
                 <h3 className="text-lg font-medium text-gray-900">No products found</h3>
                 <p className="text-sm text-gray-400">Try selecting a different category or clear filters.</p>
@@ -679,7 +679,7 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
             ) : (
               <div
                 ref={scrollRef}
-                className="flex flex-nowrap overflow-x-auto no-scrollbar scroll-smooth gap-4 pb-4 w-full"
+                className="flex flex-nowrap overflow-x-auto scroll-smooth gap-4 pb-4 w-full"
                 style={{ scrollSnapType: 'x mandatory' }}
               >
                 <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>

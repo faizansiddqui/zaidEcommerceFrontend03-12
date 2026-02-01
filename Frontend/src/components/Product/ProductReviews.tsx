@@ -3,7 +3,6 @@ import { Star, Plus, BadgeCheck, X } from 'lucide-react';
 import { productAPI } from '../../services/api';
 import ReviewForm from './ReviewForm';
 import { useAuth } from '../../context/AuthContext';
-import SkeletonLoader from '../UI/SkeletonLoader';
 
 // Add interface for ImageModal props
 interface ImageModalProps {
@@ -124,11 +123,11 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
                     </h3>
                     <div className="w-24 h-6 bg-gray-200 rounded-lg animate-pulse"></div>
                 </div>
-                
+
                 {/* Skeleton Review Items */}
                 <div className="space-y-6">
                     {Array.from({ length: 3 }).map((_, i) => (
-                        <div key={i} className="border p-4 rounded-lg shadow-sm bg-white">
+                        <div key={i} className="border p-4 rounded-lg bg-white">
                             <div className="flex items-center gap-4 mb-3">
                                 <div className="w-12 h-6 bg-gray-200 rounded-md animate-pulse"></div>
                                 <div className="flex-1">
@@ -186,15 +185,16 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
                     {/* Review Items */}
                     <div className="space-y-6">
                         {reviews.slice(0, visibleReviews).map((review) => (
-                            <div key={review.id} className="border p-4 rounded-lg shadow-sm bg-white">
+                            <div key={review.id} className="p-4 rounded-lg bg-white">
+
                                 {/* Rating */}
                                 <div
-                                    className={`flex items-center text-white px-2 py-1 rounded-md w-fit mb-3 ${getRatingColor(
+                                    className={`flex items-center text-white text-[0.8rem] px-2 py-1 rounded-md w-fit mb-3 ${getRatingColor(
                                         review.review_rate
                                     )}`}
                                 >
                                     <span className="mr-1 font-semibold">{review.review_rate}</span>
-                                    <Star size={15} className="fill-current text-white" />
+                                    <Star size={10} className="fill-current text-white" />
                                 </div>
 
                                 {/* Media (Image) and Content in a single line */}
@@ -202,7 +202,7 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
                                     {review.review_image && (
                                         <div className="flex-shrink-0">
                                             <img
-                                                className="w-20 h-20 rounded-md border object-cover cursor-pointer"
+                                                className="w-16 h-16 rounded-md border object-cover cursor-pointer"
                                                 src={mediaSource(review.review_image)}
                                                 onClick={() => {
                                                     setCurrentImageUrl(mediaSource(review.review_image));
@@ -224,7 +224,7 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
 
                                 {/* Footer */}
                                 <div className="text-sm text-gray-600 flex items-center gap-2">
-                                    <span className="font-medium">{review.user_name}</span>
+                                    <span className="font-sm">{review.user_name}</span>
 
                                     {review.user_review_count && review.user_review_count >= 10 && (
                                         <span className="flex items-center gap-1 bg-blue-100 text-blue-700 px-2 py-[2px] text-xs rounded-md">
@@ -233,7 +233,7 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
                                     )}
 
                                     <span>•</span>
-                                    <span>{formatDate(review.createdAt)}</span>
+                                    <span className="font-sm">{formatDate(review.createdAt)}</span>
                                 </div>
                             </div>
                         ))}

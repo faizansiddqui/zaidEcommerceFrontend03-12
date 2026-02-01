@@ -35,13 +35,14 @@ import ProductDetailsPage from './pages/ProductDetailsPage';
 import MyOrdersPage from './pages/MyOrdersPage';
 import WishlistPage from './pages/WishlistPage';
 import SettingsPage from './pages/SettingsPage';
+import VideoSection from './components/VideoSection';
 
 type HomeProps = { searchQuery: string; setSearchQuery: (q: string) => void };
 
 function Home({ searchQuery, setSearchQuery }: HomeProps) {
   const [showBestSellers, setShowBestSellers] = useState(false);
   const [showNewArrivals, setShowNewArrivals] = useState(false);
-  
+
   const bestSellersRef = useRef<HTMLDivElement>(null);
   const newArrivalsRef = useRef<HTMLDivElement>(null);
 
@@ -70,7 +71,7 @@ function Home({ searchQuery, setSearchQuery }: HomeProps) {
     <div className="min-h-screen bg-white">
       <Navbar onSearchChange={setSearchQuery} />
       <Hero />
-      
+
       {/* Best Sellers - Lazy Loaded */}
       <div ref={bestSellersRef}>
         {!showBestSellers ? (
@@ -135,8 +136,10 @@ function Home({ searchQuery, setSearchQuery }: HomeProps) {
 
       <ProductGrid searchQuery={searchQuery} />
 
+      <VideoSection />
+
       <Features />
-      
+
       <Footer />
     </div>
   );
