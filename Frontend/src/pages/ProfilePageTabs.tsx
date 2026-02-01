@@ -320,7 +320,7 @@ export default function ProfilePageTabs({ onBack }: { onBack?: () => void }) {
     if (!isAuthenticated) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full mx-4">
+                <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
                     <h2 className="text-2xl font-bold text-gray-900 mb-4">Please log in</h2>
                     <p className="text-gray-600 mb-6">You need to be logged in to view your profile.</p>
                     <button
@@ -341,7 +341,7 @@ export default function ProfilePageTabs({ onBack }: { onBack?: () => void }) {
                 return (
                     <div className="space-y-6">
                         {/* Profile Header */}
-                        <div className="bg-white rounded-2xl shadow-lg p-6">
+                        <div className="bg-white rounded-2xl p-6">
                             <div className="flex flex-col items-center">
                                 {/* Avatar */}
                                 <div className="bg-gray-200 border-2 border-dashed rounded-full w-20 h-20 flex items-center justify-center mb-4">
@@ -365,7 +365,7 @@ export default function ProfilePageTabs({ onBack }: { onBack?: () => void }) {
                         </div>
 
                         {/* Address Management */}
-                        <div className="bg-white rounded-2xl shadow-lg p-6">
+                        <div className="bg-white rounded-2xl p-6">
                             <div className="flex items-center justify-between mb-6">
                                 <h2 className="text-xl font-bold text-gray-900">Manage Addresses</h2>
                                 <button
@@ -458,7 +458,7 @@ export default function ProfilePageTabs({ onBack }: { onBack?: () => void }) {
                 );
             case 'orders': {
                 return (
-                    <div className="bg-white rounded-2xl shadow-lg p-6">
+                    <div className="bg-white rounded-2xl p-6">
                         <div className="flex items-center gap-3 mb-8">
                             <Package className="text-amber-700" size={32} />
                             <h1 className="text-3xl font-bold text-gray-900">My Orders</h1>
@@ -469,7 +469,7 @@ export default function ProfilePageTabs({ onBack }: { onBack?: () => void }) {
                                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-700"></div>
                             </div>
                         ) : ordersError ? (
-                            <div className="bg-red-50 border border-red-200 rounded-xl shadow-md p-8 text-center">
+                            <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
                                 <Package size={80} className="mx-auto text-red-300 mb-6" />
                                 <h2 className="text-2xl font-bold text-red-900 mb-4">Error Loading Orders</h2>
                                 <p className="text-red-700 mb-6">{ordersError}</p>
@@ -487,7 +487,7 @@ export default function ProfilePageTabs({ onBack }: { onBack?: () => void }) {
                                 </button>
                             </div>
                         ) : orders.length === 0 ? (
-                            <div className="bg-white rounded-xl shadow-md p-12 text-center">
+                            <div className="bg-white rounded-xl p-12 text-center">
                                 <Package size={80} className="mx-auto text-gray-300 mb-6" />
                                 <h2 className="text-2xl font-bold text-gray-900 mb-4">No orders yet</h2>
                                 <p className="text-gray-600 mb-8">
@@ -525,7 +525,7 @@ export default function ProfilePageTabs({ onBack }: { onBack?: () => void }) {
                                     return (
                                         <div
                                             key={order.order_id}
-                                            className="bg-white rounded-xl shadow-md p-4 md:p-6 cursor-pointer hover:shadow-lg transition-shadow"
+                                            className="bg-white rounded-xl p-4 md:p-6 cursor-pointer hover:shadow-lg transition-shadow"
                                             onClick={() => handleOrderClick(order.order_id)}
                                         >
                                             <div className="flex flex-col md:flex-row md:items-center gap-4">
@@ -610,14 +610,14 @@ export default function ProfilePageTabs({ onBack }: { onBack?: () => void }) {
                 };
 
                 return (
-                    <div className="bg-white rounded-2xl shadow-lg p-6">
+                    <div className="bg-white rounded-2xl p-6">
                         <div className="flex items-center gap-3 mb-8">
                             <Heart className="text-amber-700" size={32} />
                             <h1 className="text-3xl font-bold text-gray-900">My Wishlist</h1>
                         </div>
 
                         {wishlistItems.length === 0 ? (
-                            <div className="bg-white rounded-xl shadow-md p-8 text-center">
+                            <div className="bg-white rounded-xl p-8 text-center">
                                 <Heart size={48} className="text-gray-300 mx-auto mb-4" />
                                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Your wishlist is empty</h2>
                                 <p className="text-gray-600 mb-6">Start adding items you love to your wishlist</p>
@@ -631,10 +631,10 @@ export default function ProfilePageTabs({ onBack }: { onBack?: () => void }) {
                         ) : (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                 {wishlistItems.map((product: WishlistProduct) => (
-                                    <div key={product.product_id} className="bg-white rounded-xl shadow-md overflow-hidden relative">
+                                    <div key={product.product_id} className="bg-white rounded-xl p-4 overflow-hidden relative">
                                         <button
                                             onClick={() => handleRemoveFromWishlist()}
-                                            className="absolute top-3 right-3 bg-white rounded-full p-1 shadow-md hover:bg-gray-100 transition-colors z-10"
+                                            className="absolute top-3 right-3 bg-white rounded-full p-1 hover:bg-gray-100 transition-colors z-10"
                                         >
                                             <X size={20} className="text-gray-600" />
                                         </button>
@@ -674,7 +674,7 @@ export default function ProfilePageTabs({ onBack }: { onBack?: () => void }) {
                         <h1 className="text-3xl font-bold text-gray-900 mb-8">Settings</h1>
 
                         {/* Account Settings */}
-                        <div className="bg-white rounded-xl shadow-md p-6">
+                        <div className="bg-white rounded-xl p-6">
                             <div className="flex items-center gap-3 mb-6">
                                 <SettingsIcon className="text-amber-700" size={24} />
                                 <h2 className="text-2xl font-bold text-gray-900">
@@ -697,7 +697,7 @@ export default function ProfilePageTabs({ onBack }: { onBack?: () => void }) {
                         </div>
 
                         {/* Privacy & Security */}
-                        <div className="bg-white rounded-xl shadow-md p-6">
+                        <div className="bg-white rounded-xl p-6">
                             <div className="flex items-center gap-3 mb-6">
                                 <Shield className="text-amber-700" size={24} />
                                 <h2 className="text-2xl font-bold text-gray-900">
@@ -716,7 +716,7 @@ export default function ProfilePageTabs({ onBack }: { onBack?: () => void }) {
                         </div>
 
                         {/* Terms & Policy */}
-                        <div className="bg-white rounded-xl shadow-md p-6">
+                        <div className="bg-white rounded-xl p-6">
                             <div className="flex items-center gap-3 mb-6">
                                 <Shield className="text-amber-700" size={24} />
                                 <h2 className="text-2xl font-bold text-gray-900">
@@ -735,7 +735,7 @@ export default function ProfilePageTabs({ onBack }: { onBack?: () => void }) {
                         </div>
 
                         {/* Language & Region */}
-                        <div className="bg-white rounded-xl shadow-md p-6">
+                        <div className="bg-white rounded-xl p-6">
                             <div className="flex items-center gap-3 mb-6">
                                 <Globe className="text-amber-700" size={24} />
                                 <h2 className="text-2xl font-bold text-gray-900">
@@ -756,7 +756,7 @@ export default function ProfilePageTabs({ onBack }: { onBack?: () => void }) {
                         </div>
 
                         {/* Logout */}
-                        <div className="bg-white rounded-xl shadow-md p-6">
+                        <div className="bg-white rounded-xl p-6">
                             <button
                                 onClick={handleLogout}
                                 className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors"
@@ -770,7 +770,7 @@ export default function ProfilePageTabs({ onBack }: { onBack?: () => void }) {
             }
             default:
                 return (
-                    <div className="bg-white rounded-2xl shadow-lg p-6">
+                    <div className="bg-white rounded-2xl p-6">
                         <h2 className="text-xl font-bold text-gray-900">Profile</h2>
                         <p className="text-gray-600">Select a tab to view content</p>
                     </div>
@@ -793,7 +793,7 @@ export default function ProfilePageTabs({ onBack }: { onBack?: () => void }) {
                 <div className="flex flex-col lg:flex-row gap-8 flex-grow">
                     {/* Fixed Left Sidebar - Hidden on mobile */}
                     <div className="lg:w-1/4 hidden lg:block">
-                        <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-8">
+                        <div className="bg-white rounded-2xl p-6 sticky top-8">
                             <div className="flex items-center gap-3 mb-6">
                                 <div className="bg-gray-200 border-2 border-dashed rounded-full w-12 h-12 flex items-center justify-center">
                                     <User size={20} className="text-gray-500" />
@@ -848,7 +848,7 @@ export default function ProfilePageTabs({ onBack }: { onBack?: () => void }) {
             </div>
 
             {/* Bottom Navigation Tabs for Mobile */}
-            <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
+            <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
                 <div className="grid grid-cols-4 gap-1">
                     <button
                         onClick={() => setActiveTab('profile')}
@@ -890,7 +890,7 @@ export default function ProfilePageTabs({ onBack }: { onBack?: () => void }) {
             {/* Modal Dialog for Address Form */}
             {showAddressForm && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <div className="bg-white rounded-2xl p-6">
                         <AddressForm
                             address={editingAddress || undefined}
                             onSubmit={handleAddressSubmit}

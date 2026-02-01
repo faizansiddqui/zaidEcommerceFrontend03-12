@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { validateProductName, validateProductTitle, validateProductDescription, TEXT_LIMITS } from '../../../utils/textValidation';
 
 interface ProductFormData {
     name: string;
@@ -33,6 +34,9 @@ export default function ProductFormFields({ productForm, categories, onFormChang
     const [specifications, setSpecifications] = useState<Specification[]>([]);
     const [newSpecKey, setNewSpecKey] = useState('');
     const [newSpecValue, setNewSpecValue] = useState('');
+    
+    // Validation states
+    const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
     // Initialize specifications from existing specification JSON
     useEffect(() => {
@@ -81,6 +85,20 @@ export default function ProductFormFields({ productForm, categories, onFormChang
 
     const updateSpecification = (index: number, field: 'key' | 'value', value: string) => {
         const updatedSpecs = [...specifications];
+        
+        // Validate specification fields
+        if (field === 'key') {
+            const words = value.trim().split(/\s+/).filter(word => word.length > 0);
+            if (words.length > TEXT_LIMITS.SPECIFICATION_KEY.WORDS) {
+                return; // Don't update if exceeds limit
+            }
+        } else if (field === 'value') {
+            const words = value.trim().split(/\s+/).filter(word => word.length > 0);
+            if (words.length > TEXT_LIMITS.SPECIFICATION_VALUE.WORDS) {
+                return; // Don't update if exceeds limit
+            }
+        }
+        
         updatedSpecs[index] = { ...updatedSpecs[index], [field]: value };
         setSpecifications(updatedSpecs);
     };
@@ -93,6 +111,15 @@ export default function ProductFormFields({ productForm, categories, onFormChang
 
     const addSpecification = () => {
         if (newSpecKey.trim() !== '') {
+            // Validate before adding
+            const keyWords = newSpecKey.trim().split(/\s+/).filter(word => word.length > 0);
+            const valueWords = newSpecValue.trim().split(/\s+/).filter(word => word.length > 0);
+            
+            if (keyWords.length > TEXT_LIMITS.SPECIFICATION_KEY.WORDS || 
+                valueWords.length > TEXT_LIMITS.SPECIFICATION_VALUE.WORDS) {
+                return; // Don't add if exceeds limits
+            }
+            
             setSpecifications([...specifications, { key: newSpecKey, value: newSpecValue }]);
             setNewSpecKey('');
             setNewSpecValue('');
@@ -107,32 +134,78 @@ export default function ProductFormFields({ productForm, categories, onFormChang
         }
     };
 
+    // Validation functions
+    const validateAndUpdateField = (field: keyof ProductFormData, value: string) => {
+        let validationResult = { isValid: true, message: '' };
+        
+        switch (field) {
+            case 'name':
+                validationResult = validateProductName(value);
+                break;
+            case 'title':
+                validationResult = validateProductTitle(value);
+                break;
+            case 'description':
+                validationResult = validateProductDescription(value);
+                break;
+        }
+        
+        // Update validation errors
+        setValidationErrors(prev => ({
+            ...prev,
+            [field]: validationResult.message
+        }));
+        
+        // Only update form if valid or if it's getting better
+        if (validationResult.isValid || value.length < (productForm[field] as string).length) {
+            onFormChange(field, value);
+        }
+    };
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                     Product Name <span className="text-red-500">*</span>
+                    <span className="ml-2 text-xs text-gray-500">({TEXT_LIMITS.PRODUCT_NAME.WORDS} words max)</span>
                 </label>
                 <input
                     type="text"
                     value={productForm.name}
-                    onChange={(e) => onFormChange('name', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-700 focus:border-amber-700 outline-none"
+                    onChange={(e) => validateAndUpdateField('name', e.target.value)}
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-700 focus:border-amber-700 outline-none ${
+                        validationErrors.name ? 'border-red-500' : 'border-gray-300'
+                    }`}
                     required
                 />
+                {validationErrors.name && (
+                    <p className="mt-1 text-xs text-red-600">{validationErrors.name}</p>
+                )}
+                <p className="mt-1 text-xs text-gray-500">
+                    {productForm.name.trim().split(/\s+/).filter(word => word.length > 0).length} / {TEXT_LIMITS.PRODUCT_NAME.WORDS} words
+                </p>
             </div>
 
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                     Title <span className="text-red-500">*</span>
+                    <span className="ml-2 text-xs text-gray-500">({TEXT_LIMITS.PRODUCT_TITLE.WORDS} words max)</span>
                 </label>
                 <input
                     type="text"
                     value={productForm.title}
-                    onChange={(e) => onFormChange('title', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-700 focus:border-amber-700 outline-none"
+                    onChange={(e) => validateAndUpdateField('title', e.target.value)}
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-700 focus:border-amber-700 outline-none ${
+                        validationErrors.title ? 'border-red-500' : 'border-gray-300'
+                    }`}
                     required
                 />
+                {validationErrors.title && (
+                    <p className="mt-1 text-xs text-red-600">{validationErrors.title}</p>
+                )}
+                <p className="mt-1 text-xs text-gray-500">
+                    {productForm.title.trim().split(/\s+/).filter(word => word.length > 0).length} / {TEXT_LIMITS.PRODUCT_TITLE.WORDS} words
+                </p>
             </div>
 
             <div>
@@ -231,13 +304,22 @@ export default function ProductFormFields({ productForm, categories, onFormChang
             <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                     Description
+                    <span className="ml-2 text-xs text-gray-500">({TEXT_LIMITS.PRODUCT_DESCRIPTION.WORDS} words max)</span>
                 </label>
                 <textarea
                     value={productForm.description}
-                    onChange={(e) => onFormChange('description', e.target.value)}
+                    onChange={(e) => validateAndUpdateField('description', e.target.value)}
                     rows={4}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-700 focus:border-amber-700 outline-none"
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-700 focus:border-amber-700 outline-none ${
+                        validationErrors.description ? 'border-red-500' : 'border-gray-300'
+                    }`}
                 />
+                {validationErrors.description && (
+                    <p className="mt-1 text-xs text-red-600">{validationErrors.description}</p>
+                )}
+                <p className="mt-1 text-xs text-gray-500">
+                    {productForm.description.trim().split(/\s+/).filter(word => word.length > 0).length} / {TEXT_LIMITS.PRODUCT_DESCRIPTION.WORDS} words
+                </p>
             </div>
 
             <div className="md:col-span-2">
@@ -289,6 +371,9 @@ export default function ProductFormFields({ productForm, categories, onFormChang
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-700 focus:border-amber-700 outline-none text-sm"
                                     placeholder="Property"
                                 />
+                                <p className="mt-1 text-xs text-gray-400">
+                                    {spec.key.trim().split(/\s+/).filter(word => word.length > 0).length} / {TEXT_LIMITS.SPECIFICATION_KEY.WORDS} words
+                                </p>
                             </div>
                             <div className="col-span-6">
                                 <input
@@ -298,6 +383,9 @@ export default function ProductFormFields({ productForm, categories, onFormChang
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-700 focus:border-amber-700 outline-none text-sm"
                                     placeholder="Value"
                                 />
+                                <p className="mt-1 text-xs text-gray-400">
+                                    {spec.value.trim().split(/\s+/).filter(word => word.length > 0).length} / {TEXT_LIMITS.SPECIFICATION_VALUE.WORDS} words
+                                </p>
                             </div>
                             <div className="col-span-1">
                                 <button
@@ -318,19 +406,35 @@ export default function ProductFormFields({ productForm, categories, onFormChang
                         <input
                             type="text"
                             value={newSpecKey}
-                            onChange={(e) => setNewSpecKey(e.target.value)}
+                            onChange={(e) => {
+                                const words = e.target.value.trim().split(/\s+/).filter(word => word.length > 0);
+                                if (words.length <= TEXT_LIMITS.SPECIFICATION_KEY.WORDS) {
+                                    setNewSpecKey(e.target.value);
+                                }
+                            }}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-700 focus:border-amber-700 outline-none text-sm"
                             placeholder="New Property"
                         />
+                        <p className="mt-1 text-xs text-gray-400">
+                            {newSpecKey.trim().split(/\s+/).filter(word => word.length > 0).length} / {TEXT_LIMITS.SPECIFICATION_KEY.WORDS} words
+                        </p>
                     </div>
                     <div className="col-span-6">
                         <input
                             type="text"
                             value={newSpecValue}
-                            onChange={(e) => setNewSpecValue(e.target.value)}
+                            onChange={(e) => {
+                                const words = e.target.value.trim().split(/\s+/).filter(word => word.length > 0);
+                                if (words.length <= TEXT_LIMITS.SPECIFICATION_VALUE.WORDS) {
+                                    setNewSpecValue(e.target.value);
+                                }
+                            }}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-700 focus:border-amber-700 outline-none text-sm"
                             placeholder="Value"
                         />
+                        <p className="mt-1 text-xs text-gray-400">
+                            {newSpecValue.trim().split(/\s+/).filter(word => word.length > 0).length} / {TEXT_LIMITS.SPECIFICATION_VALUE.WORDS} words
+                        </p>
                     </div>
                     <div className="col-span-1">
                         <button
@@ -344,7 +448,7 @@ export default function ProductFormFields({ productForm, categories, onFormChang
                 </div>
 
                 <p className="mt-2 text-xs text-gray-500">
-                    Add product specifications like material, dimensions, weight, etc.
+                    Add product specifications like material, dimensions, weight, etc. (Key: {TEXT_LIMITS.SPECIFICATION_KEY.WORDS} words max, Value: {TEXT_LIMITS.SPECIFICATION_VALUE.WORDS} words max)
                 </p>
             </div>
         </div>

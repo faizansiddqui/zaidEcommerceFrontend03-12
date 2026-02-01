@@ -87,7 +87,7 @@ export default function CartPage({ onBack }: CartPageProps) {
     if (!isAuthenticated) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full mx-4">
+                <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
                     <h2 className="text-2xl font-bold text-gray-900 mb-4">Please log in</h2>
                     <p className="text-gray-600 mb-6">You need to be logged in to view your cart.</p>
                     <button
@@ -113,7 +113,7 @@ export default function CartPage({ onBack }: CartPageProps) {
                         <span className="font-medium">Continue Shopping</span>
                     </button>
 
-                    <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
+                    <div className="bg-white rounded-2xl p-12 text-center">
                         <div className="max-w-md mx-auto">
                             <ShoppingBag size={80} className="mx-auto text-gray-300 mb-6" />
                             <h2 className="text-3xl font-bold text-gray-900 mb-4">Your cart is empty</h2>
@@ -157,7 +157,7 @@ export default function CartPage({ onBack }: CartPageProps) {
                         {cartItems.map((item) => (
                             <div
                                 key={item.id}
-                                className="bg-white rounded-xl shadow-md p-6 flex flex-col sm:flex-row gap-6 hover:shadow-lg transition-shadow"
+                                className="bg-white rounded-xl p-6 flex flex-col sm:flex-row gap-6 hover:shadow-lg transition-shadow"
                             >
                                 <div className="flex-shrink-0">
                                     <img

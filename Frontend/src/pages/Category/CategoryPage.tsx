@@ -32,16 +32,23 @@ interface CategoryPageProps {
 
 export default function CategoryPage({ onSearchChange }: CategoryPageProps) {
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+    const [productType, setProductType] = useState<'best-sellers' | 'new-arrivals' | null>(null);
 
-    // Get category from URL parameters
+    // Get category and type from URL parameters
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const categoryParam = urlParams.get('category');
+        const typeParam = urlParams.get('type');
 
         if (categoryParam) {
             setSelectedCategory(categoryParam);
+            setProductType(null);
+        } else if (typeParam === 'best-sellers' || typeParam === 'new-arrivals') {
+            setProductType(typeParam);
+            setSelectedCategory(null);
         }
     }, []);
+
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoadingProducts, setIsLoadingProducts] = useState(false);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -95,10 +102,14 @@ export default function CategoryPage({ onSearchChange }: CategoryPageProps) {
             } else {
                 loadProductsByCategory(selectedCategory, true);
             }
+        } else if (productType === 'best-sellers') {
+            loadBestSellers(true);
+        } else if (productType === 'new-arrivals') {
+            loadNewArrivals(true);
         } else {
             loadAllProducts(true);
         }
-    }, [selectedCategory, searchQuery]);
+    }, [selectedCategory, productType, searchQuery]);
 
     // Infinite scroll observer
     useEffect(() => {
@@ -196,6 +207,10 @@ export default function CategoryPage({ onSearchChange }: CategoryPageProps) {
     const loadMoreProducts = async () => {
         if (selectedCategory) {
             loadProductsByCategory(selectedCategory, false);
+        } else if (productType === 'best-sellers') {
+            loadBestSellers(false);
+        } else if (productType === 'new-arrivals') {
+            loadNewArrivals(false);
         } else {
             loadAllProducts(false);
         }
@@ -277,6 +292,148 @@ export default function CategoryPage({ onSearchChange }: CategoryPageProps) {
         }
     };
 
+    const loadBestSellers = async (reset: boolean = true) => {
+        const page = reset ? 1 : currentPage;
+        const cacheKey = `best-sellers-page-${page}-limit-12`;
+
+        if (reset) {
+            setIsLoadingProducts(true);
+        } else {
+            setIsLoadingMore(true);
+        }
+
+        try {
+            // Check cache first
+            const cachedProducts = productCache.getCachedProducts(cacheKey);
+            if (cachedProducts && !reset) {
+                if (reset) {
+                    setProducts(cachedProducts);
+                } else {
+                    setProducts(prev => [...prev, ...cachedProducts]);
+                }
+                setHasMore(cachedProducts.length === 12);
+                if (!reset) {
+                    setCurrentPage(prev => prev + 1);
+                } else {
+                    setCurrentPage(2);
+                }
+                setIsLoadingMore(false);
+                return;
+            }
+
+            const response = await productAPI.getProducts();
+            if (response.data.status && Array.isArray(response.data.products)) {
+                const allProducts = response.data.products
+                    .sort((a: Product, b: Product) => {
+                        const aScore = (a.quantity || 0) + (a.selling_price || a.price || 0);
+                        const bScore = (b.quantity || 0) + (b.selling_price || b.price || 0);
+                        return bScore - aScore;
+                    })
+                    .slice((page - 1) * 12, page * 12);
+
+                // Cache the products
+                productCache.setCachedProducts(cacheKey, allProducts);
+
+                if (reset) {
+                    setProducts(allProducts);
+                } else {
+                    setProducts(prev => [...prev, ...allProducts]);
+                }
+
+                setHasMore(allProducts.length === 12);
+                if (!reset) {
+                    setCurrentPage(prev => prev + 1);
+                } else {
+                    setCurrentPage(2);
+                }
+            } else {
+                if (reset) {
+                    setProducts([]);
+                }
+                setHasMore(false);
+            }
+        } catch (error: unknown) {
+            console.error('❌ Error loading best sellers:', error);
+            if (reset) {
+                setProducts([]);
+            }
+            setHasMore(false);
+        } finally {
+            setIsLoadingProducts(false);
+            setIsLoadingMore(false);
+        }
+    };
+
+    const loadNewArrivals = async (reset: boolean = true) => {
+        const page = reset ? 1 : currentPage;
+        const cacheKey = `new-arrivals-page-${page}-limit-12`;
+
+        if (reset) {
+            setIsLoadingProducts(true);
+        } else {
+            setIsLoadingMore(true);
+        }
+
+        try {
+            // Check cache first
+            const cachedProducts = productCache.getCachedProducts(cacheKey);
+            if (cachedProducts && !reset) {
+                if (reset) {
+                    setProducts(cachedProducts);
+                } else {
+                    setProducts(prev => [...prev, ...cachedProducts]);
+                }
+                setHasMore(cachedProducts.length === 12);
+                if (!reset) {
+                    setCurrentPage(prev => prev + 1);
+                } else {
+                    setCurrentPage(2);
+                }
+                setIsLoadingMore(false);
+                return;
+            }
+
+            const response = await productAPI.getProducts();
+            if (response.data.status && Array.isArray(response.data.products)) {
+                const allProducts = response.data.products
+                    .sort((a: Product, b: Product) =>
+                        new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+                    )
+                    .slice((page - 1) * 12, page * 12);
+
+                // Cache the products
+                productCache.setCachedProducts(cacheKey, allProducts);
+
+                if (reset) {
+                    setProducts(allProducts);
+                } else {
+                    setProducts(prev => [...prev, ...allProducts]);
+                }
+
+                setHasMore(allProducts.length === 12);
+                if (!reset) {
+                    setCurrentPage(prev => prev + 1);
+                } else {
+                    setCurrentPage(2);
+                }
+            } else {
+                if (reset) {
+                    setProducts([]);
+                }
+                setHasMore(false);
+            }
+        } catch (error: unknown) {
+            console.error('❌ Error loading new arrivals:', error);
+            if (reset) {
+                setProducts([]);
+            }
+            setHasMore(false);
+        } finally {
+            setIsLoadingProducts(false);
+            setIsLoadingMore(false);
+        }
+    };
+
     const getImageUrl = (productImage: string | string[] | { [key: string]: string } | undefined): string => {
         if (!productImage) return '';
         if (typeof productImage === 'string') {
@@ -293,7 +450,7 @@ export default function CategoryPage({ onSearchChange }: CategoryPageProps) {
     };
 
     const handleCategoryClick = () => {
-        go('/category-list');
+        go('/');
     };
 
     const handleProductClick = (productId: number) => {
@@ -359,7 +516,9 @@ export default function CategoryPage({ onSearchChange }: CategoryPageProps) {
                             <ArrowLeft size={20} />
                             <span className="font-medium">Back</span>
                         </button>
-                        <h1 className="text-xl font-bold text-gray-900">Categories</h1>
+                        <h1 className="text-xl font-bold text-gray-900">
+                            {productType === 'best-sellers' ? 'Best Sellers' : productType === 'new-arrivals' ? 'New Arrivals' : 'Categories'}
+                        </h1>
                     </div>
                 </div>
             </div>
@@ -369,7 +528,11 @@ export default function CategoryPage({ onSearchChange }: CategoryPageProps) {
                 <div>
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
                         <h2 className="text-2xl font-bold text-gray-900">
-                            {searchQuery ? `Search Results for "${searchQuery}"` : selectedCategory ? `${selectedCategory} Products` : 'All Products'}
+                            {searchQuery ? `Search Results for "${searchQuery}"` : 
+                             selectedCategory ? `${selectedCategory} Products` : 
+                             productType === 'best-sellers' ? 'Best Selling Products' : 
+                             productType === 'new-arrivals' ? 'New Arrival Products' : 
+                             'All Products'}
                         </h2>
                         <div className="flex items-center gap-4">
                             {products.length > 0 && (

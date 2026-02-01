@@ -124,7 +124,7 @@ export default function ProfilePage({ onBack }: { onBack?: () => void }) {
     if (!isAuthenticated) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full mx-4">
+                <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
                     <h2 className="text-2xl font-bold text-gray-900 mb-4">Please log in</h2>
                     <p className="text-gray-600 mb-6">You need to be logged in to view your profile.</p>
                     <button
@@ -153,7 +153,7 @@ export default function ProfilePage({ onBack }: { onBack?: () => void }) {
                 <div className="flex flex-col lg:flex-row gap-8 flex-grow">
                     {/* Fixed Left Sidebar - Hidden on mobile */}
                     <div className="lg:w-1/4 hidden lg:block">
-                        <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-8">
+                        <div className="bg-white rounded-2xl p-6 sticky top-8">
                             <div className="flex items-center gap-3 mb-6">
                                 <div className="bg-gray-200 border-2 border-dashed rounded-full w-12 h-12 flex items-center justify-center">
                                     <User size={20} className="text-gray-500" />
@@ -204,7 +204,7 @@ export default function ProfilePage({ onBack }: { onBack?: () => void }) {
                     <div className="lg:w-3/4 flex-grow">
                         {/* Profile Header - Only shown in profile tab */}
                         {activeTab === 'profile' && (
-                            <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
+                            <div className="bg-white rounded-2xl overflow-hidden mb-8">
                                 <div className="px-6 py-8">
                                     <div className="flex flex-col items-center">
                                         {/* Avatar */}
@@ -233,7 +233,7 @@ export default function ProfilePage({ onBack }: { onBack?: () => void }) {
 
                         {/* Content based on active tab */}
                         {activeTab === 'profile' && (
-                            <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+                            <div className="bg-white rounded-2xl overflow-hidden">
                                 {/* Divider */}
                                 <div className="border-t border-gray-200"></div>
 
@@ -383,7 +383,7 @@ export default function ProfilePage({ onBack }: { onBack?: () => void }) {
             {/* Modal Dialog for Address Form */}
             {showAddressForm && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                         <AddressForm
                             address={editingAddress || undefined}
                             onSubmit={handleAddressSubmit}
@@ -394,7 +394,7 @@ export default function ProfilePage({ onBack }: { onBack?: () => void }) {
             )}
 
             {/* Bottom Navigation Tabs for Mobile */}
-            <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
+            <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
                 <div className="grid grid-cols-4 gap-1">
                     <button
                         onClick={() => setActiveTab('profile')}

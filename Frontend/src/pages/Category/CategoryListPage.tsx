@@ -114,7 +114,7 @@ export default function CategoryListPage({ onBack, onSearchChange }: CategoryLis
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [selectedCategory]);
 
     // Dynamic Category List with "All" prepended
     const fullCategories = useMemo<CategoryItem[]>(() => [

@@ -220,7 +220,7 @@ export default function OrderDetailsPage({ orderId, onBack }: OrderDetailsPagePr
                         <span className="font-medium">Back to Orders</span>
                     </button>
 
-                    <div className="bg-red-50 border border-red-200 rounded-xl shadow-md p-8 text-center">
+                    <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
                         <Package size={80} className="mx-auto text-red-300 mb-6" />
                         <h2 className="text-2xl font-bold text-red-900 mb-4">Error Loading Order</h2>
                         <p className="text-red-700 mb-6">{error}</p>
@@ -248,7 +248,7 @@ export default function OrderDetailsPage({ orderId, onBack }: OrderDetailsPagePr
                         <span className="font-medium">Back to Orders</span>
                     </button>
 
-                    <div className="bg-white rounded-xl shadow-md p-12 text-center">
+                    <div className="bg-white rounded-xl p-12 text-center">
                         <Package size={80} className="mx-auto text-gray-300 mb-6" />
                         <h2 className="text-2xl font-bold text-gray-900 mb-4">Order Not Found</h2>
                         <p className="text-gray-600 mb-8">
@@ -379,7 +379,7 @@ export default function OrderDetailsPage({ orderId, onBack }: OrderDetailsPagePr
                 </div>
 
                 {/* Progress Tracker - Desktop Only (Horizontal) */}
-                <div className="hidden md:block bg-white rounded-xl shadow-md p-6 mb-8">
+                <div className="hidden md:block bg-white rounded-xl p-6 mb-8">
                     <div className="flex justify-between relative">
                         {/* Progress line */}
                         <div className="absolute top-5 left-[60px] right-[25px] h-1 bg-gray-200 -z-0">
@@ -414,7 +414,7 @@ export default function OrderDetailsPage({ orderId, onBack }: OrderDetailsPagePr
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Order Summary */}
                     <div className="lg:col-span-2 space-y-6">
-                        <div className="bg-white rounded-xl shadow-md p-6">
+                        <div className="bg-white rounded-xl p-6">
                             <div className="flex items-center justify-between mb-6">
                                 <h2 className="text-2xl font-bold text-gray-900">Order #{order.order_id.slice(0, 8)}</h2>
                                 <span className={`px-4 py-2 rounded-lg font-semibold ${order.status === 'cancelled'
@@ -547,7 +547,7 @@ export default function OrderDetailsPage({ orderId, onBack }: OrderDetailsPagePr
                         </div>
 
                         {/* Order Information Section - Added at the bottom of order summary */}
-                        <div className="bg-white rounded-xl shadow-md p-6">
+                        <div className="bg-white rounded-xl p-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-6 pb-4 border-b border-gray-100">Order Information</h2>
 
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -582,7 +582,7 @@ export default function OrderDetailsPage({ orderId, onBack }: OrderDetailsPagePr
                         </div>
 
                         {/* Progress Tracker - Mobile Only (Vertical at bottom) */}
-                        <div className="md:hidden bg-white rounded-xl shadow-md p-6">
+                        <div className="md:hidden bg-white rounded-xl p-6">
                             <h3 className="text-lg font-bold text-gray-900 mb-4">Order Progress</h3>
                             <div className="flex flex-col items-start relative">
                                 {/* Vertical line */}
@@ -625,7 +625,7 @@ export default function OrderDetailsPage({ orderId, onBack }: OrderDetailsPagePr
 
                     {/* Order Information */}
                     <div className="space-y-6">
-                        <div className="bg-white rounded-xl shadow-md p-6">
+                        <div className="bg-white rounded-xl p-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-6 pb-4 border-b border-gray-100">Customer Details</h2>
 
                             <div className="space-y-6">
@@ -641,7 +641,7 @@ export default function OrderDetailsPage({ orderId, onBack }: OrderDetailsPagePr
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-xl shadow-md p-6">
+                        <div className="bg-white rounded-xl p-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-6 pb-4 border-b border-gray-100">Delivery Address</h2>
 
                             <div className="space-y-2">
@@ -660,7 +660,7 @@ export default function OrderDetailsPage({ orderId, onBack }: OrderDetailsPagePr
             {/* Cancel Confirmation Dialog */}
             {showCancelDialog && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+                    <div className="bg-white rounded-xl max-w-md w-full p-6">
                         <h3 className="text-xl font-bold text-gray-900 mb-4">Confirm Cancellation</h3>
                         <p className="text-gray-600 mb-6">Are you sure you want to cancel this order?</p>
                         <div className="flex justify-end gap-3">

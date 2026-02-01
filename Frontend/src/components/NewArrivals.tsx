@@ -112,7 +112,7 @@ export default function NewArrivals() {
                         </h2>
                     </div>
                     <button
-                        onClick={() => go('/categories')}
+                        onClick={() => go('/categories?type=new-arrivals')}
                         className="group flex items-center gap-2 text-sm font-semibold text-gray-900 hover:text-amber-700 transition-colors"
                     >
                         Explore the collection

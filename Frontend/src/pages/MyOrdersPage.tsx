@@ -188,7 +188,7 @@ export default function MyOrdersPage({ onBack }: MyOrdersPageProps) {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full mx-4">
+        <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Please log in</h2>
           <p className="text-gray-600 mb-6">You need to be logged in to view your orders.</p>
           <button
@@ -240,7 +240,7 @@ export default function MyOrdersPage({ onBack }: MyOrdersPageProps) {
         </div>
 
         {error ? (
-          <div className="bg-red-50 border border-red-200 rounded-xl shadow-md p-8 text-center">
+          <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
             <Package size={80} className="mx-auto text-red-300 mb-6" />
             <h2 className="text-2xl font-bold text-red-900 mb-4">Error Loading Orders</h2>
             <p className="text-red-700 mb-6">{error}</p>
@@ -252,7 +252,7 @@ export default function MyOrdersPage({ onBack }: MyOrdersPageProps) {
             </button>
           </div>
         ) : sortedOrders.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-md p-12 text-center">
+          <div className="bg-white rounded-xl p-12 text-center">
             <Package size={80} className="mx-auto text-gray-300 mb-6" />
             <h2 className="text-2xl font-bold text-gray-900 mb-4">No orders yet</h2>
             <p className="text-gray-600 mb-8">
@@ -290,7 +290,7 @@ export default function MyOrdersPage({ onBack }: MyOrdersPageProps) {
               return (
                 <div
                   key={order.order_id}
-                  className="bg-white rounded-xl shadow-md p-4 md:p-6 cursor-pointer hover:shadow-lg transition-shadow"
+                  className="bg-white rounded-xl p-4 md:p-6 cursor-pointer hover:shadow-lg transition-shadow"
                   onClick={() => handleOrderClick(order.order_id)}
                 >
                   <div className="flex flex-col md:flex-row md:items-center gap-4">
