@@ -10,6 +10,7 @@ import Footer from '../../components/Footer/Footer';
 import ProductSortDropdown from './ProductSortDropdown';
 import SkeletonLoader from '../../components/UI/SkeletonLoader';
 
+
 interface Product {
     product_id: number;
     name: string;
