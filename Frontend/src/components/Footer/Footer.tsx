@@ -46,11 +46,11 @@ export default function Footer() {
           <div>
             <h4 className="text-white font-semibold mb-2 xs:mb-3 sm:mb-4 text-xs xs:text-sm sm:text-base">Shop</h4>
             <ul className="space-y-1 xs:space-y-1.5 sm:space-y-2">
-              <li><a href="/categories" className="hover:text-amber-400 transition-colors text-[10px] xs:text-xs sm:text-sm">All Categories</a></li>
-              <li><a href="/categories" className="hover:text-amber-400 transition-colors text-[10px] xs:text-xs sm:text-sm">Kiswah Collection</a></li>
-              <li><a href="/categories" className="hover:text-amber-400 transition-colors text-[10px] xs:text-xs sm:text-sm">Islamic Arts</a></li>
-              <li><a href="/" className="hover:text-amber-400 transition-colors text-[10px] xs:text-xs sm:text-sm">Bestsellers</a></li>
-              <li><a href="/" className="hover:text-amber-400 transition-colors text-[10px] xs:text-xs sm:text-sm">New Arrivals</a></li>
+              <li><a href="/category-list" className="hover:text-amber-400 transition-colors text-[10px] xs:text-xs sm:text-sm">All Categories</a></li>
+              <li><a href="/category-list" className="hover:text-amber-400 transition-colors text-[10px] xs:text-xs sm:text-sm">Kiswah Collection</a></li>
+              <li><a href="/category-list" className="hover:text-amber-400 transition-colors text-[10px] xs:text-xs sm:text-sm">Islamic Arts</a></li>
+              <li><a href="/category-list" className="hover:text-amber-400 transition-colors text-[10px] xs:text-xs sm:text-sm">Bestsellers</a></li>
+              <li><a href="/category-list" className="hover:text-amber-400 transition-colors text-[10px] xs:text-xs sm:text-sm">New Arrivals</a></li>
             </ul>
           </div>
 

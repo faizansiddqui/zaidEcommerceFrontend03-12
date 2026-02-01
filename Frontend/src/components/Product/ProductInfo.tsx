@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { Star, Check } from 'lucide-react';
+import WishlistButton from './WishlistButton';
+import { Product } from '../../utils/productUtils';
+
 
 interface ProductSpecification {
     specification_id?: number;
@@ -15,6 +18,7 @@ interface ProductInfoProps {
     sellingPrice: number;
     specifications?: ProductSpecification[];
     quantity: number;
+    product: Product;
     // Added review-related props
     averageRating?: number;
     reviewCount?: number;
@@ -28,12 +32,14 @@ export default function ProductInfo({
     sellingPrice,
     specifications,
     quantity,
+    product,
     // Destructure review-related props with defaults
     averageRating = 0,
     reviewCount = 0
 }: ProductInfoProps) {
     // State for showing/hiding full description
     const [showFullDescription, setShowFullDescription] = useState(false);
+
 
     // Get full product name/title
     const fullProductName = name || title || 'Product';
@@ -52,7 +58,7 @@ export default function ProductInfo({
     // Function to format description into readable paragraphs/sentences
     const formatDescription = (desc: string) => {
         if (!desc) return null;
-        
+
         // First, check if it has natural paragraph breaks (\n)
         const paragraphs = desc.split('\n').filter(p => p.trim());
         if (paragraphs.length > 1) {
@@ -180,16 +186,28 @@ export default function ProductInfo({
                 return null;
             })()}
 
-            <div className={`${quantity > 0 ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'} rounded-lg p-3 sm:p-4`}>
-                <div className={`flex items-center gap-2 ${quantity > 0 ? 'text-green-800' : 'text-red-800'}`}>
-                    <Check size={18} className="sm:w-5 sm:h-5 flex-shrink-0" />
-                    <span className="text-sm sm:text-base font-semibold">
-                        {quantity > 0
-                            ? 'In Stock'
-                            : 'Out of Stock'
-                        }
-                    </span>
+            <div className='flex items-center justify-between sm:gap-1 lg:gap-2'>
+                <div className={`${quantity > 0 ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'} rounded-lg p-3 sm:p-4`}>
+                    <div className={`flex items-center gap-2 ${quantity > 0 ? 'text-green-800' : 'text-red-800'}`}>
+                        <Check size={18} className="sm:w-5 sm:h-5 flex-shrink-0" />
+                        <span className="text-sm sm:text-base font-semibold">
+                            {quantity > 0
+                                ? 'In Stock'
+                                : 'Out of Stock'
+                            }
+                        </span>
+                    </div>
                 </div>
+
+                {/* Wishlist Button */}
+                <div className="flex justify-end">
+                    <WishlistButton
+                        product={product}
+                        size="lg"
+                        showLabel={true}
+                    />
+                </div>
+
             </div>
 
             {/* Bulk Order Contact Information */}

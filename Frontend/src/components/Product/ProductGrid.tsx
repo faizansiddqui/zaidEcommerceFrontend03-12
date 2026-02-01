@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import ProductCard from './ProductCard';
-import { Filter, SlidersHorizontal, X } from 'lucide-react';
+import { SlidersHorizontal, Check, ChevronLeft, ChevronRight, ShoppingBag } from 'lucide-react';
 import { productAPI } from '../../services/api';
 import { productCache } from '../../services/productCache';
 import { Product, getImageUrl, isProductNew, isProductBestSeller } from '../../utils/productUtils';
 import { getCategories } from '../../data/categories';
-import { useNavigation } from "../../utils/navigation"; 
 import SkeletonLoader from '../UI/SkeletonLoader';
 
 // Define Review interface for rating calculations
@@ -26,19 +25,16 @@ interface ProductWithRating extends Product {
 }
 
 export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
-  const { go } = useNavigation();
   const [products, setProducts] = useState<ProductWithRating[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('All Products');
   const [sortBy, setSortBy] = useState('featured');
-  const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [displayedProducts, setDisplayedProducts] = useState(6); // Show only 6 products initially
-  const [isContentVisible, setIsContentVisible] = useState(false); // For smooth transition
   // Add cache for ratings to avoid repeated API calls
   const [ratingsCache, setRatingsCache] = useState<Record<number, { averageRating: number; reviewCount: number }>>({});
   const [isBackgroundFetching, setIsBackgroundFetching] = useState(false); // Prevent duplicate background fetches
@@ -47,18 +43,16 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
   const observer = useRef<IntersectionObserver>();
   const lastProductRef = useRef<HTMLDivElement>(null);
 
-  // Add effect for smooth content transition
-  useEffect(() => {
-    if (!isLoading && !isInitialLoad && products.length > 0) {
-      // Small delay to ensure smooth transition
-      const timer = setTimeout(() => {
-        setIsContentVisible(true);
-      }, 100);
-      return () => clearTimeout(timer);
-    } else {
-      setIsContentVisible(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const { scrollLeft, clientWidth } = scrollRef.current;
+      const scrollTo = direction === 'left' ? scrollLeft - clientWidth : scrollLeft + clientWidth;
+      scrollRef.current.scrollTo({ left: scrollTo, behavior: 'smooth' });
     }
-  }, [isLoading, isInitialLoad, products]);
+  };
+
 
   useEffect(() => {
     // Only load products if this is not the initial load
@@ -72,17 +66,17 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsInitialLoad(false);
-      
+
       // Check if we have local storage data first
       const cacheKey = `products-page-1-limit-12`;
       const cachedProducts = productCache.getCachedProducts(cacheKey);
-      
+
       if (cachedProducts) {
         setProducts(cachedProducts);
         setHasMore(cachedProducts.length === 12);
         setCurrentPage(2);
         setIsLoading(false);
-        
+
         // Try to fetch fresh data in background (may fail due to network)
         fetchFreshProductsWithFallback();
       } else {
@@ -96,19 +90,19 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
   const fetchFreshProductsWithFallback = async () => {
     try {
       const response = await productAPI.getProducts(1, 12);
-      
+
       if (response.data.status && Array.isArray(response.data.products)) {
         const cacheKey = `products-page-1-limit-12`;
-        
+
         // Cache fresh products (saves to local storage)
         productCache.setCachedProducts(cacheKey, response.data.products);
-        
+
         // Update state with fresh data
         const productsWithCache = response.data.products.map((product: Product) => ({
           ...product,
           ...(ratingsCache[product.product_id] || {})
         }));
-        
+
         setProducts(productsWithCache);
         setHasMore(response.data.products.length === 12);
         setCurrentPage(2);
@@ -123,19 +117,19 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
     try {
       setIsLoading(true);
       const response = await productAPI.getProducts(1, 12);
-      
+
       if (response.data.status && Array.isArray(response.data.products)) {
         console.log('✅ API call successful');
         const cacheKey = `products-page-1-limit-12`;
-        
+
         // Cache fresh products
         productCache.setCachedProducts(cacheKey, response.data.products);
-        
+
         const productsWithCache = response.data.products.map((product: Product) => ({
           ...product,
           ...(ratingsCache[product.product_id] || {})
         }));
-        
+
         setProducts(productsWithCache);
         setHasMore(response.data.products.length === 12);
         setCurrentPage(2);
@@ -144,7 +138,7 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
       }
     } catch (error) {
       console.error('❌ API failed, trying fallback:', error);
-      
+
       // Fallback: Try to get any cached data
       const allCached = productCache.getAllCachedProducts();
       if (allCached.length > 0) {
@@ -168,17 +162,17 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
     setCurrentPage(1);
     setHasMore(true);
     setDisplayedProducts(6); // Reset to 6 products
-    
+
     if (selectedCategory === 'All Products') {
       const cacheKey = `products-page-1-limit-12`;
       const cachedProducts = productCache.getCachedProducts(cacheKey);
-      
+
       if (cachedProducts) {
         setProducts(cachedProducts);
         setHasMore(cachedProducts.length === 12);
         setCurrentPage(2);
         setIsLoading(false);
-        
+
         // Fetch fresh data in background
         if (!isBackgroundFetching) {
           fetchFreshProductsWithFallback();
@@ -189,13 +183,13 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
     } else if (selectedCategory !== 'Uncategorized') {
       const cacheKey = `category-${selectedCategory}-page-1-limit-12`;
       const cachedProducts = productCache.getCachedProducts(cacheKey);
-      
+
       if (cachedProducts) {
         setProducts(cachedProducts);
         setHasMore(cachedProducts.length === 12);
         setCurrentPage(2);
         setIsLoading(false);
-        
+
         // Fetch fresh data in background
         if (!isBackgroundFetching) {
           fetchFreshCategoryProducts(selectedCategory);
@@ -208,25 +202,25 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
 
   const fetchFreshCategoryProducts = async (categoryName: string) => {
     if (isBackgroundFetching) return;
-    
+
     setIsBackgroundFetching(true);
     try {
       const response = await productAPI.getProductByCategory(categoryName, 1, 12);
-      
+
       if (response.data.status === 'ok' && response.data.data) {
         const categoryData = response.data.data;
         if (categoryData && categoryData.Products && Array.isArray(categoryData.Products)) {
           const cacheKey = `category-${categoryName}-page-1-limit-12`;
-          
+
           // Cache the fresh products (saves to local storage)
           productCache.setCachedProducts(cacheKey, categoryData.Products);
-          
+
           // Update state with fresh data
           const productsWithCache = categoryData.Products.map((product: Product) => ({
             ...product,
             ...(ratingsCache[product.product_id] || {})
           }));
-          
+
           setProducts(productsWithCache);
           setHasMore(categoryData.Products.length === 12);
           setCurrentPage(2);
@@ -267,7 +261,7 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
   const loadProducts = async (reset: boolean = false) => {
     const page = reset ? 1 : currentPage;
     const cacheKey = `products-page-${page}-limit-12`;
-    
+
     if (reset) {
       setIsLoading(true);
       setDisplayedProducts(6); // Reset to 6 products
@@ -331,7 +325,6 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
     } finally {
       setIsLoading(false);
       setIsLoadingMore(false);
-      setIsContentVisible(false); // Reset visibility when loading starts
     }
   };
 
@@ -346,7 +339,7 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
   const loadProductsByCategory = async (categoryName: string, reset: boolean = true) => {
     const page = reset ? 1 : currentPage;
     const cacheKey = `category-${categoryName}-page-${page}-limit-12`;
-    
+
     if (reset) {
       setIsLoading(true);
       setDisplayedProducts(6); // Reset to 6 products
@@ -569,231 +562,146 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
     return 0;
   });
 
-  if (isLoading || isInitialLoad) {
-    return (
-      <div className="bg-gradient-to-b from-gray-50 to-white py-8 sm:py-12 lg:py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header Section */}
-          <div className="text-center mb-8 sm:mb-12">
-            <div className="inline-flex items-center justify-center px-4 py-2 bg-amber-100 text-amber-700 rounded-full text-sm font-medium mb-4">
-              <SlidersHorizontal size={16} className="mr-2" />
-              Curated Selection
-            </div>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
-              Our Featured Collection
-            </h2>
-            <p className="text-sm text-gray-600 max-w-2xl mx-auto">
-              Explore our carefully curated selection of premium Islamic art and decor
-            </p>
-          </div>
+  // Show skeleton loaders for product cards when loading
+  const showSkeletons = isLoading || isInitialLoad;
 
-          {/* Skeleton Loaders */}
-          <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <SkeletonLoader key={index} type="card" />
-            ))}
+  return (
+
+    <div className="bg-white min-h-[100%]">
+      {/* 1. Slim Top Info Bar */}
+      <div className="bg-white border-b border-gray-200">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between pl-9 pb-5 pt-5 gap-6">
+          <div className="max-w-xl">
+            <div className="flex items-center gap-2 text-amber-600 font-bold uppercase tracking-widest text-xs mb-3">
+              <SlidersHorizontal size={16} className="" />
+              <span>Featured Collection</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-light text-gray-900 tracking-tight">
+              Our Featured <span className="font-serif italic text-amber-700">Products</span>
+            </h2>
           </div>
         </div>
       </div>
-    );
-  }
 
-  return (
-    <div className="bg-gradient-to-b from-gray-50 to-white py-8 sm:py-12 lg:py-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header Section */}
-        <div className="text-center mb-8 sm:mb-12">
-          <div className="inline-flex items-center justify-center px-4 py-2 bg-amber-100 text-amber-700 rounded-full text-sm font-medium mb-4">
-            <SlidersHorizontal size={16} className="mr-2" />
-            Curated Selection
+      {/* 2. & 3. Combined Filter & Main Section */}
+      <div className="max-w-[1440px] mx-auto flex flex-col lg:flex-row p-2 lg:p-4 gap-4">
+
+        {/* Sidebar - Hidden on Mobile, Persistent on Desktop */}
+        <aside className="hidden lg:block w-64 flex-shrink-0 bg-white border border-gray-200 self-start sticky top-24">
+          <div className="p-4 border-b border-gray-100">
+            <h3 className="text-base font-bold text-gray-900">Filters</h3>
           </div>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
-            Our Featured Collection
-          </h2>
-          <p className="text-sm text-gray-600 max-w-2xl mx-auto">
-            Explore our carefully curated selection of premium Islamic art and decor
-          </p>
-        </div>
+          <div className="p-4">
+            <p className="text-xs font-bold uppercase text-gray-400 mb-3 tracking-wider">Categories</p>
+            <div className="space-y-2">
+              {categories.map((cat) => (
+                <label key={cat} className="flex items-center gap-3 cursor-pointer group">
+                  <div className={`w-4 h-4 border transition-colors flex items-center justify-center ${selectedCategory === cat ? 'bg-amber-700 border-amber-700' : 'border-gray-300 group-hover:border-amber-500'}`}>
+                    {selectedCategory === cat && <Check size={12} className="text-white" />}
+                  </div>
+                  <input type="radio" className="hidden" name="category" checked={selectedCategory === cat} onChange={() => setSelectedCategory(cat)} />
+                  <span className={`text-sm ${selectedCategory === cat ? 'text-amber-700 font-medium' : 'text-gray-700'}`}>{cat}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        </aside>
 
-        {/* Mobile Filter Button */}
-        <div className="lg:hidden mb-4">
-          <button
-            onClick={() => setShowMobileFilters(!showMobileFilters)}
-            className="w-full flex items-center justify-center gap-2 bg-white border-2 border-amber-700 text-amber-700 px-4 py-3 rounded-lg font-semibold hover:bg-amber-50 transition-colors shadow-md"
-          >
-            <SlidersHorizontal size={20} />
-            {showMobileFilters ? 'Hide Filters' : 'Show Filters & Categories'}
-          </button>
-        </div>
+        {/* Main Content Area */}
+        <main className="flex-1 min-w-0">
 
-        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-          {/* Vertical Category Tabs - Left Side on Desktop, Collapsible on Mobile */}
-          <div className={`lg:w-56 flex-shrink-0 ${showMobileFilters ? 'block' : 'hidden lg:block'}`}>
-            {/* Mobile: Styled Card */}
-            <div className="lg:hidden bg-white rounded-xl shadow-lg p-4 mb-4 border border-amber-100">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                  <Filter size={20} className="text-amber-600" />
-                  Categories
-                </h3>
-                <button
-                  onClick={() => setShowMobileFilters(false)}
-                  className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-                >
-                  <X size={20} className="text-gray-500" />
-                </button>
+          {/* MOBILE ONLY: Category Dropdown */}
+          <div className="lg:hidden mb-4">
+            <div className="relative">
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="w-full bg-white border border-gray-200 rounded-lg px-4 py-3 text-sm font-medium appearance-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-700 outline-none"
+              >
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                <ChevronRight size={18} className="rotate-90" />
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                {categories.map((category) => (
+            </div>
+          </div>
+
+          {/* Sort Bar - Horizontal Scrolling on all views */}
+          <div className="bg-white border border-gray-200 mb-4 flex items-center justify-between overflow-hidden rounded-sm">
+            <div className="flex items-center flex-1 overflow-hidden">
+              <div className="px-4 py-3 border-r border-gray-100 hidden sm:block bg-gray-50/50">
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Sort By</span>
+              </div>
+              <div className="flex overflow-x-auto no-scrollbar scroll-smooth">
+                {[
+                  { id: 'featured', label: 'Popularity' },
+                  { id: 'price-low', label: 'Price: Low-High' },
+                  { id: 'price-high', label: 'Price: High-Low' },
+                  { id: 'name', label: 'Newest First' }
+                ].map((option) => (
                   <button
-                    key={category}
-                    onClick={() => {
-                      setSelectedCategory(category);
-                      setShowMobileFilters(false);
-                    }}
-                    className={`px-3 py-2.5 text-sm font-medium transition-all rounded-lg ${selectedCategory === category
-                      ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-lg transform scale-105'
-                      : 'bg-gray-50 text-gray-700 hover:bg-amber-50 hover:text-amber-700 border border-gray-200'
+                    key={option.id}
+                    onClick={() => setSortBy(option.id)}
+                    className={`px-5 py-3 text-xs sm:text-sm whitespace-nowrap transition-all relative flex-none ${sortBy === option.id
+                      ? 'text-amber-800 font-bold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-amber-700'
+                      : 'text-gray-500 hover:text-amber-700'
                       }`}
                   >
-                    {category}
+                    {option.label}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Desktop: Vertical Sidebar */}
-            <div className="hidden lg:flex lg:flex-col gap-2">
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  onClick={() => setSelectedCategory(category)}
-                  className={`px-4 py-3 text-sm font-medium transition-all rounded-lg text-left group ${selectedCategory === category
-                    ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-lg'
-                    : 'bg-white text-gray-700 hover:bg-amber-50 hover:text-amber-700 border border-gray-200 hover:border-amber-300'
-                    }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span>{category}</span>
-                    {selectedCategory === category && (
-                      <div className="w-2 h-2 bg-white rounded-full"></div>
-                    )}
-                  </div>
-                </button>
-              ))}
+            {/* Navigation Arrows (Desktop Only) */}
+            <div className="hidden sm:flex items-center gap-2 px-4 border-l border-gray-100 bg-white h-full py-2">
+              <p className='text-sm font-medium text-gray-700'>{sortedProducts.length} Items</p>
+              <button onClick={() => scroll('left')} className="p-1.5 rounded-full hover:bg-gray-100 border border-transparent hover:border-gray-200 transition-all">
+                <ChevronLeft size={16} className="text-gray-400" />
+              </button>
+              <button onClick={() => scroll('right')} className="p-1.5 rounded-full hover:bg-gray-100 border border-transparent hover:border-gray-200 transition-all">
+                <ChevronRight size={16} className="text-gray-400" />
+              </button>
             </div>
           </div>
 
-          {/* Products Section */}
-          <div className="flex-1">
-            {/* Sort and Count Bar */}
-            <div className="bg-white rounded-xl shadow-md border border-gray-100 p-4 mb-6">
-              <div className="flex items-center justify-between flex-wrap gap-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-1 h-6 bg-amber-600 rounded-full"></div>
-                  <p className="text-sm font-semibold text-gray-700">
-                    Showing <span className="text-amber-700 text-lg">{sortedProducts.length}</span> products
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
-                  <SlidersHorizontal size={16} className="text-amber-600" />
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="bg-transparent border-none focus:ring-0 text-sm font-medium text-gray-700 cursor-pointer outline-none"
-                  >
-                    <option value="featured">✨ Featured</option>
-                    <option value="price-low">💰 Price: Low to High</option>
-                    <option value="price-high">💎 Price: High to Low</option>
-                    <option value="name">🔤 Name: A to Z</option>
-                  </select>
-                </div>
+          {/* 4. Horizontal Product Container */}
+          <div className="relative">
+            {!showSkeletons && sortedProducts.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-24 bg-white border border-dashed border-gray-200 rounded-xl">
+                <ShoppingBag size={48} className="text-gray-200 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900">No products found</h3>
+                <p className="text-sm text-gray-400">Try selecting a different category or clear filters.</p>
               </div>
-            </div>
-
-            <div className={`grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6 transition-all duration-500 ease-in-out ${
-              isContentVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-            }`}>
-              {sortedProducts.slice(0, displayedProducts).map((product, index) => {
-                const imageUrl = getImageUrl(product.product_image);
-                const isNew = isProductNew(product);
-                const isBestSeller = isProductBestSeller(product);
-                const badge = isNew ? 'new' : isBestSeller ? 'bestseller' : null;
-                const displayPrice = product.selling_price || product.price;
-                const oldPrice = product.price > product.selling_price ? product.price : undefined;
-
-                return (
-                  <div
-                    key={product.product_id}
-                    ref={index === displayedProducts - 1 ? lastProductRef : null}
-                  >
-                    <ProductCard
-                      id={product.product_id}
-                      name={product.name || product.title || 'Product'}
-                      price={displayPrice}
-                      image={imageUrl}
-                      category={product.Catagory?.name || ''}
-                      inStock={product.quantity > 0}
-                      badge={badge}
-                      oldPrice={oldPrice}
-                      // Pass rating data
-                      averageRating={product.averageRating}
-                      reviewCount={product.reviewCount}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Show More Button - Redirect to Categories */}
-            {sortedProducts.length > displayedProducts && (
-              <div className="flex justify-center mt-8">
-                <button
-                  onClick={() => go('/categories')}
-                  className="relative bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:scale-105 hover:-translate-y-1 overflow-hidden group"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out"></div>
-                  {isLoadingMore ? (
-                    <div className="relative z-10 flex items-center gap-2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      <span className="font-medium">View All Products...</span>
+            ) : (
+              <div
+                ref={scrollRef}
+                className="flex flex-nowrap overflow-x-auto no-scrollbar scroll-smooth gap-4 pb-4 w-full"
+                style={{ scrollSnapType: 'x mandatory' }}
+              >
+                <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
+                {showSkeletons
+                  ? Array.from({ length: 6 }).map((_, index) => (
+                    <div key={index} className="flex-none w-[45vw] sm:w-[30vw] lg:w-[20vw]">
+                      <SkeletonLoader type="card" />
                     </div>
-                  ) : (
-                    <span className="relative z-10 font-medium">View All Products...</span>
-                  )}
-                </button>
-              </div>
-            )}
-
-            {/* Loading More Indicator */}
-            {isLoadingMore && sortedProducts.length <= displayedProducts && (
-              <div className="flex justify-center py-8">
-                <div className="flex items-center gap-2">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-700"></div>
-                  <span className="text-gray-600">Loading more products...</span>
-                </div>
-              </div>
-            )}
-
-            {/* No More Products Indicator */}
-            {!hasMore && sortedProducts.length > 0 && sortedProducts.length <= displayedProducts && (
-              <div className="text-center py-8 text-gray-500">
-                <p className="text-sm">You've reached the end of our collection</p>
-              </div>
-            )}
-
-            {sortedProducts.length === 0 && !isLoading && (
-              <div className="text-center py-16 bg-white rounded-xl shadow-md">
-                <div className="text-gray-400 mb-4">
-                  <Filter size={48} className="mx-auto" />
-                </div>
-                <p className="text-lg text-gray-500 font-medium">No products found</p>
-                <p className="text-sm text-gray-400 mt-2">Try selecting a different category</p>
+                  ))
+                  : sortedProducts.slice(0, displayedProducts).map((product, index) => (
+                    <div
+                      key={product.product_id}
+                      className="flex-none w-[45vw] sm:w-[30vw] lg:w-[20vw] scroll-snap-align-start"
+                      ref={index === displayedProducts - 1 ? lastProductRef : null}
+                    >
+                      <ProductCard {...product} id={product.product_id} image={getImageUrl(product.product_image)} inStock={product.quantity > 0} /> {/* Pass id, image using getImageUrl utility and inStock based on quantity */}
+                    </div>
+                  ))}
               </div>
             )}
           </div>
-        </div>
+        </main>
       </div>
     </div>
   );

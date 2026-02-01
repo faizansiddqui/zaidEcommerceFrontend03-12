@@ -4,11 +4,10 @@ import { productAPI } from '../../services/api';
 import { productCache } from '../../services/productCache';
 import ProductCard from '../../components/Product/ProductCard';
 import ProductDetails from '../../components/Product/ProductDetails';
+import { useNavigation } from "../../utils/navigation";
 import Navbar from '../../components/Navbar/Navbar';
 import Footer from '../../components/Footer/Footer';
-import CategorySelector from './CategorySelector';
 import ProductSortDropdown from './ProductSortDropdown';
-import { getCategories, Category } from '../../data/categories';
 import SkeletonLoader from '../../components/UI/SkeletonLoader';
 
 interface Product {
@@ -27,19 +26,21 @@ interface Product {
 }
 
 interface CategoryPageProps {
-    onBack: () => void;
     onSearchChange: (query: string) => void;
 }
 
-export default function CategoryPage({ onBack, onSearchChange }: CategoryPageProps) {
-    // Load categories from centralized data file
-    const categoriesData = getCategories();
-    const hardcodedCategories: Category[] = [
-        { id: 0, name: 'All' },
-        ...categoriesData
-    ];
+export default function CategoryPage({ onSearchChange }: CategoryPageProps) {
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-    const [selectedCategory, setSelectedCategory] = useState<string | null>('All');
+    // Get category from URL parameters
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const categoryParam = urlParams.get('category');
+
+        if (categoryParam) {
+            setSelectedCategory(categoryParam);
+        }
+    }, []);
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoadingProducts, setIsLoadingProducts] = useState(false);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -49,6 +50,9 @@ export default function CategoryPage({ onBack, onSearchChange }: CategoryPagePro
     const [searchQuery, setSearchQuery] = useState('');
     const [hasMore, setHasMore] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
+
+    const { go } = useNavigation();
+
 
     // Ref for infinite scroll
     const observer = useRef<IntersectionObserver>();
@@ -79,8 +83,8 @@ export default function CategoryPage({ onBack, onSearchChange }: CategoryPagePro
         setProducts([]);
         setCurrentPage(1);
         setHasMore(true);
-        
-        if (selectedCategory && selectedCategory !== 'All') {
+
+        if (selectedCategory) {
             const cacheKey = `category-${selectedCategory}-page-1-limit-12`;
             const cachedProducts = productCache.getCachedProducts(cacheKey);
             if (cachedProducts) {
@@ -123,7 +127,7 @@ export default function CategoryPage({ onBack, onSearchChange }: CategoryPagePro
     const loadAllProducts = async (reset: boolean = true) => {
         const page = reset ? 1 : currentPage;
         const cacheKey = `products-page-${page}-limit-12`;
-        
+
         if (reset) {
             setIsLoadingProducts(true);
         } else {
@@ -189,7 +193,7 @@ export default function CategoryPage({ onBack, onSearchChange }: CategoryPagePro
     };
 
     const loadMoreProducts = async () => {
-        if (selectedCategory && selectedCategory !== 'All') {
+        if (selectedCategory) {
             loadProductsByCategory(selectedCategory, false);
         } else {
             loadAllProducts(false);
@@ -199,7 +203,7 @@ export default function CategoryPage({ onBack, onSearchChange }: CategoryPagePro
     const loadProductsByCategory = async (categoryName: string, reset: boolean = true) => {
         const page = reset ? 1 : currentPage;
         const cacheKey = `category-${categoryName}-page-${page}-limit-12`;
-        
+
         if (reset) {
             setIsLoadingProducts(true);
         } else {
@@ -287,6 +291,10 @@ export default function CategoryPage({ onBack, onSearchChange }: CategoryPagePro
         return '';
     };
 
+    const handleCategoryClick = () => {
+        go('/category-list');
+    };
+
     const handleProductClick = (productId: number) => {
         setSelectedProductId(productId);
     };
@@ -344,7 +352,7 @@ export default function CategoryPage({ onBack, onSearchChange }: CategoryPagePro
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
                         <button
-                            onClick={onBack}
+                            onClick={handleCategoryClick}
                             className="flex items-center gap-2 text-gray-700 hover:text-amber-700 transition-colors"
                         >
                             <ArrowLeft size={20} />
@@ -356,17 +364,11 @@ export default function CategoryPage({ onBack, onSearchChange }: CategoryPagePro
             </div>
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                <CategorySelector
-                    categories={hardcodedCategories}
-                    selectedCategory={selectedCategory}
-                    onCategorySelect={setSelectedCategory}
-                />
-
                 {/* Products Grid */}
                 <div>
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
                         <h2 className="text-2xl font-bold text-gray-900">
-                            {searchQuery ? `Search Results for "${searchQuery}"` : selectedCategory && selectedCategory !== 'All' ? `${selectedCategory} Products` : 'All Products'}
+                            {searchQuery ? `Search Results for "${searchQuery}"` : selectedCategory ? `${selectedCategory} Products` : 'All Products'}
                         </h2>
                         <div className="flex items-center gap-4">
                             {products.length > 0 && (

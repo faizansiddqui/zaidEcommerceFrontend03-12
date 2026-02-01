@@ -1,21 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Sparkles, Clock } from 'lucide-react';
+import { Sparkles, Clock, ArrowRight, Star } from 'lucide-react';
 import { productAPI } from '../services/api';
 import { Product, getImageUrl } from '../utils/productUtils';
 import { useNavigation } from "../utils/navigation";
 import SkeletonLoader from './UI/SkeletonLoader';
 import { productCache } from '../services/productCache';
 
-// Define Review interface for rating calculations
 interface Review {
     id: number;
-    user_name: string;
-    review_title: string;
-    review_text: string;
     review_rate: number;
-    review_image?: string;
-    createdAt: string;
-    user_review_count?: number;
 }
 
 interface ProductWithRating extends Product {
@@ -26,321 +19,183 @@ interface ProductWithRating extends Product {
 export default function NewArrivals() {
     const [products, setProducts] = useState<ProductWithRating[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [isContentVisible, setIsContentVisible] = useState(false); // For smooth transition
+    const [isContentVisible, setIsContentVisible] = useState(false);
     const { go } = useNavigation();
-    // Add cache for ratings to avoid repeated API calls
     const [ratingsCache, setRatingsCache] = useState<Record<number, { averageRating: number; reviewCount: number }>>({});
-
-    // Add effect for smooth content transition
-    useEffect(() => {
-        if (!isLoading && products.length > 0) {
-            // Small delay to ensure smooth transition
-            const timer = setTimeout(() => {
-                setIsContentVisible(true);
-            }, 100);
-            return () => clearTimeout(timer);
-        } else {
-            setIsContentVisible(false);
-        }
-    }, [isLoading, products]);
 
     useEffect(() => {
         loadProducts();
     }, []);
 
-    const loadProducts = async () => {
-        setIsLoading(true);
-        try {
-            // Check cache first (includes local storage)
-            const cachedNewArrivals = productCache.getCachedNewArrivals();
-
-            if (cachedNewArrivals) {
-                // Use cached data initially for instant loading
-                const cachedWithRatings = cachedNewArrivals.map(product => ({
-                    ...product,
-                    ...(ratingsCache[product.product_id] || {})
-                }));
-                setProducts(cachedWithRatings);
-                setIsLoading(false);
-                
-                // Fetch fresh data in background
-                fetchFreshProducts();
-                return;
-            }
-
-            // If no cache, fetch from API
-            await fetchFreshProducts();
-        } catch (error) {
-            console.error('Error loading new arrivals:', error);
-            setProducts([]);
-        } finally {
-            setIsLoading(false);
-            setIsContentVisible(false);
+    useEffect(() => {
+        if (!isLoading && products.length > 0) {
+            const timer = setTimeout(() => setIsContentVisible(true), 100);
+            return () => clearTimeout(timer);
         }
-    };
+    }, [isLoading, products]);
 
     const fetchFreshProducts = async () => {
         try {
             const response = await productAPI.getProducts();
-
             if (response.data.status && Array.isArray(response.data.products)) {
-                // Get the most recent products (last 6)
                 const newArrivals = response.data.products
-                    .sort((a: Product, b: Product) => {
-                        const dateA = new Date(a.createdAt || 0).getTime();
-                        const dateB = new Date(b.createdAt || 0).getTime();
-                        return dateB - dateA;
-                    })
-                    .slice(0, 6);
+                    .sort((a: Product, b: Product) =>
+                        new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+                    )
+                    .slice(0, 8);
 
-                // Cache the results (saves to local storage)
                 productCache.setCachedNewArrivals(newArrivals);
-
-                const productsWithRatings = newArrivals.map((product: Product) => ({
-                    ...product,
-                    ...(ratingsCache[product.product_id] || {})
-                }));
-                setProducts(productsWithRatings);
-            } else {
-                setProducts([]);
+                setProducts(newArrivals.map((p: ProductWithRating) => ({ ...p, ...(ratingsCache[p.product_id] || {}) })));
             }
         } catch (error) {
-            console.error('Error fetching fresh new arrivals:', error);
+            console.error('Error fetching fresh products:', error);
         }
     };
 
-    // Function to get rating background color
-    const getRatingBgColor = (rate: number) => {
-        if (rate <= 1) return 'bg-red-600';
-        if (rate <= 3) return 'bg-yellow-500';
-        return 'bg-green-600';
+    const loadProducts = async () => {
+        setIsLoading(true);
+        const cached = productCache.getCachedNewArrivals();
+        if (cached) {
+            setProducts(cached.map((p: ProductWithRating) => ({ ...p, ...(ratingsCache[p.product_id] || {}) })));
+            setIsLoading(false);
+            fetchFreshProducts();
+        } else {
+            await fetchFreshProducts();
+            setIsLoading(false);
+        }
     };
 
-    // Function to fetch ratings for a product
     const fetchProductRating = useCallback(async (productId: number) => {
-        // If we already have the rating in cache, return it
-        if (ratingsCache[productId]) {
-            return ratingsCache[productId];
-        }
-
+        if (ratingsCache[productId]) return ratingsCache[productId];
         try {
             const response = await productAPI.getProductReviews(productId);
-            const list = response?.data?.reviews || response?.data?.data || [];
-
-            if (Array.isArray(list)) {
-                const reviewCount = list.length;
-                let averageRating = 0;
-
-                if (reviewCount > 0) {
-                    const totalRating = list.reduce((sum, review: Review) => sum + review.review_rate, 0);
-                    averageRating = totalRating / reviewCount;
-                }
-
-                const ratingData = { averageRating, reviewCount };
-
-                // Update cache
-                setRatingsCache(prev => ({
-                    ...prev,
-                    [productId]: ratingData
-                }));
-
-                return ratingData;
-            }
-        } catch (err) {
-            console.error(`Failed to load reviews for product ${productId}:`, err);
-        }
-
-        // Return default values if failed to fetch
-        return { averageRating: 0, reviewCount: 0 };
+            const list = response?.data?.reviews || [];
+            const reviewCount = list.length;
+            const averageRating = reviewCount > 0
+                ? list.reduce((sum: number, r: Review) => sum + r.review_rate, 0) / reviewCount
+                : 0;
+            const data = { averageRating, reviewCount };
+            setRatingsCache(prev => ({ ...prev, [productId]: data }));
+            return data;
+        } catch { return { averageRating: 0, reviewCount: 0 }; }
     }, [ratingsCache]);
 
-    // Function to load ratings for visible products
-    const loadRatingsForVisibleProducts = useCallback(async () => {
-        // Only load ratings for products that don't already have them
-        const productsWithoutRatings = products.filter(product =>
-            product.product_id && (product.averageRating === undefined || product.reviewCount === undefined)
-        );
-
-        if (productsWithoutRatings.length === 0) return;
-
-        // Process products in batches to avoid overwhelming the API
-        const batchSize = 5;
-        for (let i = 0; i < productsWithoutRatings.length; i += batchSize) {
-            const batch = productsWithoutRatings.slice(i, i + batchSize);
-
-            // Fetch ratings for all products in the batch
-            const ratingPromises = batch.map(product =>
-                fetchProductRating(product.product_id)
-            );
-
-            try {
-                const ratings = await Promise.all(ratingPromises);
-
-                // Update products with fetched ratings
-                setProducts(prevProducts =>
-                    prevProducts.map(product => {
-                        const index = batch.findIndex(p => p.product_id === product.product_id);
-                        if (index !== -1) {
-                            return {
-                                ...product,
-                                averageRating: ratings[index].averageRating,
-                                reviewCount: ratings[index].reviewCount
-                            };
-                        }
-                        return product;
-                    })
-                );
-            } catch (error) {
-                console.error('Error fetching ratings for batch:', error);
+    useEffect(() => {
+        if (products.length > 0) {
+            const productsToFetch = products.filter(p => p.averageRating === undefined);
+            if (productsToFetch.length > 0) {
+                productsToFetch.forEach(p => fetchProductRating(p.product_id));
             }
         }
     }, [products, fetchProductRating]);
 
-    // Load ratings when products change
-    useEffect(() => {
-        if (products.length > 0) {
-            loadRatingsForVisibleProducts();
-        }
-    }, [products, loadRatingsForVisibleProducts]);
+    const calculateDiscount = (price: number, oldPrice: number) => Math.round(((oldPrice - price) / oldPrice) * 100);
 
-    const handleProductClick = (productId: number) => {
-        go(`/product/${productId}`);
-    };
+    // Show skeleton loaders for product cards when loading
+    const showSkeletons = isLoading;
 
-    const calculateDiscount = (price: number, oldPrice: number) => {
-        return Math.round(((oldPrice - price) / oldPrice) * 100);
-    };
-
-    if (isLoading) {
-        return (
-            <div className="bg-white py-12">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center mb-12">
-                        <div className="flex items-center justify-center gap-2 mb-3">
-                            <Clock className="text-amber-700" size={24} />
-                            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">
-                                New Arrivals
-                            </h2>
-                            <Clock className="text-amber-700" size={24} />
-                        </div>
-                        <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto">
-                            Fresh additions to our collection - Be the first to own these exclusive pieces
-                        </p>
-                    </div>
-
-                    {/* Skeleton Loaders */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
-                        {Array.from({ length: 8 }).map((_, index) => (
-                            <SkeletonLoader key={index} type="card" />
-                        ))}
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    if (products.length === 0) {
-        return null;
-    }
+    // If there are no products and we aren't loading, don't show the section at all
+    if (!isLoading && products.length === 0) return null;
 
     return (
-        <div className="bg-white py-12 sm:py-16 lg:py-20">
+        <section className="bg-[#FAFAFA] py-16 sm:py-24">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="text-center mb-12">
-                    <div className="flex items-center justify-center gap-2 mb-3">
-                        <Clock className="text-amber-700" size={24} />
-                        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">
-                            New Arrivals
+                {/* Modern Header - Always Visible */}
+                <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-amber-700 font-bold uppercase tracking-[0.2em] text-xs">
+                            <Clock size={14} />
+                            <span>Just In</span>
+                        </div>
+                        <h2 className="text-3xl sm:text-4xl font-light text-gray-900 tracking-tight">
+                            New <span className="font-serif italic">Arrivals</span>
                         </h2>
-                        <Clock className="text-amber-700" size={24} />
                     </div>
-                    <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto">
-                        Fresh additions to our collection - Be the first to own these exclusive pieces
-                    </p>
-                </div>
-
-                <div className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6 transition-all duration-500 ease-in-out ${isContentVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-                    }`}>
-                    {products.map((product) => {
-                        const imageUrl = getImageUrl(product.product_image);
-                        const displayPrice = product.selling_price || product.price;
-                        const oldPrice = product.price > product.selling_price ? product.price : undefined;
-
-                        return (
-                            <div
-                                key={product.product_id}
-                                onClick={() => handleProductClick(product.product_id)}
-                                className="group cursor-pointer bg-white rounded-lg overflow-hidden sm:hover:shadow-xl sm:transition-all sm:duration-300 sm:transform sm:hover:-translate-y-1 border border-gray-200"
-                            >
-                                <div className="relative aspect-square overflow-hidden bg-gray-100">
-                                    <div className="absolute top-2 left-2 z-10">
-                                        <span className="px-2 py-1 rounded-full text-xs font-bold uppercase bg-green-600 text-white flex items-center gap-1">
-                                            <Sparkles size={12} />
-                                            New
-                                        </span>
-                                    </div>
-                                    <img
-                                        src={imageUrl}
-                                        alt={product.name || product.title || 'Product'}
-                                        className="w-full h-full object-cover sm:group-hover:scale-110 sm:transition-transform sm:duration-500"
-                                    />
-                                </div>
-
-                                <div className="p-3">
-                                    {/* Rating Display */}
-                                    {product.averageRating && product.averageRating > 0 ? (
-                                        <div className="flex items-center gap-1 mb-1">
-                                            <div className={`inline-flex items-center px-2 py-0.5 rounded-md ${getRatingBgColor(product.averageRating)}`}>
-                                                <span className="text-white font-bold text-[10px]">{product.averageRating.toFixed(1)}</span>
-                                            </div>
-                                            <span className="text-[9px] text-gray-500">
-                                                ({product.reviewCount})
-                                            </span>
-                                        </div>
-                                    ) : (
-                                        <div className="flex items-center gap-0.5 mb-1">
-                                            <span className="text-[9px] text-gray-600">
-                                                No reviews yet
-                                            </span>
-                                        </div>
-                                    )}
-
-                                    <h3 className="text-xs sm:text-sm text-gray-900 font-medium mb-2 line-clamp-2 min-h-[2rem] sm:group-hover:text-amber-700 sm:transition-colors">
-                                        {product.name || product.title || 'Product'}
-                                    </h3>
-
-                                    <div className="flex flex-col gap-1">
-                                        <span className="text-base sm:text-lg font-bold text-amber-700">
-                                            ${displayPrice}
-                                        </span>
-                                        {oldPrice && (
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-xs text-gray-400 line-through">
-                                                    ${oldPrice}
-                                                </span>
-                                                <span className="bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full text-[10px] font-semibold">
-                                                    -{calculateDiscount(displayPrice, oldPrice)}%
-                                                </span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-
-                <div className="text-center mt-10">
                     <button
                         onClick={() => go('/categories')}
-                        className="relative bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:scale-105 hover:-translate-y-1 overflow-hidden group">
-                        <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out"></div>
-                        <div className="relative z-10 flex items-center gap-2">
-                            <span className="font-medium">View All Products...</span>
-                        </div>
+                        className="group flex items-center gap-2 text-sm font-semibold text-gray-900 hover:text-amber-700 transition-colors"
+                    >
+                        Explore the collection
+                        <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                     </button>
                 </div>
+
+                {/* Product Grid / Loader Area */}
+                <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-10 transition-all duration-700 ${isContentVisible || isLoading ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+                    {showSkeletons
+                        ? Array.from({ length: 4 }).map((_, i) => (
+                            <SkeletonLoader key={`skeleton-${i}`} type="card" />
+                        ))
+                        : (
+                            products.map((product) => {
+                                const imageUrl = getImageUrl(product.product_image);
+                                const displayPrice = product.selling_price || product.price;
+                                const oldPrice = product.price > (product.selling_price || 0) ? product.price : undefined;
+                                const rating = ratingsCache[product.product_id]?.averageRating || 0;
+
+                                return (
+                                    <div
+                                        key={product.product_id}
+                                        onClick={() => go(`/product/${product.product_id}`)}
+                                        className="group cursor-pointer"
+                                    >
+                                        <div className="relative overflow-hidden bg-gray-200 shadow-sm">
+                                            <div className="absolute top-3 left-3 z-10">
+                                                <span className="backdrop-blur-md bg-white/70 text-gray-900 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 shadow-sm">
+                                                    <Sparkles size={10} className="text-amber-600 fill-amber-600" />
+                                                    New
+                                                </span>
+                                            </div>
+
+                                            {oldPrice && (
+                                                <div className="absolute top-3 right-3 z-10">
+                                                    <span className="bg-amber-700 text-white px-2 py-1 rounded-lg text-[10px] font-bold">
+                                                        -{calculateDiscount(displayPrice, oldPrice)}%
+                                                    </span>
+                                                </div>
+                                            )}
+
+                                            <img
+                                                src={imageUrl}
+                                                alt={product.name}
+                                                className="w-full h-[20vh] sm:h-[20vh] md:h-[30vh] lg:h-[45vh] object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                                            />
+                                            <div className="absolute inset-0 bg-black/5 group-hover:bg-black/0 transition-colors duration-300" />
+                                        </div>
+
+                                        <div className="mt-4 space-y-1">
+                                            <div className="flex items-center gap-1">
+                                                {rating > 0 ? (
+                                                    <div className="flex items-center text-amber-500">
+                                                        <Star size={12} fill="currentColor" />
+                                                        <span className="text-[11px] font-bold ml-1 text-gray-700">{rating.toFixed(1)}</span>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-[10px] text-gray-400 font-medium tracking-wide">NEW SEASON</span>
+                                                )}
+                                            </div>
+
+                                            <h3 className="text-sm font-medium text-gray-800 line-clamp-1 group-hover:text-amber-700 transition-colors">
+                                                {product.name || product.title}
+                                            </h3>
+
+                                            <div className="flex items-baseline gap-2">
+                                                <span className="text-base font-bold text-gray-900">
+                                                    ${displayPrice}
+                                                </span>
+                                                {oldPrice && (
+                                                    <span className="text-xs text-gray-400 line-through font-light">
+                                                        ${oldPrice}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        )}
+                </div>
             </div>
-        </div>
+        </section>
     );
 }

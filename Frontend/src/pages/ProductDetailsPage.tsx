@@ -6,7 +6,7 @@ import ProductImageGallery from '../components/Product/ProductImageGallery';
 import ProductInfo from '../components/Product/ProductInfo';
 import ProductActions from '../components/Product/ProductActions';
 import ProductReviews from '../components/Product/ProductReviews';
-import WishlistButton from '../components/Product/WishlistButton';
+import FullscreenGalleryModal from '../components/Product/FullscreenGalleryModal';
 import { useNavigation } from "../utils/navigation";
 import { Product } from '../utils/productUtils';
 import ProductCard from '../components/Product/ProductCard';
@@ -81,6 +81,8 @@ export default function ProductDetailsPage({ productId, onBack }: ProductDetails
     const [averageRating, setAverageRating] = useState(0); // Add state for average rating
     const [reviewCount, setReviewCount] = useState(0); // Add state for review count
     const [isContentVisible, setIsContentVisible] = useState(false); // For smooth transition
+    const [isFullscreenGalleryOpen, setIsFullscreenGalleryOpen] = useState(false);
+    const [fullscreenGalleryIndex, setFullscreenGalleryIndex] = useState(0);
     const { cartItems, addToCart, isInCart } = useCart(); // Add cartItems to the destructuring
     const { go } = useNavigation();
 
@@ -281,6 +283,15 @@ export default function ProductDetailsPage({ productId, onBack }: ProductDetails
         }
     };
 
+    const handleImageClick = (index: number) => {
+        setFullscreenGalleryIndex(index);
+        setIsFullscreenGalleryOpen(true);
+    };
+
+    const closeFullscreenGallery = () => {
+        setIsFullscreenGalleryOpen(false);
+    };
+
     if (isLoading) {
         return (
             // Added navbar and footer to loading state
@@ -288,17 +299,17 @@ export default function ProductDetailsPage({ productId, onBack }: ProductDetails
                 <Navbar />
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     {/* Skeleton for product details */}
-                    <div className="bg-white rounded-xl shadow-md overflow-hidden">
+                    <div className="rounded-xl shadow-md overflow-hidden">
                         <div className="grid lg:grid-cols-2 gap-8 p-6 lg:p-8">
                             {/* Image gallery skeleton */}
                             <div className="space-y-4">
-                                <SkeletonLoader type="card" height="400px" className="rounded-lg" />
+                                <SkeletonLoader type="card" height="600px" className="rounded-lg" />
                             </div>
                             {/* Product info skeleton */}
                             <div className="space-y-4">
-                                <SkeletonLoader type="text" lines={2} />
+                                <SkeletonLoader type="text" lines={1} />
                                 <SkeletonLoader type="text" width="60%" />
-                                <SkeletonLoader type="text" lines={3} />
+                                <SkeletonLoader type="text" lines={1} />
                                 <div className="space-y-2">
                                     <SkeletonLoader type="text" width="40%" />
                                     <SkeletonLoader type="text" width="30%" />
@@ -322,7 +333,7 @@ export default function ProductDetailsPage({ productId, onBack }: ProductDetails
             <div className="min-h-screen bg-gray-50">
                 <Navbar />
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    <div className="bg-white rounded-xl shadow-md p-8 text-center">
+                    <div className="rounded-xl shadow-md p-8 text-center">
                         <p className="text-red-600 mb-4">{error || 'Product not found'}</p>
                         <button
                             onClick={handleBack}
@@ -352,15 +363,15 @@ export default function ProductDetailsPage({ productId, onBack }: ProductDetails
                     <span className="font-medium">Back to Products</span>
                 </button>
 
-                <div className={`bg-white rounded-xl shadow-md overflow-hidden transition-all duration-500 ease-in-out ${
-                    isContentVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-                }`}>
-                    <div className="grid lg:grid-cols-2 gap-8 p-6 lg:p-8">
+                <div className={`rounded-xl overflow-hidden transition-all duration-500 ease-in-out ${isContentVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                    }`}>
+                    <div className="grid lg:grid-cols-2 gap-8 p-2 lg:p-3">
                         <ProductImageGallery
                             images={product ? getSortedMediaArray(product.product_image) : []}
                             selectedImage={selectedImage}
                             onImageSelect={setSelectedImage}
                             productName={product.name || product.title || 'Product'}
+                            onImageClick={handleImageClick}
                         />
 
                         <div className="space-y-6">
@@ -372,19 +383,11 @@ export default function ProductDetailsPage({ productId, onBack }: ProductDetails
                                 sellingPrice={product.selling_price}
                                 specifications={product.ProductSpecification || product.ProductSpecifications || []}
                                 quantity={product.quantity}
+                                product={product as Product}
                                 // Pass dynamic review data
                                 averageRating={averageRating}
                                 reviewCount={reviewCount}
                             />
-
-                            {/* Wishlist Button */}
-                            <div className="flex justify-end">
-                                <WishlistButton
-                                    product={product as Product}
-                                    size="lg"
-                                    showLabel={true}
-                                />
-                            </div>
 
                             <ProductActions
                                 quantity={product.quantity}
@@ -411,17 +414,15 @@ export default function ProductDetailsPage({ productId, onBack }: ProductDetails
                     </div>
 
                     {isLoadingRelated ? (
-                        <div className={`grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 transition-all duration-500 ease-in-out ${
-                            !isLoadingRelated && relatedProducts.length > 0 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-                        }`}>
+                        <div className={`grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 transition-all duration-500 ease-in-out ${!isLoadingRelated && relatedProducts.length > 0 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                            }`}>
                             {Array.from({ length: 4 }).map((_, i) => (
                                 <SkeletonLoader key={i} type="card" />
                             ))}
                         </div>
                     ) : relatedProducts.length > 0 ? (
-                        <div className={`grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 transition-all duration-500 ease-in-out ${
-                            !isLoadingRelated && relatedProducts.length > 0 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-                        }`}>
+                        <div className={`grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 transition-all duration-500 ease-in-out ${!isLoadingRelated && relatedProducts.length > 0 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                            }`}>
                             {relatedProducts.map((relatedProduct) => {
                                 // Handle different image formats
                                 let imageUrl = '';
@@ -451,13 +452,23 @@ export default function ProductDetailsPage({ productId, onBack }: ProductDetails
                             })}
                         </div>
                     ) : (
-                        <div className="text-center py-12 bg-white rounded-xl shadow-sm">
+                        <div className="text-center py-12 rounded-xl shadow-sm">
                             <p className="text-gray-500">No related products found in this category.</p>
                         </div>
                     )}
                 </div>
             </div>
             <Footer />
+
+            {/* Fullscreen Gallery Modal */}
+            {isFullscreenGalleryOpen && product && (
+                <FullscreenGalleryModal
+                    images={getSortedMediaArray(product.product_image)}
+                    initialIndex={fullscreenGalleryIndex}
+                    onClose={closeFullscreenGallery}
+                    productName={product.name || product.title || 'Product'}
+                />
+            )}
         </div>
     );
 }

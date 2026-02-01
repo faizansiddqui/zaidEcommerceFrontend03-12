@@ -133,7 +133,7 @@ export default function Navbar({ onSearchChange }: NavbarProps) {
   }, [showSuggestions]);
 
   const handleCategoryClick = () => {
-    go('/categories');
+    go('/category-list');
   };
 
   const handleSearchFocus = () => {

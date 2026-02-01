@@ -13,14 +13,15 @@ import SkeletonLoader from './components/UI/SkeletonLoader';
 // Lazy load components for better performance
 const LazyBestSellers = lazy(() => import('./components/BestSellers'));
 const LazyNewArrivals = lazy(() => import('./components/NewArrivals'));
-const LazyFeatures = lazy(() => import('./components/Features'));
 
 import AdminPage from './Admin/AdminPage';
+import Features from './components/Features';
 import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
 import LoginPage from './pages/LoginPage';
 import ProfilePageTabs from './pages/ProfilePageTabs';
 import CategoryPage from './pages/Category/CategoryPage';
+import CategoryListPage from './pages/Category/CategoryListPage';
 import ContactPage from './pages/ContactPage';
 import ShippingInfoPage from './pages/ShippingInfoPage';
 import ReturnsPage from './pages/ReturnsPage';
@@ -40,11 +41,9 @@ type HomeProps = { searchQuery: string; setSearchQuery: (q: string) => void };
 function Home({ searchQuery, setSearchQuery }: HomeProps) {
   const [showBestSellers, setShowBestSellers] = useState(false);
   const [showNewArrivals, setShowNewArrivals] = useState(false);
-  const [showFeatures, setShowFeatures] = useState(false);
   
   const bestSellersRef = useRef<HTMLDivElement>(null);
   const newArrivalsRef = useRef<HTMLDivElement>(null);
-  const featuresRef = useRef<HTMLDivElement>(null);
 
   // Sequential loading - Load BestSellers first, then trigger others
   useEffect(() => {
@@ -67,17 +66,6 @@ function Home({ searchQuery, setSearchQuery }: HomeProps) {
     }
   }, [showBestSellers]);
 
-  // Load Features after NewArrivals is loaded
-  useEffect(() => {
-    if (showNewArrivals) {
-      const timer = setTimeout(() => {
-        setShowFeatures(true);
-      }, 800); // Load Features after 800ms
-
-      return () => clearTimeout(timer);
-    }
-  }, [showNewArrivals]);
-
   return (
     <div className="min-h-screen bg-white">
       <Navbar onSearchChange={setSearchQuery} />
@@ -93,7 +81,7 @@ function Home({ searchQuery, setSearchQuery }: HomeProps) {
                 <SkeletonLoader type="text" width="400px" className="mx-auto" />
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-                {Array.from({ length: 8 }).map((_, i) => (
+                {Array.from({ length: 4 }).map((_, i) => (
                   <SkeletonLoader key={i} type="card" />
                 ))}
               </div>
@@ -124,7 +112,7 @@ function Home({ searchQuery, setSearchQuery }: HomeProps) {
                 <SkeletonLoader type="text" width="400px" className="mx-auto" />
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-                {Array.from({ length: 8 }).map((_, i) => (
+                {Array.from({ length: 4 }).map((_, i) => (
                   <SkeletonLoader key={i} type="card" />
                 ))}
               </div>
@@ -147,40 +135,7 @@ function Home({ searchQuery, setSearchQuery }: HomeProps) {
 
       <ProductGrid searchQuery={searchQuery} />
 
-      {/* Features - Lazy Loaded */}
-      <div ref={featuresRef}>
-        {!showFeatures ? (
-          <div className="py-16 bg-gray-50">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="text-center mb-12">
-                <SkeletonLoader type="text" width="300px" height="40px" className="mb-4" />
-                <SkeletonLoader type="text" width="500px" className="mx-auto mb-8" />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="text-center">
-                    <SkeletonLoader type="card" height="120px" className="mb-4" />
-                    <SkeletonLoader type="text" width="150px" className="mb-2" />
-                    <SkeletonLoader type="text" lines={2} />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <Suspense fallback={
-            <div className="py-16 bg-gray-50">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-center items-center h-32">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-700"></div>
-                </div>
-              </div>
-            </div>
-          }>
-            <LazyFeatures />
-          </Suspense>
-        )}
-      </div>
+      <Features />
       
       <Footer />
     </div>
@@ -238,7 +193,8 @@ export default function App() {
         <Route path="/order-success" element={<OrderSuccess onContinueShopping={() => navigate('/')} />} />
         <Route path="/order/:id" element={<OrderRouteWrapper />} />
         <Route path="/product/:id" element={<ProductRouteWrapper />} />
-        <Route path="/categories" element={<CategoryPage onBack={() => navigate('/')} onSearchChange={setSearchQuery} />} />
+        <Route path="/categories" element={<CategoryPage onSearchChange={setSearchQuery} />} />
+        <Route path="/category-list" element={<CategoryListPage onSearchChange={setSearchQuery} onBack={() => navigate('/')} />} />
         <Route path="/search" element={<SearchPage onBack={() => navigate('/')} onSearchChange={setSearchQuery} />} />
         <Route path="/contact" element={<ContactPage onBack={() => navigate('/')} />} />
         <Route path="/shipping" element={<ShippingInfoPage onBack={() => navigate('/')} />} />

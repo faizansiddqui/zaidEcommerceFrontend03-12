@@ -21,7 +21,7 @@ export default function SkeletonLoader({
 
   if (type === 'card') {
     return (
-      <div className={`bg-white rounded-lg shadow-md overflow-hidden ${className}`}>
+      <div className={`bg-white rounded-lg overflow-hidden ${className}`}>
         <div 
           className={`${baseClasses} h-48 w-full`}
           style={animationStyle}

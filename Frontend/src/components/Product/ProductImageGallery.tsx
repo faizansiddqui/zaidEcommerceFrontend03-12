@@ -8,20 +8,25 @@ interface ProductImageGalleryProps {
     selectedImage: number;
     onImageSelect: (index: number) => void;
     productName: string;
+    onImageClick?: (index: number) => void; // Optional callback for fullscreen view
 }
 
 export default function ProductImageGallery({
     images,
     selectedImage,
     onImageSelect,
-    productName
+    productName,
+    onImageClick
 }: ProductImageGalleryProps) {
     const mainImage = images[selectedImage] || images[0] || '';
 
     return (
         <div className="space-y-3 sm:space-y-4">
             {/* Main media display */}
-            <div className="relative aspect-square mute rounded-lg sm:rounded-xl lg:rounded-2xl overflow-hidden bg-gray-100">
+            <div
+                className="relative aspect-square mute rounded-lg sm:rounded-xl lg:rounded-2xl overflow-hidden bg-gray-100 cursor-pointer"
+                onClick={() => onImageClick && onImageClick(selectedImage)}
+            >
                 {isVideoUrl(mainImage) ? (
                     <VideoPlayer
                         src={mainImage}
@@ -38,6 +43,10 @@ export default function ProductImageGallery({
                         }}
                     />
                 )}
+                {/* Fullscreen indicator */}
+                <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded opacity-0 hover:opacity-100 transition-opacity">
+                    Click to view fullscreen
+                </div>
             </div>
 
             {images.length > 1 && (

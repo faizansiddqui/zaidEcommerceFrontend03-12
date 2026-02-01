@@ -5,13 +5,14 @@ import AdminTabs from './components/Admin/AdminTabs';
 import ProductUploadForm from './components/Product/ProductUploadForm';
 import ProductsList from './components/Product/ProductsList';
 import OrdersList from './components/Order/OrdersList';
+import UserManagement from './components/User/UserManagement';
 
 interface AdminPageProps {
     onBack?: () => void;
 }
 
 export default function AdminPage({ onBack }: AdminPageProps) {
-    const [activeTab, setActiveTab] = useState<'upload' | 'products' | 'orders'>('upload');
+    const [activeTab, setActiveTab] = useState<'upload' | 'products' | 'orders' | 'users'>('upload');
 
     return (
         <AuthGuard>
@@ -24,6 +25,7 @@ export default function AdminPage({ onBack }: AdminPageProps) {
                         {activeTab === 'upload' && <ProductUploadForm />}
                         {activeTab === 'products' && <ProductsList />}
                         {activeTab === 'orders' && <OrdersList />}
+                        {activeTab === 'users' && <UserManagement />}
                     </div>
                 </div>
             </div>
