@@ -1,5 +1,6 @@
 import { ShoppingCart, ShoppingBag, Star, Crown, Sparkles } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
 import WishlistButton from './WishlistButton';
 import { useNavigation } from "../../utils/navigation";
 import SkeletonLoader from '../UI/SkeletonLoader';
@@ -23,7 +24,22 @@ export default function ProductCard({
   averageRating = 0, isLoading = false
 }: ProductCardProps) {
   const { addToCart, isInCart } = useCart();
+  const { isAuthenticated } = useAuth();
   const { go } = useNavigation();
+
+  // Handle add to cart with auth protection
+  const handleAddToCart = () => {
+    if (!id || !inStock) return;
+    
+    if (!isAuthenticated) {
+      // Save current path and redirect to login
+      localStorage.setItem('redirectAfterLogin', window.location.pathname + window.location.search);
+      go('/log');
+      return;
+    }
+    
+    addToCart(id, { name: name || '', price: price || 0, image: image || '' });
+  };
 
   // If loading, show the skeleton version of the card
   if (isLoading) {
@@ -107,7 +123,7 @@ export default function ProductCard({
           </div>
           
           <button
-            onClick={() => id && inStock && addToCart(id, { name: name || '', price: price || 0, image: image || '' })}
+            onClick={handleAddToCart}
             disabled={!inStock}
             className={`p-3 rounded-2xl transition-all duration-300 ${
               id && isInCart(id) 

@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
-import { X, ArrowLeft } from 'lucide-react';
-import { useCart } from '../../context/CartContext';
-import { productAPI } from '../../services/api';
+import { ArrowLeft, X } from 'lucide-react';
 import ProductImageGallery from './ProductImageGallery';
 import ProductInfo from './ProductInfo';
 import ProductActions from './ProductActions';
 import ProductReviews from './ProductReviews';
 import WishlistButton from './WishlistButton';
 import { useNavigation } from "../../utils/navigation";
+import { useAuth } from '../../context/AuthContext';
+import { useCart } from '../../context/CartContext';
 import { Product } from '../../utils/productUtils';
+import { productAPI } from '../../services/api';
 
 interface ProductSpecification {
   specification_id?: number;
@@ -41,12 +42,17 @@ export default function ProductDetails({ productId, onClose }: ProductDetailsPro
   const [selectedImage, setSelectedImage] = useState(0);
   const [addedToCart, setAddedToCart] = useState(false);
   const { cartItems, addToCart, isInCart } = useCart(); // Add cartItems to the destructuring
+  const { isAuthenticated } = useAuth();
   const { go } = useNavigation();
 
   useEffect(() => {
-    loadProduct();
+    if (!isAuthenticated) {
+      go('/login');
+    } else {
+      loadProduct();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [productId]);
+  }, [productId, isAuthenticated]);
 
   // Add effect to update addedToCart when cart changes
   useEffect(() => {
@@ -82,6 +88,14 @@ export default function ProductDetails({ productId, onClose }: ProductDetailsPro
   };
 
   const handleAddToCart = () => {
+    if (!isAuthenticated) {
+      // Save current path and redirect to login
+      localStorage.setItem('redirectAfterLogin', window.location.pathname + window.location.search);
+      onClose(); // Close modal first
+      go('/login');
+      return;
+    }
+
     if (product) {
       // Pass product data to addToCart
       addToCart(product.product_id, {
@@ -121,6 +135,14 @@ export default function ProductDetails({ productId, onClose }: ProductDetailsPro
   };
 
   const handleBuyNow = () => {
+    if (!isAuthenticated) {
+      // Save current path and redirect to login
+      localStorage.setItem('redirectAfterLogin', window.location.pathname + window.location.search);
+      onClose(); // Close modal first
+      go('/login');
+      return;
+    }
+
     if (product) {
       // Add to cart first
       addToCart(product.product_id, {
@@ -202,6 +224,7 @@ export default function ProductDetails({ productId, onClose }: ProductDetailsPro
                 sellingPrice={product.selling_price}
                 specifications={product.ProductSpecification || product.ProductSpecifications || []}
                 quantity={product.quantity}
+                product={product as Product}
               />
 
               {/* Wishlist Button */}

@@ -215,7 +215,7 @@ export default function CheckoutPage({ onBack }: CheckoutPageProps) {
               handleSubmit(e);
             }} className="space-y-8">
               {/* Address Selection */}
-              <div className="bg-white rounded-xl shadow-md p-6">
+              <div className="">
                 <AddressSelector
                   selectedAddressId={selectedAddressId}
                   onAddressSelect={setSelectedAddressId}
@@ -244,7 +244,7 @@ export default function CheckoutPage({ onBack }: CheckoutPageProps) {
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-md p-6 sticky top-8">
+            <div className="rounded-xl p-6 sticky top-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">
                 {effectiveBuyNowItemId ? 'Order Summary (Single Item)' : 'Order Summary'}
               </h2>

@@ -76,21 +76,52 @@ export default function AddressForm({ address, onSubmit, onCancel }: AddressForm
         setIsSubmitting(true);
         try {
             const userId = user?.id || JSON.parse(localStorage.getItem('user') || '{}').id;
+            
             if (address?.id) {
-                await userAPI.updateAddress(address.id, { ...formData, address_id: address.id });
+                // Update existing address - FIX: Match backend API field names
+                await userAPI.updateAddress(address.id, { 
+                    FullName: formData.FullName,
+                    phone1: formData.phone1,
+                    phone2: formData.phone2,
+                    country: formData.country,
+                    state: formData.state,
+                    city: formData.city,
+                    pinCode: formData.pinCode,
+                    address: formData.address,
+                    addressType: formData.addressType,
+                    address_id: address.id 
+                });
+
             } else {
-                await userAPI.createAddress({ ...formData, phoneNo: formData.phone1, alt_Phone: formData.phone2, decode_user: userId });
+                // Create new address - FIX: Match backend API field names
+                await userAPI.createAddress({ 
+                    FullName: formData.FullName,
+                    phone1: formData.phone1,
+                    phone2: formData.phone2,
+                    country: formData.country,
+                    state: formData.state,
+                    city: formData.city,
+                    pinCode: formData.pinCode,
+                    address: formData.address,
+                    addressType: formData.addressType,
+                    phoneNo: formData.phone1, 
+                    alt_Phone: formData.phone2, 
+                    decode_user: userId 
+                });
             }
+            
+            // Call onSubmit to refresh the address list
             onSubmit(formData);
         } catch (err) {
-            alert("Error saving address");
+            console.error('❌ Error saving address:', err);
+            alert("Error saving address. Please try again.");
         } finally {
             setIsSubmitting(false);
         }
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="md:col-span-2">
                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Full Name *</label>
@@ -138,10 +169,15 @@ export default function AddressForm({ address, onSubmit, onCancel }: AddressForm
 
             <div className="flex gap-4 py-2 border-t mt-4">
                 <button type="button" onClick={onCancel} className="flex-1 py-2 border rounded-md text-sm font-semibold hover:bg-gray-50">CANCEL</button>
-                <button type="submit" disabled={isSubmitting} className="flex-1 py-2 bg-amber-600 text-white rounded-md text-sm font-semibold hover:bg-amber-700 disabled:opacity-50">
+                <button 
+                    type="button" 
+                    onClick={handleSubmit} 
+                    disabled={isSubmitting} 
+                    className="flex-1 py-2 bg-amber-600 text-white rounded-md text-sm font-semibold hover:bg-amber-700 disabled:opacity-50"
+                >
                     {isSubmitting ? 'SAVING...' : 'SAVE'}
                 </button>
             </div>
-        </form>
+        </div>
     );
 }

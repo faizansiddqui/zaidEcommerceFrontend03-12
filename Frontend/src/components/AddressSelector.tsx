@@ -134,7 +134,7 @@ export default function AddressSelector({ selectedAddressId, onAddressSelect }: 
                     className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium transition-colors"
                 >
                     <Plus size={16} />
-                    Add New Address
+                    Add Address
                 </button>
             </div>
 
@@ -222,7 +222,7 @@ export default function AddressSelector({ selectedAddressId, onAddressSelect }: 
             {/* Modal Dialog for Address Form */}
             {showAddressForm && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <div className="bg-white rounded-2xl p-6 shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                         <AddressForm
                             address={editingAddress ? convertToLocalAddress(editingAddress) : undefined}
                             onSubmit={handleAddressSubmit}
