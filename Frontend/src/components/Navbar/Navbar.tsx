@@ -241,7 +241,7 @@ export default function Navbar({ onSearchChange }: NavbarProps) {
                 className="text-gray-700 hover:text-gray-900 transition-colors relative flex items-center gap-1 xs:gap-2 px-1 xs:px-2 py-1"
               >
                 <ShoppingCart size={18} className="xs:w-5 xs:h-5 sm:w-6 sm:h-6" />
-                <span className="hidden xs:inline text-sm xs:text-base sm:text-base font-medium">Cart</span>
+                <span className="hidden sm:inline text-sm xs:text-base sm:text-base font-medium">Cart</span>
                 {getTotalItems() > 0 && (
                   <span className="absolute -top-1 -right-1 bg-amber-700 text-white text-[10px] xs:text-xs rounded-full h-4 w-4 xs:h-5 xs:w-5 flex items-center justify-center font-semibold">
                     {getTotalItems()}

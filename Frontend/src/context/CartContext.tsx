@@ -36,7 +36,15 @@ interface CartContextType {
     getTotalItems: () => number;
     saveCartToLocalStorage: () => void;
     isInCart: (productId: number) => boolean;
-    buyNow: (productId: number) => void;
+    buyNow: (
+        productId: number,
+        productData?: {
+            name: string;
+            price: number;
+            image: string;
+            stock?: number;
+        }
+    ) => void;
     setBuyNowItem: (itemId: number | null) => void;
     buyNowItemId: number | null; // Add this property
 }
@@ -361,9 +369,25 @@ export function CartProvider({ children }: { children: ReactNode }) {
     // Add this new method for buying a single item
     const [buyNowItemId, setBuyNowItem] = useState<number | null>(null);
 
-    const buyNow = (productId: number) => {
+    const buyNow = (
+        productId: number,
+        productData?: {
+            name: string;
+            price: number;
+            image: string;
+            stock?: number;
+        }
+    ) => {
         // If user is not authenticated, save product info and redirect to login
         if (!isAuthenticated) {
+            // Save product info for use after login (so checkout can still show it)
+            if (productData) {
+                const productInfo = {
+                    id: productId,
+                    ...productData
+                };
+                localStorage.setItem('pendingAddToCart', JSON.stringify(productInfo));
+            }
             // Save the product ID for use after login
             localStorage.setItem('pendingBuyNow', productId.toString());
             // Save current path to redirect back after login

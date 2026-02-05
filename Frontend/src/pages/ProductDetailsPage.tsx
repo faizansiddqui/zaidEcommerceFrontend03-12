@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { productAPI } from '../services/api';
 import { productCache } from '../services/productCache';
 import ProductImageGallery from '../components/Product/ProductImageGallery';
@@ -83,8 +84,9 @@ export default function ProductDetailsPage({ productId, onBack }: ProductDetails
     const [isContentVisible, setIsContentVisible] = useState(false); // For smooth transition
     const [isFullscreenGalleryOpen, setIsFullscreenGalleryOpen] = useState(false);
     const [fullscreenGalleryIndex, setFullscreenGalleryIndex] = useState(0);
-    const { cartItems, addToCart, isInCart } = useCart(); // Add cartItems to the destructuring
+    const { cartItems, addToCart, isInCart, buyNow } = useCart(); // Add cartItems to the destructuring
     const { go } = useNavigation();
+    const { isAuthenticated } = useAuth();
 
     useEffect(() => {
         loadProduct();
@@ -260,8 +262,7 @@ export default function ProductDetailsPage({ productId, onBack }: ProductDetails
 
     const handleBuyNow = () => {
         if (product) {
-            // Add to cart and redirect to checkout
-            addToCart(product.product_id, {
+            const productInfo = {
                 name: product.name || product.title || 'Product',
                 price: product.selling_price || product.price,
                 image: Array.isArray(product.product_image)
@@ -269,9 +270,17 @@ export default function ProductDetailsPage({ productId, onBack }: ProductDetails
                     : typeof product.product_image === 'string'
                         ? product.product_image
                         : Object.values(product.product_image)[0] || ''
-            });
-            // Redirect to checkout page
-            go('/checkout');
+            };
+
+            if (!isAuthenticated) {
+                buyNow(product.product_id, productInfo);
+                return;
+            }
+            // Add to cart and redirect to checkout
+            addToCart(product.product_id, productInfo);
+            // Mark this as a buy-now checkout and redirect
+            buyNow(product.product_id);
+            go('/checkout', { state: { buyNowItemId: product.product_id } });
         }
     };
 
@@ -352,7 +361,7 @@ export default function ProductDetailsPage({ productId, onBack }: ProductDetails
         // Added navbar and footer to main render
         <div className="min-h-screen bg-gray-50">
             <Navbar />
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="max-w-7xl mx-auto px-1 sm:px-6 lg:px-4 py-8">
                 <button
                     onClick={handleBack}
                     className="flex items-center gap-2 text-gray-600 hover:text-amber-700 transition-colors mb-6"
@@ -402,7 +411,7 @@ export default function ProductDetailsPage({ productId, onBack }: ProductDetails
                 </div>
 
                 {/* Related Products Section */}
-                <div className="mt-12">
+                <div className="mt-12 px-2">
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="text-2xl font-bold text-gray-900">Related Products</h2>
                         {/* <div className="w-16 h-1 bg-amber-600 rounded-full"></div> */}
@@ -454,7 +463,7 @@ export default function ProductDetailsPage({ productId, onBack }: ProductDetails
                 </div>
                 
                 {/* Product Reviews Section */}
-                <div className="mt-8">
+                <div className="mt-8 px-2">
                     <ProductReviews productId={product.product_id} />
                 </div>
 

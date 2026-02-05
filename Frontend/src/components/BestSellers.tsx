@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Sparkles, ArrowRight, ShoppingBag, Star, Crown } from 'lucide-react';
+import { Sparkles, ArrowRight, ShoppingBag, Star, Crown} from 'lucide-react';
 import { productAPI } from '../services/api';
 import { productCache } from '../services/productCache';
 import { Product, getImageUrl } from '../utils/productUtils';
@@ -136,10 +136,10 @@ export default function BestSellers() {
                 >
                   {/* Image Container */}
                   <div className="relative rounded-1xl overflow-hidden bg-gray-50">
-                    <div className="absolute top-4 left-4 z-10">
+                    <div className="absolute top-2 left-2 z-10">
                       <div className="relative group/badge">
                         <div className="absolute inset-0 bg-gradient-to-r from-amber-400 to-amber-600 blur-[4px] opacity-50 rounded-full"></div>
-                        <span className="relative flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/80 backdrop-blur-md border border-white/20 text-white text-[10px] font-black uppercase tracking-widest shadow-xl">
+                        <span className="relative flex items-center gap-1.5 px-2 py-1 rounded-full bg-black/80 backdrop-blur-md border border-white/20 text-white text-[8px] font-black uppercase shadow-xl">
                           <Crown size={10} className="text-amber-400 fill-amber-400" />
                           Trending
                         </span>
@@ -149,7 +149,7 @@ export default function BestSellers() {
                     <img
                       src={imageUrl}
                       alt={product.name}
-                      className="w-full h-[20vh] sm:h-[20vh] md:h-[30vh] lg:h-[45vh] object-cover transition-transform duration-1000 group-hover:scale-110"
+                      className="w-full h-[25vh] sm:h-[20vh] md:h-[30vh] lg:h-[45vh] object-cover transition-transform duration-1000 group-hover:scale-110"
                     />
 
                     <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">

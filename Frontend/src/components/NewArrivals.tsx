@@ -139,17 +139,17 @@ export default function NewArrivals() {
                                         onClick={() => go(`/product/${product.product_id}`)}
                                         className="group cursor-pointer"
                                     >
-                                        <div className="relative overflow-hidden bg-gray-200 shadow-sm">
-                                            <div className="absolute top-3 left-3 z-10">
-                                                <span className="backdrop-blur-md bg-white/70 text-gray-900 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 shadow-sm">
+                                        <div className="relative overflow-hidden">
+                                            <div className="absolute top-2 left-2 z-10">
+                                                <span className="backdrop-blur-md bg-white/70 text-gray-900 px-3 py-1 rounded-full text-[8px] font-bold uppercase tracking-wider flex items-center gap-1 shadow-sm">
                                                     <Sparkles size={10} className="text-amber-600 fill-amber-600" />
                                                     New
                                                 </span>
                                             </div>
 
                                             {oldPrice && (
-                                                <div className="absolute top-3 right-3 z-10">
-                                                    <span className="bg-amber-700 text-white px-2 py-1 rounded-lg text-[10px] font-bold">
+                                                <div className="absolute top-1 right-3 z-10">
+                                                    <span className="bg-amber-700 text-white px-2 py-1 rounded-lg text-[8px] font-bold">
                                                         -{calculateDiscount(displayPrice, oldPrice)}%
                                                     </span>
                                                 </div>
@@ -158,7 +158,7 @@ export default function NewArrivals() {
                                             <img
                                                 src={imageUrl}
                                                 alt={product.name}
-                                                className="w-full h-[20vh] sm:h-[20vh] md:h-[30vh] lg:h-[45vh] object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                                                className="w-full h-[25vh] sm:h-[20vh] md:h-[30vh] lg:h-[45vh] object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                                             />
                                             <div className="absolute inset-0 bg-black/5 group-hover:bg-black/0 transition-colors duration-300" />
                                         </div>

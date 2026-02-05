@@ -679,7 +679,7 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
             ) : (
               <div
                 ref={scrollRef}
-                className="flex flex-nowrap overflow-x-auto scroll-smooth gap-4 pb-4 w-full"
+                className="flex flex-nowrap overflow-x-auto scroll-smooth gap-1 pb-4 w-full"
                 style={{ scrollSnapType: 'x mandatory' }}
               >
                 <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>

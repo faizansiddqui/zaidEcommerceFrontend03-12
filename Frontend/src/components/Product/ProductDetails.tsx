@@ -41,7 +41,7 @@ export default function ProductDetails({ productId, onClose }: ProductDetailsPro
   const [error, setError] = useState('');
   const [selectedImage, setSelectedImage] = useState(0);
   const [addedToCart, setAddedToCart] = useState(false);
-  const { cartItems, addToCart, isInCart } = useCart(); // Add cartItems to the destructuring
+  const { cartItems, addToCart, isInCart, buyNow } = useCart(); // Add cartItems to the destructuring
   const { isAuthenticated } = useAuth();
   const { go } = useNavigation();
 
@@ -135,17 +135,8 @@ export default function ProductDetails({ productId, onClose }: ProductDetailsPro
   };
 
   const handleBuyNow = () => {
-    if (!isAuthenticated) {
-      // Save current path and redirect to login
-      localStorage.setItem('redirectAfterLogin', window.location.pathname + window.location.search);
-      onClose(); // Close modal first
-      go('/login');
-      return;
-    }
-
     if (product) {
-      // Add to cart first
-      addToCart(product.product_id, {
+      const productInfo = {
         name: product.name || product.title || 'Product',
         price: product.selling_price || product.price,
         image: Array.isArray(product.product_image)
@@ -153,11 +144,20 @@ export default function ProductDetails({ productId, onClose }: ProductDetailsPro
           : typeof product.product_image === 'string'
             ? product.product_image
             : Object.values(product.product_image)[0] || ''
-      });
+      };
+
+      if (!isAuthenticated) {
+        buyNow(product.product_id, productInfo);
+        return;
+      }
+
+      // Add to cart first
+      addToCart(product.product_id, productInfo);
 
       // Then navigate to checkout
+      buyNow(product.product_id);
       onClose();
-      go('/checkout');
+      go('/checkout', { state: { buyNowItemId: product.product_id } });
     }
   };
 

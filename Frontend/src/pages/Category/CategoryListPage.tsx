@@ -243,7 +243,7 @@ export default function CategoryListPage({ onBack, onSearchChange }: CategoryLis
                                     <button
                                         key={cat.id}
                                         onClick={() => handleCategoryClick(cat.name)}
-                                        className={`flex items-center gap-4 px-6 py-4 transition-all duration-300 whitespace-nowrap lg:whitespace-normal flex-shrink-0 lg:flex-shrink
+                                        className={`flex items-center gap-3 px-6 py-4 transition-all duration-300 whitespace-nowrap lg:whitespace-normal flex-shrink-0 lg:flex-shrink
                                             ${selectedCategory === cat.name
                                                 ? 'text-amber-800 bg-amber-50/40 lg:border-r-4 lg:border-amber-700 font-bold'
                                                 : 'text-gray-500 hover:bg-gray-50 border-transparent'

@@ -155,7 +155,7 @@ export default function AddressSelector({ selectedAddressId, onAddressSelect }: 
                     </button>
                 </div>
             ) : (
-                <div className="space-y-4">
+                <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1 sm:max-h-none sm:overflow-visible sm:scrollbar-thin sm:scrollbar-thumb-gray-300 sm:scrollbar-track-gray-100">
                     {addresses.map((address) => (
                         <div
                             key={address.id}
