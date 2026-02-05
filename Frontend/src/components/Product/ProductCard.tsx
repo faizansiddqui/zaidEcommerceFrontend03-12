@@ -16,20 +16,33 @@ interface ProductCardProps {
   oldPrice?: number;
   disableHover?: boolean;
   averageRating?: number;
-  isLoading?: boolean; // New prop to handle internal loading
+  isLoading?: boolean;
+  quantity?: number;
 }
 
 export default function ProductCard({
-  id, name, price, image, category, inStock, badge, oldPrice,
-  averageRating = 0, isLoading = false
+  id,
+  name,
+  price,
+  image,
+  category,
+  inStock,
+  badge,
+  oldPrice,
+  // disableHover,
+  averageRating = 0,
+  isLoading = false,
+  quantity
 }: ProductCardProps) {
   const { addToCart, isInCart } = useCart();
   const { isAuthenticated } = useAuth();
   const { go } = useNavigation();
 
+  const isAvailable = inStock ?? true;
+
   // Handle add to cart with auth protection
   const handleAddToCart = () => {
-    if (!id || !inStock) return;
+    if (!id || !isAvailable) return;
     
     if (!isAuthenticated) {
       // Save current path and redirect to login
@@ -51,7 +64,7 @@ export default function ProductCard({
 
   return (
     <div 
-      className="group relative bg-white p-2 transition-all duration-500 border border-transparent hover:border-amber-100/50 h-full flex flex-col"
+      className="group relative p-2 transition-all duration-500 border border-transparent hover:border-amber-100/50 h-full flex flex-col"
     >
       {/* Image Container */}
       <div 
@@ -87,10 +100,21 @@ export default function ProductCard({
         />
 
         <div className="absolute bottom-4 right-4 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-          {id && <WishlistButton product={{ product_id: id, name: name || '', price: price || 0, selling_price: price || 0, product_image: image || '', quantity: 0 }} />}
+          {id && (
+            <WishlistButton
+              product={{
+                product_id: id,
+                name: name || '',
+                price: price || 0,
+                selling_price: price || 0,
+                product_image: image || '',
+                quantity: quantity !== undefined ? quantity : isAvailable ? 1 : 0
+              }}
+            />
+          )}
         </div>
 
-        {!inStock && (
+        {!isAvailable && (
           <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
             <span className="bg-gray-900 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest">Sold Out</span>
           </div>
@@ -124,9 +148,9 @@ export default function ProductCard({
           
           <button
             onClick={handleAddToCart}
-            disabled={!inStock}
+            disabled={!isAvailable}
             className={`p-3 rounded-2xl transition-all duration-300 ${
-              id && isInCart(id) 
+              id && isInCart(id)
               ? 'bg-green-100 text-green-600' 
               : 'bg-gray-900 text-white hover:bg-amber-700 shadow-lg shadow-gray-200 hover:shadow-amber-200'
             } disabled:opacity-50 disabled:bg-gray-100`}

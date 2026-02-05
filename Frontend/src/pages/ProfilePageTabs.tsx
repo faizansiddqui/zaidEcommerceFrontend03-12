@@ -4,6 +4,8 @@ import { userAPI } from '../services/api';
 import AddressForm from '../components/AddressForm';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
+import ProductCard from '../components/Product/ProductCard';
+import { getImageUrl } from '../utils/productUtils';
 import {
     ArrowLeft,
     Mail,
@@ -14,7 +16,7 @@ import {
     User,
     Heart,
     Settings as SettingsIcon,
-    ShoppingCart,
+    // ShoppingCart,
     X,
     LogOut,
     Shield,
@@ -123,8 +125,8 @@ export default function ProfilePageTabs({ onBack }: { onBack?: () => void }) {
     const [editingAddress, setEditingAddress] = useState<Address | null>(null);
 
     // Wishlist tab states and functions
-    const { wishlistItems } = useWishlist();
-    const { addToCart } = useCart();
+    const { wishlistItems, removeFromWishlist } = useWishlist();
+    // const { addToCart } = useCart();
 
     // Orders tab states and functions
     const [orders, setOrders] = useState<Order[]>([]);
@@ -592,25 +594,32 @@ export default function ProfilePageTabs({ onBack }: { onBack?: () => void }) {
                 );
             }
             case 'wishlist': {
-                const handleRemoveFromWishlist = async () => {
-                    // Implementation would go here if we had access to removeFromWishlist
-                    // For now, we'll just log it
+                const handleRemoveFromWishlist = async (productId: number) => {
+                    await removeFromWishlist(productId);
                 };
 
-                const handleAddToCartFromWishlist = async (product: WishlistProduct) => {
-                    try {
-                        await addToCart(product.product_id, {
-                            name: product.name,
-                            price: product.selling_price,
-                            image: typeof product.product_image === 'string' ? product.product_image : Array.isArray(product.product_image) ? product.product_image[0] : Object.values(product.product_image)[0]
-                        });
-                    } catch (error) {
-                        console.error('Failed to add to cart:', error);
-                    }
-                };
+                // const handleAddToCartFromWishlist = async (product: WishlistProduct) => {
+                //     try {
+                //         const resolvedImage = getImageUrl(
+                //             typeof product.product_image === 'string'
+                //                 ? product.product_image
+                //                 : Array.isArray(product.product_image)
+                //                     ? product.product_image[0]
+                //                     : Object.values(product.product_image || {})[0] || ''
+                //         );
+
+                //         await addToCart(product.product_id, {
+                //             name: product.name,
+                //             price: product.selling_price,
+                //             image: resolvedImage
+                //         });
+                //     } catch (error) {
+                //         console.error('Failed to add to cart:', error);
+                //     }
+                // };
 
                 return (
-                    <div className="bg-white rounded-2xl p-6">
+                    <div className="">
                         <div className="flex items-center gap-3 mb-8">
                             <Heart className="text-amber-700" size={32} />
                             <h1 className="text-3xl font-bold text-gray-900">My Wishlist</h1>
@@ -629,35 +638,39 @@ export default function ProfilePageTabs({ onBack }: { onBack?: () => void }) {
                                 </button>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {wishlistItems.map((product: WishlistProduct) => (
-                                    <div key={product.product_id} className="bg-white rounded-xl p-4 overflow-hidden relative">
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                                {wishlistItems.map((product: WishlistProduct) => {
+                                    const resolvedImage = getImageUrl(
+                                        typeof product.product_image === 'string'
+                                            ? product.product_image
+                                            : Array.isArray(product.product_image)
+                                                ? product.product_image[0]
+                                                : Object.values(product.product_image || {})[0] || ''
+                                    );
+
+                                    return (
+                                        <div key={product.product_id} className="overflow-hidden relative flex flex-col">
                                         <button
-                                            onClick={() => handleRemoveFromWishlist()}
-                                            className="absolute top-3 right-3 bg-white rounded-full p-1 hover:bg-gray-100 transition-colors z-10"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleRemoveFromWishlist(product.product_id);
+                                            }}
+                                            className="absolute top-3 right-3 bg-white rounded-full p-1 shadow-md hover:bg-gray-100 transition-colors z-10"
                                         >
                                             <X size={20} className="text-gray-600" />
                                         </button>
 
-                                        <div className="p-4">
-                                            <h3 className="font-semibold text-gray-900 mb-1">{product.name}</h3>
-                                            <p className="text-amber-700 font-bold">${product.selling_price}</p>
-                                        </div>
-
-                                        <div className="p-4">
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleAddToCartFromWishlist(product);
-                                                }}
-                                                className="w-full bg-amber-700 hover:bg-amber-800 text-white py-2 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
-                                            >
-                                                <ShoppingCart size={18} />
-                                                Add to Cart
-                                            </button>
-                                        </div>
+                                        <ProductCard
+                                            id={product.product_id}
+                                            name={product.name}
+                                            price={product.selling_price}
+                                            image={resolvedImage}
+                                            category={product.Catagory?.name || 'Uncategorized'}
+                                            inStock={product.quantity > 0}
+                                        />
                                     </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
                     </div>

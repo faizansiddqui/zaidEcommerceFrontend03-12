@@ -98,7 +98,7 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
         setProducts(productsWithCache);
       }
     } catch (error) {
-      console.error('âŒ Network error, keeping cached data:', error);
+      console.error('Error: network issue while refreshing products', error);
       // Keep showing cached data - no action needed since already loaded
     }
   };
@@ -125,15 +125,15 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
         throw new Error('Invalid API response');
       }
     } catch (error) {
-      console.error('âŒ API failed, trying fallback:', error);
+      console.error('Error: product API failed, attempting fallback', error);
 
       // Fallback: Try to get any cached data
       const allCached = productCache.getAllCachedProducts();
       if (allCached.length > 0) {
-        console.log('ðŸ”„ Fallback: Using cached products due to network failure');
+        console.log('Fallback: using cached products due to network failure');
         setProducts(allCached);
       } else {
-        console.log('ðŸ“­ No cached data available');
+        console.log('No cached data available');
         setProducts([]);
       }
     } finally {
@@ -203,7 +203,7 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
         }
       }
     } catch (error) {
-      console.error('âŒ ProductGrid: Error fetching fresh category products:', error);
+      console.error('Error fetching fresh category products:', error);
     } finally {
       setIsBackgroundFetching(false);
     }
@@ -244,7 +244,7 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
         setProducts([]);
       }
     } catch (error: unknown) {
-      console.error('âŒ Error loading products:', error);
+      console.error('Error loading products:', error);
       setProducts([]);
     } finally {
       setIsLoading(false);
@@ -285,15 +285,15 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
 
           setProducts(productsWithCache);
         } else {
-          console.warn('âš ï¸ No products found for category:', categoryName);
+          console.warn('Warning: no products found for category', categoryName);
           setProducts([]);
         }
       } else {
-        console.warn('âš ï¸ Invalid response format for category:', categoryName);
+        console.warn('Warning: invalid response format for category', categoryName);
         setProducts([]);
       }
     } catch (error: unknown) {
-      console.error(`âŒ Error loading products for category ${categoryName}:`, error);
+      console.error(`Error loading products for category ${categoryName}:`, error);
       setProducts([]);
     } finally {
       setIsLoading(false);
