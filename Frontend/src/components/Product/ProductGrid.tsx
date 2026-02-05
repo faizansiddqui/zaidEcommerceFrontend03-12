@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+﻿import { useState, useEffect, useCallback, useRef } from 'react';
 import ProductCard from './ProductCard';
 import { SlidersHorizontal, Check, ChevronLeft, ChevronRight, ShoppingBag } from 'lucide-react';
 import { productAPI } from '../../services/api';
@@ -28,20 +28,14 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
   const [products, setProducts] = useState<ProductWithRating[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('All Products');
   const [sortBy, setSortBy] = useState('featured');
-  const [hasMore, setHasMore] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [displayedProducts, setDisplayedProducts] = useState(6); // Show only 6 products initially
   // Add cache for ratings to avoid repeated API calls
   const [ratingsCache, setRatingsCache] = useState<Record<number, { averageRating: number; reviewCount: number }>>({});
   const [isBackgroundFetching, setIsBackgroundFetching] = useState(false); // Prevent duplicate background fetches
 
-  // Ref for infinite scroll
-  const observer = useRef<IntersectionObserver>();
-  const lastProductRef = useRef<HTMLDivElement>(null);
+  const PRODUCTS_LIMIT = 1000;
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -68,13 +62,11 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
       setIsInitialLoad(false);
 
       // Check if we have local storage data first
-      const cacheKey = `products-page-1-limit-12`;
+      const cacheKey = `products-page-1-limit-${PRODUCTS_LIMIT}`;
       const cachedProducts = productCache.getCachedProducts(cacheKey);
 
       if (cachedProducts) {
         setProducts(cachedProducts);
-        setHasMore(cachedProducts.length === 12);
-        setCurrentPage(2);
         setIsLoading(false);
 
         // Try to fetch fresh data in background (may fail due to network)
@@ -89,10 +81,10 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
 
   const fetchFreshProductsWithFallback = async () => {
     try {
-      const response = await productAPI.getProducts(1, 12);
+      const response = await productAPI.getProducts(1, PRODUCTS_LIMIT);
 
       if (response.data.status && Array.isArray(response.data.products)) {
-        const cacheKey = `products-page-1-limit-12`;
+        const cacheKey = `products-page-1-limit-${PRODUCTS_LIMIT}`;
 
         // Cache fresh products (saves to local storage)
         productCache.setCachedProducts(cacheKey, response.data.products);
@@ -104,11 +96,9 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
         }));
 
         setProducts(productsWithCache);
-        setHasMore(response.data.products.length === 12);
-        setCurrentPage(2);
       }
     } catch (error) {
-      console.error('❌ Network error, keeping cached data:', error);
+      console.error('âŒ Network error, keeping cached data:', error);
       // Keep showing cached data - no action needed since already loaded
     }
   };
@@ -116,11 +106,11 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
   const fetchProductsWithFallback = async () => {
     try {
       setIsLoading(true);
-      const response = await productAPI.getProducts(1, 12);
+      const response = await productAPI.getProducts(1, PRODUCTS_LIMIT);
 
       if (response.data.status && Array.isArray(response.data.products)) {
-        console.log('✅ API call successful');
-        const cacheKey = `products-page-1-limit-12`;
+        console.log('âœ… API call successful');
+        const cacheKey = `products-page-1-limit-${PRODUCTS_LIMIT}`;
 
         // Cache fresh products
         productCache.setCachedProducts(cacheKey, response.data.products);
@@ -131,25 +121,20 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
         }));
 
         setProducts(productsWithCache);
-        setHasMore(response.data.products.length === 12);
-        setCurrentPage(2);
       } else {
         throw new Error('Invalid API response');
       }
     } catch (error) {
-      console.error('❌ API failed, trying fallback:', error);
+      console.error('âŒ API failed, trying fallback:', error);
 
       // Fallback: Try to get any cached data
       const allCached = productCache.getAllCachedProducts();
       if (allCached.length > 0) {
-        console.log('🔄 Fallback: Using cached products due to network failure');
-        setProducts(allCached.slice(0, 12));
-        setHasMore(allCached.length >= 12);
-        setCurrentPage(2);
+        console.log('ðŸ”„ Fallback: Using cached products due to network failure');
+        setProducts(allCached);
       } else {
-        console.log('📭 No cached data available');
+        console.log('ðŸ“­ No cached data available');
         setProducts([]);
-        setHasMore(false);
       }
     } finally {
       setIsLoading(false);
@@ -159,18 +144,13 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
   // Reset pagination when category or search changes
   useEffect(() => {
     setProducts([]);
-    setCurrentPage(1);
-    setHasMore(true);
-    setDisplayedProducts(6); // Reset to 6 products
 
     if (selectedCategory === 'All Products') {
-      const cacheKey = `products-page-1-limit-12`;
+      const cacheKey = `products-page-1-limit-${PRODUCTS_LIMIT}`;
       const cachedProducts = productCache.getCachedProducts(cacheKey);
 
       if (cachedProducts) {
         setProducts(cachedProducts);
-        setHasMore(cachedProducts.length === 12);
-        setCurrentPage(2);
         setIsLoading(false);
 
         // Fetch fresh data in background
@@ -178,16 +158,14 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
           fetchFreshProductsWithFallback();
         }
       } else {
-        loadProducts(true);
+        loadProducts();
       }
     } else if (selectedCategory !== 'Uncategorized') {
-      const cacheKey = `category-${selectedCategory}-page-1-limit-12`;
+      const cacheKey = `category-${selectedCategory}-page-1-limit-${PRODUCTS_LIMIT}`;
       const cachedProducts = productCache.getCachedProducts(cacheKey);
 
       if (cachedProducts) {
         setProducts(cachedProducts);
-        setHasMore(cachedProducts.length === 12);
-        setCurrentPage(2);
         setIsLoading(false);
 
         // Fetch fresh data in background
@@ -195,7 +173,7 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
           fetchFreshCategoryProducts(selectedCategory);
         }
       } else {
-        loadProductsByCategory(selectedCategory, true);
+        loadProductsByCategory(selectedCategory);
       }
     }
   }, [selectedCategory, searchQuery]);
@@ -205,12 +183,12 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
 
     setIsBackgroundFetching(true);
     try {
-      const response = await productAPI.getProductByCategory(categoryName, 1, 12);
+      const response = await productAPI.getProductByCategory(categoryName, 1, PRODUCTS_LIMIT);
 
       if (response.data.status === 'ok' && response.data.data) {
         const categoryData = response.data.data;
         if (categoryData && categoryData.Products && Array.isArray(categoryData.Products)) {
-          const cacheKey = `category-${categoryName}-page-1-limit-12`;
+          const cacheKey = `category-${categoryName}-page-1-limit-${PRODUCTS_LIMIT}`;
 
           // Cache the fresh products (saves to local storage)
           productCache.setCachedProducts(cacheKey, categoryData.Products);
@@ -222,71 +200,35 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
           }));
 
           setProducts(productsWithCache);
-          setHasMore(categoryData.Products.length === 12);
-          setCurrentPage(2);
         }
       }
     } catch (error) {
-      console.error('❌ ProductGrid: Error fetching fresh category products:', error);
+      console.error('âŒ ProductGrid: Error fetching fresh category products:', error);
     } finally {
       setIsBackgroundFetching(false);
     }
   };
 
-  // Infinite scroll observer
-  useEffect(() => {
-    const options = {
-      root: null,
-      rootMargin: '100px',
-      threshold: 0.1
-    };
+  const loadProducts = async () => {
+    const cacheKey = `products-page-1-limit-${PRODUCTS_LIMIT}`;
 
-    observer.current = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting && hasMore && !isLoading && !isLoadingMore) {
-        loadMoreProducts();
-      }
-    }, options);
-
-    if (lastProductRef.current) {
-      observer.current.observe(lastProductRef.current);
-    }
-
-    return () => {
-      if (observer.current) {
-        observer.current.disconnect();
-      }
-    };
-  }, [hasMore, isLoading, isLoadingMore, currentPage, selectedCategory, searchQuery]);
-
-  const loadProducts = async (reset: boolean = false) => {
-    const page = reset ? 1 : currentPage;
-    const cacheKey = `products-page-${page}-limit-12`;
-
-    if (reset) {
-      setIsLoading(true);
-      setDisplayedProducts(6); // Reset to 6 products
-    } else {
-      setIsLoadingMore(true);
-    }
+    setIsLoading(true);
 
     try {
       // Check cache first
       const cachedProducts = productCache.getCachedProducts(cacheKey);
-      if (cachedProducts && !reset) {
-        // Load from cache for pagination
+      if (cachedProducts) {
         const productsWithCache = cachedProducts.map((product: Product) => ({
           ...product,
           ...(ratingsCache[product.product_id] || {})
         }));
 
-        setProducts(prev => [...prev, ...productsWithCache]);
-        setHasMore(cachedProducts.length === 12);
-        setCurrentPage(prev => prev + 1);
-        setIsLoadingMore(false);
+        setProducts(productsWithCache);
+        setIsLoading(false);
         return;
       }
 
-      const response = await productAPI.getProducts(page, 12);
+      const response = await productAPI.getProducts(1, PRODUCTS_LIMIT);
 
       if (response.data.status && Array.isArray(response.data.products)) {
         const productsWithCache = response.data.products.map((product: Product) => ({
@@ -297,74 +239,38 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
         // Cache the products
         productCache.setCachedProducts(cacheKey, response.data.products);
 
-        if (reset) {
-          setProducts(productsWithCache);
-        } else {
-          setProducts(prev => [...prev, ...productsWithCache]);
-        }
-
-        // Check if there are more products to load
-        setHasMore(response.data.products.length === 12);
-        if (!reset) {
-          setCurrentPage(prev => prev + 1);
-        } else {
-          setCurrentPage(2);
-        }
+        setProducts(productsWithCache);
       } else {
-        if (reset) {
-          setProducts([]);
-        }
-        setHasMore(false);
-      }
-    } catch (error: unknown) {
-      console.error('❌ Error loading products:', error);
-      if (reset) {
         setProducts([]);
       }
-      setHasMore(false);
+    } catch (error: unknown) {
+      console.error('âŒ Error loading products:', error);
+      setProducts([]);
     } finally {
       setIsLoading(false);
-      setIsLoadingMore(false);
     }
   };
 
-  const loadMoreProducts = async () => {
-    if (selectedCategory === 'All Products') {
-      loadProducts(false);
-    } else if (selectedCategory !== 'Uncategorized') {
-      loadProductsByCategory(selectedCategory, false);
-    }
-  };
+  const loadProductsByCategory = async (categoryName: string) => {
+    const cacheKey = `category-${categoryName}-page-1-limit-${PRODUCTS_LIMIT}`;
 
-  const loadProductsByCategory = async (categoryName: string, reset: boolean = true) => {
-    const page = reset ? 1 : currentPage;
-    const cacheKey = `category-${categoryName}-page-${page}-limit-12`;
-
-    if (reset) {
-      setIsLoading(true);
-      setDisplayedProducts(6); // Reset to 6 products
-    } else {
-      setIsLoadingMore(true);
-    }
+    setIsLoading(true);
 
     try {
       // Check cache first
       const cachedProducts = productCache.getCachedProducts(cacheKey);
-      if (cachedProducts && !reset) {
-        // Load from cache for pagination
+      if (cachedProducts) {
         const productsWithCache = cachedProducts.map((product: Product) => ({
           ...product,
           ...(ratingsCache[product.product_id] || {})
         }));
 
-        setProducts(prev => [...prev, ...productsWithCache]);
-        setHasMore(cachedProducts.length === 12);
-        setCurrentPage(prev => prev + 1);
-        setIsLoadingMore(false);
+        setProducts(productsWithCache);
+        setIsLoading(false);
         return;
       }
 
-      const response = await productAPI.getProductByCategory(categoryName, page, 12);
+      const response = await productAPI.getProductByCategory(categoryName, 1, PRODUCTS_LIMIT);
 
       if (response.data.status === 'ok' && response.data.data) {
         const categoryData = response.data.data;
@@ -377,45 +283,22 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
           // Cache the products
           productCache.setCachedProducts(cacheKey, categoryData.Products);
 
-          if (reset) {
-            setProducts(productsWithCache);
-          } else {
-            setProducts(prev => [...prev, ...productsWithCache]);
-          }
-
-          // Check if there are more products to load
-          setHasMore(categoryData.Products.length === 12);
-          if (!reset) {
-            setCurrentPage(prev => prev + 1);
-          } else {
-            setCurrentPage(2);
-          }
+          setProducts(productsWithCache);
         } else {
-          console.warn('⚠️ No products found for category:', categoryName);
-          if (reset) {
-            setProducts([]);
-          }
-          setHasMore(false);
-        }
-      } else {
-        console.warn('⚠️ Invalid response format for category:', categoryName);
-        if (reset) {
+          console.warn('âš ï¸ No products found for category:', categoryName);
           setProducts([]);
         }
-        setHasMore(false);
-      }
-    } catch (error: unknown) {
-      console.error(`❌ Error loading products for category ${categoryName}:`, error);
-      if (reset) {
+      } else {
+        console.warn('âš ï¸ Invalid response format for category:', categoryName);
         setProducts([]);
       }
-      setHasMore(false);
+    } catch (error: unknown) {
+      console.error(`âŒ Error loading products for category ${categoryName}:`, error);
+      setProducts([]);
     } finally {
       setIsLoading(false);
-      setIsLoadingMore(false);
     }
   };
-
   // Function to fetch ratings for a product
   const fetchProductRating = useCallback(async (productId: number) => {
     // If we already have the rating in cache, return it
@@ -689,11 +572,10 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
                       <SkeletonLoader type="card" />
                     </div>
                   ))
-                  : sortedProducts.slice(0, displayedProducts).map((product, index) => (
+                  : sortedProducts.map((product) => (
                     <div
                       key={product.product_id}
                       className="flex-none w-[45vw] sm:w-[30vw] lg:w-[20vw] scroll-snap-align-start"
-                      ref={index === displayedProducts - 1 ? lastProductRef : null}
                     >
                       <ProductCard {...product} id={product.product_id} image={getImageUrl(product.product_image)} inStock={product.quantity > 0} /> {/* Pass id, image using getImageUrl utility and inStock based on quantity */}
                     </div>
@@ -706,3 +588,4 @@ export default function ProductGrid({ searchQuery }: { searchQuery?: string }) {
     </div>
   );
 }
+
