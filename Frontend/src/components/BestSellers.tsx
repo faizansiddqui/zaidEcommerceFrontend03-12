@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Sparkles, ArrowRight, ShoppingBag, Star, Crown} from 'lucide-react';
+import { Sparkles, ArrowRight, ShoppingBag, Star, Crown } from 'lucide-react';
 import { productAPI } from '../services/api';
 import { productCache } from '../services/productCache';
 import { Product, getImageUrl } from '../utils/productUtils';
@@ -85,6 +85,11 @@ export default function BestSellers() {
       products.filter((p: ProductWithRating) => p.averageRating === undefined).forEach((p: ProductWithRating) => fetchProductRating(p.product_id));
     }
   }, [products, fetchProductRating]);
+
+  const getProductTitle = (name?: string, fallback?: string, limit = 15) => {
+    const value = name || fallback || '';
+    return value.length > limit ? `${value.slice(0, limit).trimEnd()}...` : value;
+  };
 
   // If there are no products and we aren't loading, don't show the section at all
   if (!isLoading && products.length === 0) return null;
@@ -179,8 +184,8 @@ export default function BestSellers() {
                       )}
                     </div>
 
-                    <h3 className="text-base font-medium text-gray-900 line-clamp-2 group-hover:text-amber-700 transition-colors h-10">
-                      {product.name || product.title}
+                    <h3 className="text-base font-medium text-gray-900 group-hover:text-amber-700 transition-colors h-10">
+                      {getProductTitle(product.name, product.title)}
                     </h3>
 
                     <div className="flex items-baseline gap-2">
